@@ -57,6 +57,13 @@ static const CAmount DEFAULT_MAX_BURN_AMOUNT{0};
                                                     TxBroadcast broadcast_method,
                                                     bool wait_callback);
 
+[[nodiscard]] TransactionError BroadcastTransaction_orphan(NodeContext& node,
+                                                    CTransactionRef tx,
+                                                    std::string& err_string,
+                                                    const CAmount& max_tx_fee,
+                                                    TxBroadcast broadcast_method,
+                                                    bool wait_callback);
+
 /**
  * Return transaction with a given hash.
  * If mempool is provided and block_index is not provided, check it first for the tx.

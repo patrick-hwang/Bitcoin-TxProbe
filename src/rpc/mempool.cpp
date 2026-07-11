@@ -139,6 +139,101 @@ static RPCHelpMan sendrawtransaction()
     };
 }
 
+static RPCHelpMan sendrawtransaction_orphan()
+{
+    return RPCHelpMan{
+        "sendrawtransaction_orphan",
+        "Submit a raw transaction (serialized, hex-encoded) to the network.\n"
+
+        "\nIf -privatebroadcast is disabled, then the transaction will be put into the\n"
+        "local mempool of the node and will be sent unconditionally to all currently\n"
+        "connected peers, so using sendrawtransaction for manual rebroadcast will degrade\n"
+        "privacy by leaking the transaction's origin, as nodes will normally not\n"
+        "rebroadcast non-wallet transactions already in their mempool.\n"
+
+        "\nIf -privatebroadcast is enabled, then the transaction will be sent only via\n"
+        "dedicated, short-lived connections to Tor or I2P peers or IPv4/IPv6 peers\n"
+        "via the Tor network. This conceals the transaction's origin. The transaction\n"
+        "will only enter the local mempool when it is received back from the network.\n"
+
+        "\nA specific exception, RPC_TRANSACTION_ALREADY_IN_UTXO_SET, may throw if the transaction cannot be added to the mempool.\n"
+
+        "\nRelated RPCs: createrawtransaction, signrawtransactionwithkey\n",
+        {
+            {"hexstring", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "The hex string of the raw transaction"},
+            {"maxfeerate", RPCArg::Type::AMOUNT, RPCArg::Default{FormatMoney(DEFAULT_MAX_RAW_TX_FEE_RATE.GetFeePerK())},
+             "Reject transactions whose fee rate is higher than the specified value, expressed in " + CURRENCY_UNIT +
+                 "/kvB.\nFee rates larger than 1BTC/kvB are rejected.\nSet to 0 to accept any fee rate."},
+            {"maxburnamount", RPCArg::Type::AMOUNT, RPCArg::Default{FormatMoney(DEFAULT_MAX_BURN_AMOUNT)},
+             "Reject transactions with provably unspendable outputs (e.g. 'datacarrier' outputs that use the OP_RETURN opcode) greater than the specified value, expressed in " + CURRENCY_UNIT + ".\n"
+             "If burning funds through unspendable outputs is desired, increase this value.\n"
+             "This check is based on heuristics and does not guarantee spendability of outputs.\n"},
+        },
+        RPCResult{
+            RPCResult::Type::STR_HEX, "", "The transaction hash in hex"
+        },
+        RPCExamples{
+            "\nCreate a transaction\n"
+            + HelpExampleCli("createrawtransaction", "\"[{\\\"txid\\\" : \\\"mytxid\\\",\\\"vout\\\":0}]\" \"{\\\"myaddress\\\":0.01}\"") +
+            "Sign the transaction, and get back the hex\n"
+            + HelpExampleCli("signrawtransactionwithwallet", "\"myhex\"") +
+            "\nSend the transaction (signed hex)\n"
+            + HelpExampleCli("sendrawtransaction", "\"signedhex\"") +
+            "\nAs a JSON-RPC call\n"
+            + HelpExampleRpc("sendrawtransaction", "\"signedhex\"")
+                },
+        [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue
+        {
+            const CAmount max_burn_amount = request.params[2].isNull() ? 0 : AmountFromValue(request.params[2]);
+
+            CMutableTransaction mtx;
+            if (!DecodeHexTx(mtx, request.params[0].get_str())) {
+                throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "TX decode failed. Make sure the tx has at least one input.");
+            }
+
+            for (const auto& out : mtx.vout) {
+                if((out.scriptPubKey.IsUnspendable() || !out.scriptPubKey.HasValidOps()) && out.nValue > max_burn_amount) {
+                    throw JSONRPCTransactionError(TransactionError::MAX_BURN_EXCEEDED);
+                }
+            }
+
+            CTransactionRef tx(MakeTransactionRef(std::move(mtx)));
+
+            const CFeeRate max_raw_tx_fee_rate{ParseFeeRate(self.Arg<UniValue>("maxfeerate"))};
+
+            int64_t virtual_size = GetVirtualTransactionSize(*tx);
+            CAmount max_raw_tx_fee = max_raw_tx_fee_rate.GetFee(virtual_size);
+
+            std::string err_string;
+            AssertLockNotHeld(cs_main);
+            NodeContext& node = EnsureAnyNodeContext(request.context);
+            const bool private_broadcast_enabled{gArgs.GetBoolArg("-privatebroadcast", DEFAULT_PRIVATE_BROADCAST)};
+            if (private_broadcast_enabled &&
+                !g_reachable_nets.Contains(NET_ONION) &&
+                !g_reachable_nets.Contains(NET_I2P)) {
+                throw JSONRPCError(RPC_MISC_ERROR,
+                                   "-privatebroadcast is enabled, but none of the Tor or I2P networks is "
+                                   "reachable. Maybe the location of the Tor proxy couldn't be retrieved "
+                                   "from the Tor daemon at startup. Check whether the Tor daemon is running "
+                                   "and that -torcontrol, -torpassword and -i2psam are configured properly.");
+            }
+            const auto method = private_broadcast_enabled ? node::TxBroadcast::NO_MEMPOOL_PRIVATE_BROADCAST
+                                                          : node::TxBroadcast::MEMPOOL_AND_BROADCAST_TO_ALL;
+            const TransactionError err = BroadcastTransaction_orphan(node,
+                                                              tx,
+                                                              err_string,
+                                                              max_raw_tx_fee,
+                                                              method,
+                                                              /*wait_callback=*/true);
+            if (TransactionError::OK != err) {
+                throw JSONRPCTransactionError(err, err_string);
+            }
+
+            return tx->GetHash().GetHex();
+        },
+    };
+}
+
 static RPCHelpMan getprivatebroadcastinfo()
 {
     return RPCHelpMan{
@@ -1507,6 +1602,7 @@ void RegisterMempoolRPCCommands(CRPCTable& t)
 {
     static const CRPCCommand commands[]{
         {"rawtransactions", &sendrawtransaction},
+        {"rawtransactions", &sendrawtransaction_orphan},
         {"rawtransactions", &getprivatebroadcastinfo},
         {"rawtransactions", &abortprivatebroadcast},
         {"rawtransactions", &testmempoolaccept},
