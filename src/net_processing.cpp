@@ -547,6 +547,7 @@ public:
     void SendPings() override EXCLUSIVE_LOCKS_REQUIRED(!m_peer_mutex);
     void InitiateTxBroadcastToAll(const Txid& txid, const Wtxid& wtxid) override EXCLUSIVE_LOCKS_REQUIRED(!m_peer_mutex);
     void InitiateTxBroadcastPrivate(const CTransactionRef& tx) override EXCLUSIVE_LOCKS_REQUIRED(!m_peer_mutex);
+    void SendTxToPeers_orphan(const CTransactionRef& tx, const std::vector<NodeId>& peer_ids) override;
     void SetBestBlock(int height, std::chrono::seconds time) override
     {
         m_best_height = height;
@@ -2273,6 +2274,32 @@ void PeerManagerImpl::InitiateTxBroadcastPrivate(const CTransactionRef& tx)
         m_connman.m_private_broadcast.NumToOpenAdd(NUM_PRIVATE_BROADCAST_PER_TX);
     } else {
         LogDebug(BCLog::PRIVBROADCAST, "Ignoring unnecessary request to schedule an already scheduled transaction: %s", txstr);
+    }
+}
+
+void PeerManagerImpl::SendTxToPeers_orphan(const CTransactionRef& tx, const std::vector<NodeId>& peer_ids)
+{
+    for (NodeId id : peer_ids) {
+        const bool use_witness = [&]() {
+            PeerRef peer = GetPeerRef(id);
+            return peer && peer->m_wtxid_relay;
+        }();
+
+        m_connman.ForNode(id, [this, &tx, use_witness](CNode* pnode) {
+            if (pnode->IsBlockOnlyConn() || pnode->IsFeelerConn() || pnode->IsPrivateBroadcastConn()) {
+                LogDebug(BCLog::NET, "SendTxToPeers_orphan: skipping peer=%d (ineligible)\n", pnode->GetId());
+                return false;
+            }
+            if (use_witness) {
+                MakeAndPushMessage(*pnode, NetMsgType::TX, TX_WITH_WITNESS(*tx));
+            } else {
+                MakeAndPushMessage(*pnode, NetMsgType::TX, TX_NO_WITNESS(*tx));
+            }
+            LogDebug(BCLog::NET, "SendTxToPeers_orphan: sent tx %s to peer=%d%s\n",
+                     tx->GetHash().ToString(), pnode->GetId(),
+                     use_witness ? " (witness)" : "");
+            return true;
+        });
     }
 }
 

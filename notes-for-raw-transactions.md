@@ -4,38 +4,28 @@
 - Description: Steps for validating the transaction before sending to a peer.
 - Purpose: To avoid penalty from peer.
 
-### Syntax validation
+### 1. Syntax validation
 - Check if the syntax is correct:
-- Reference: function ...
+- Reference: function DecodeHexTx() in ./src/core_id.cpp
 
-### Not announced validation
+### 2. Standardness validation
+- Check if the trasaction is in standard form
+- Reference: ./src/policy/policy.cpp $\rightarrow$ IsStandardTx()
+
+### 3. Size >= 65 bytes non-witness
+- Check if the transaction's serialize size greater then 65
+- Purpose: Avoid a specific DoS
+- Reference: ./src/validation.cpp $\rightarrow$ PreChecks()
+
+### Not sent validation
 - Check if we already sent an INV message about the transaction
 - Reference: ./src/net_processing.cpp $\rightarrow$ SendMessages()
-
-### Feerate validation
-- Check if: Transaction feerate >= Peer allowed minimal feerate
-- Reference: ./src/net_processing.cpp $\rightarrow$ SendMessages()
-
-### Relay fee >= min relay fee
 
 ### Bloom filter validation
 - Check if the transaction go through the bloom filer
 - Reference: ./src/net_processing.cpp $\rightarrow$ SendMessages()
 
-### Standardness validation
-- Check if the trasaction is in standard form
-- Reference: ./src/policy/policy.cpp $\rightarrow$ IsStandardTx()
-
-### Size >= 65 bytes non-witness
-- Check if the transaction's serialize size greater then 65
-- Purpose: Avoid a specific DoS
-- Reference: ./src/validation.cpp $\rightarrow$ PreChecks()
-
-### Output amount validation (Input >= Output)
-- Check if the output amount is at most equal to the input amount
-- Reference: ./src/consensus/tx_verify.cpp $\rightarrow$ CheckTxInputs()
-
-### Peer handshake?
+### Peer handshake
 - Check if the handshake has done: m_next_inv_send_time != 0
 - Reference: ./src/net_processing.cpp $\rightarrow$ InitiateTxBroadcastToAll()
 

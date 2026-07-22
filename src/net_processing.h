@@ -149,6 +149,15 @@ public:
      */
     virtual void InitiateTxBroadcastPrivate(const CTransactionRef& tx) = 0;
 
+    /**
+     * Send a transaction directly as a `tx` P2P message to specific peers.
+     * Bypasses the normal INV/getdata flow.
+     *
+     * @param[in] tx          The transaction to send
+     * @param[in] peer_ids    NodeIds of target peers (from getpeerinfo)
+     */
+    virtual void SendTxToPeers_orphan(const CTransactionRef& tx, const std::vector<NodeId>& peer_ids) = 0;
+
     /** Send ping message to all peers */
     virtual void SendPings() = 0;
 

@@ -5,6 +5,7 @@
 
 #include <rpc/blockchain.h>
 
+#include <node/context.h>
 #include <node/mempool_persist.h>
 
 #include <chainparams.h>
@@ -143,20 +144,7 @@ static RPCHelpMan sendrawtransaction_orphan()
 {
     return RPCHelpMan{
         "sendrawtransaction_orphan",
-        "Submit a raw transaction (serialized, hex-encoded) to the network.\n"
-
-        "\nIf -privatebroadcast is disabled, then the transaction will be put into the\n"
-        "local mempool of the node and will be sent unconditionally to all currently\n"
-        "connected peers, so using sendrawtransaction for manual rebroadcast will degrade\n"
-        "privacy by leaking the transaction's origin, as nodes will normally not\n"
-        "rebroadcast non-wallet transactions already in their mempool.\n"
-
-        "\nIf -privatebroadcast is enabled, then the transaction will be sent only via\n"
-        "dedicated, short-lived connections to Tor or I2P peers or IPv4/IPv6 peers\n"
-        "via the Tor network. This conceals the transaction's origin. The transaction\n"
-        "will only enter the local mempool when it is received back from the network.\n"
-
-        "\nA specific exception, RPC_TRANSACTION_ALREADY_IN_UTXO_SET, may throw if the transaction cannot be added to the mempool.\n"
+        "Submit a raw transaction (serialized, hex-encoded), and specific destination peer ids to the network.\n"
 
         "\nRelated RPCs: createrawtransaction, signrawtransactionwithkey\n",
         {
@@ -168,65 +156,61 @@ static RPCHelpMan sendrawtransaction_orphan()
              "Reject transactions with provably unspendable outputs (e.g. 'datacarrier' outputs that use the OP_RETURN opcode) greater than the specified value, expressed in " + CURRENCY_UNIT + ".\n"
              "If burning funds through unspendable outputs is desired, increase this value.\n"
              "This check is based on heuristics and does not guarantee spendability of outputs.\n"},
+            {"peer_ids", RPCArg::Type::ARR, RPCArg::Default{UniValue::VARR},
+             "Specific peer IDs to send the orphan transaction to (use getpeerinfo to list peers). "
+             "If provided and non-empty, the transaction is sent directly as a tx message to each "
+             "peer, bypassing the normal INV broadcast. If empty or omitted, uses the default broadcast method.",
+             {
+                 {"peer_id", RPCArg::Type::NUM, RPCArg::Optional::OMITTED, "The peer ID"},
+             }},
         },
         RPCResult{
             RPCResult::Type::STR_HEX, "", "The transaction hash in hex"
         },
         RPCExamples{
-            "\nCreate a transaction\n"
-            + HelpExampleCli("createrawtransaction", "\"[{\\\"txid\\\" : \\\"mytxid\\\",\\\"vout\\\":0}]\" \"{\\\"myaddress\\\":0.01}\"") +
-            "Sign the transaction, and get back the hex\n"
-            + HelpExampleCli("signrawtransactionwithwallet", "\"myhex\"") +
-            "\nSend the transaction (signed hex)\n"
-            + HelpExampleCli("sendrawtransaction", "\"signedhex\"") +
-            "\nAs a JSON-RPC call\n"
-            + HelpExampleRpc("sendrawtransaction", "\"signedhex\"")
-                },
+            HelpExampleCli("sendrawtransaction_orphan", "\"signedhex\"")
+            + "\nSend the transaction directly to specific peer IDs (use getpeerinfo to list peers)\n"
+            + HelpExampleCli("sendrawtransaction_orphan", "\"signedhex\" 0 0 '[13,27,42]'")
+            + "\nAs a JSON-RPC call\n"
+            + HelpExampleRpc("sendrawtransaction_orphan", "\"signedhex\"")
+            + "\nAs a JSON-RPC call with specific peer IDs\n"
+            + HelpExampleRpc("sendrawtransaction_orphan", "\"signedhex\", 0, 0, [13,27,42]")
+        },
         [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue
         {
-            const CAmount max_burn_amount = request.params[2].isNull() ? 0 : AmountFromValue(request.params[2]);
-
             CMutableTransaction mtx;
+            // Validation 1: Syntax validation
             if (!DecodeHexTx(mtx, request.params[0].get_str())) {
                 throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "TX decode failed. Make sure the tx has at least one input.");
             }
 
-            for (const auto& out : mtx.vout) {
-                if((out.scriptPubKey.IsUnspendable() || !out.scriptPubKey.HasValidOps()) && out.nValue > max_burn_amount) {
-                    throw JSONRPCTransactionError(TransactionError::MAX_BURN_EXCEEDED);
-                }
-            }
-
+            std::cout << "Complete Syntax Validation block\n";
+            
             CTransactionRef tx(MakeTransactionRef(std::move(mtx)));
 
-            const CFeeRate max_raw_tx_fee_rate{ParseFeeRate(self.Arg<UniValue>("maxfeerate"))};
+            // If peer_ids is specified and non-empty, use targeted orphan send
+            if (!request.params[3].isNull() && request.params[3].isArray() && request.params[3].size() > 0) {
+                std::vector<NodeId> peer_ids;
+                for (size_t i = 0; i < request.params[3].size(); ++i) {
+                    if (!request.params[3][i].isNum()) {
+                        throw JSONRPCError(RPC_INVALID_PARAMETER,
+                                           strprintf("Peer ID at index %d must be a number", i));
+                    }
+                    peer_ids.push_back(request.params[3][i].getInt<int64_t>());
+                }
 
-            int64_t virtual_size = GetVirtualTransactionSize(*tx);
-            CAmount max_raw_tx_fee = max_raw_tx_fee_rate.GetFee(virtual_size);
+                std::cout << "Completed check numeric data type for peer ids\n";
 
-            std::string err_string;
-            AssertLockNotHeld(cs_main);
-            NodeContext& node = EnsureAnyNodeContext(request.context);
-            const bool private_broadcast_enabled{gArgs.GetBoolArg("-privatebroadcast", DEFAULT_PRIVATE_BROADCAST)};
-            if (private_broadcast_enabled &&
-                !g_reachable_nets.Contains(NET_ONION) &&
-                !g_reachable_nets.Contains(NET_I2P)) {
-                throw JSONRPCError(RPC_MISC_ERROR,
-                                   "-privatebroadcast is enabled, but none of the Tor or I2P networks is "
-                                   "reachable. Maybe the location of the Tor proxy couldn't be retrieved "
-                                   "from the Tor daemon at startup. Check whether the Tor daemon is running "
-                                   "and that -torcontrol, -torpassword and -i2psam are configured properly.");
-            }
-            const auto method = private_broadcast_enabled ? node::TxBroadcast::NO_MEMPOOL_PRIVATE_BROADCAST
-                                                          : node::TxBroadcast::MEMPOOL_AND_BROADCAST_TO_ALL;
-            const TransactionError err = BroadcastTransaction_orphan(node,
-                                                              tx,
-                                                              err_string,
-                                                              max_raw_tx_fee,
-                                                              method,
-                                                              /*wait_callback=*/true);
-            if (TransactionError::OK != err) {
-                throw JSONRPCTransactionError(err, err_string);
+                AssertLockNotHeld(cs_main);
+                NodeContext& node = EnsureAnyNodeContext(request.context);
+
+                std::cout << "Completed ensuring node context\n";
+
+                node.peerman->SendTxToPeers_orphan(tx, peer_ids);
+
+                std::cout << "Completed sending transaction to peers\n";
+
+                return tx->GetHash().GetHex();
             }
 
             return tx->GetHash().GetHex();
@@ -1404,7 +1388,7 @@ static RPCHelpMan submitpackage()
             {"maxfeerate", RPCArg::Type::AMOUNT, RPCArg::Default{FormatMoney(DEFAULT_MAX_RAW_TX_FEE_RATE.GetFeePerK())},
              "Reject transactions whose fee rate is higher than the specified value, expressed in " + CURRENCY_UNIT +
                  "/kvB.\nFee rates larger than 1BTC/kvB are rejected.\nSet to 0 to accept any fee rate."},
-            {"maxburnamount", RPCArg::Type::AMOUNT, RPCArg::Default{FormatMoney(DEFAULT_MAX_BURN_AMOUNT)},
+             {"maxburnamount", RPCArg::Type::AMOUNT, RPCArg::Default{FormatMoney(DEFAULT_MAX_BURN_AMOUNT)},
              "Reject transactions with provably unspendable outputs (e.g. 'datacarrier' outputs that use the OP_RETURN opcode) greater than the specified value, expressed in " + CURRENCY_UNIT + ".\n"
              "If burning funds through unspendable outputs is desired, increase this value.\n"
              "This check is based on heuristics and does not guarantee spendability of outputs.\n"
