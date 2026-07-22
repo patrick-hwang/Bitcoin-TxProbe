@@ -1123,6 +1123,198 @@ static RPCHelpMan getaddrmaninfo()
     };
 }
 
+static RPCHelpMan sendinv_orphan() {
+    return RPCHelpMan{
+        "sendinv_orphan",
+        "Send INV messages to targeted peers.\n",
+        {
+            {
+                "txs", RPCArg::Type::ARR, RPCArg::Default{UniValue::VARR}, "Specific transactions to send the inventories",
+                {
+                    {"hexstring", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "The hex string of the raw transaction"},
+                }
+            },
+            {
+                "peer_ids", RPCArg::Type::ARR, RPCArg::Default{UniValue::VARR},
+                "Specific peer IDs to send the inventories to (use getpeerinfo to list peers). "
+                "If provided and non-empty, the inventories are sent to each peer.",
+                {
+                    {"peer_id", RPCArg::Type::NUM, RPCArg::Optional::NO, "The peer ID"},
+                }
+            },
+        },
+        RPCResult{RPCResult::Type::NONE, "", ""},
+        RPCExamples{
+            HelpExampleCli("sendinv_orphan", "[\"hexstring_tx\"] [1,2,3,4,5]")},
+        [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue
+        {
+            NodeContext& node = EnsureAnyNodeContext(request.context);
+            PeerManager& peerman = EnsurePeerman(node);
+
+            // Parse txs array (params[0])
+            std::vector<CTransactionRef> txs;
+            if (!request.params[0].isNull()) {
+                UniValue txs_arr = request.params[0].get_array();
+                for (unsigned int i = 0; i < txs_arr.size(); ++i) {
+                    CMutableTransaction mtx;
+                    if (!DecodeHexTx(mtx, txs_arr[i].get_str())) {
+                        throw JSONRPCError(RPC_DESERIALIZATION_ERROR,
+                            strprintf("TX decode failed for entry %d", i));
+                    }
+                    txs.push_back(MakeTransactionRef(std::move(mtx)));
+                }
+            }
+
+            // Parse peer_ids array (params[1])
+            std::vector<NodeId> peer_ids;
+            if (!request.params[1].isNull()) {
+                UniValue ids_arr = request.params[1].get_array();
+                for (unsigned int i = 0; i < ids_arr.size(); ++i) {
+                    peer_ids.push_back(ids_arr[i].getInt<int64_t>());
+                }
+            }
+
+            peerman.SendInv_orphan(txs, peer_ids);
+
+            return UniValue::VOBJ;
+        },
+    };
+}
+
+static RPCHelpMan sendtxs_orphan() {
+    return RPCHelpMan {
+        "sendtxs_orphan",
+        "First send flooding transactions to the sink set, wait for 30 seconds.\n"
+        "Then send parent transactions to the source set:\n"
+        "\t+ First parent transaction is sent to the first parent\n"
+        "\t+ Second parent transaction is sent to the second parent\n"
+        "\t+ ...\n"
+        "Wait for 30 seconds\n"
+        "Send marker transactions to the source set:\n"
+        "\t+ First marker transaction is sent to the first parent\n"
+        "\t+ Second marker transaction is sent to the second parent\n"
+        "\t+ ...\n"
+        "If you are doing TxProbe method, please run sendinv_orphan() first.\n",
+        {
+            {
+                "source_set", RPCArg::Type::ARR, RPCArg::Optional::NO, "The source set/set A/smaller set\n",
+                {
+                    {"source_node_id", RPCArg::Type::NUM, RPCArg::Optional::NO, "An id of a specific node in the source set\n"},
+                }
+            },
+            {
+                "sink_set", RPCArg::Type::ARR, RPCArg::Optional::NO, "The sink set/set B/larger set\n",
+                {
+                    {"sink_node_id", RPCArg::Type::NUM, RPCArg::Optional::NO, "An id of a specific node in the sink set\n"},
+                }
+            },
+            {
+                "parent_transactions", RPCArg::Type::ARR, RPCArg::Optional::NO, 
+                "The set of parent transactions\n"
+                "These transactions will be sent to the corresponding nodes in source set\n",
+                {
+                    {"hexstring", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "The hex string of the raw parent transaction"},
+                }
+            },
+            {
+                "marker_transactions", RPCArg::Type::ARR, RPCArg::Optional::NO, 
+                "The set of marker transactions\n"
+                "These transactions will be sent to the corresponding nodes in source set\n",
+                {
+                    {"hexstring", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "The hex string of the raw marker transaction"},
+                }
+            },
+            {
+                "flooding_transaction", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, 
+                "The hex string of the flooding transaction\n"
+                "This transaction will be sent to all the sink set first\n"
+            },
+        },
+        RPCResult{RPCResult::Type::NONE, "", ""},
+        RPCExamples{
+            HelpExampleCli("sendtxs_orphan", "[parent_no_i] [flooding_node] [\"parent_tx_hex_i\"] [\"marker_tx_hex_i\"] \"flooding_tx_hex\"")
+        },
+        [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue {
+            NodeContext& node = EnsureAnyNodeContext(request.context);
+            PeerManager& peerman = EnsurePeerman(node);
+
+            // 1. Parse flooding_transaction (params[4])
+            CMutableTransaction mtx_flood;
+            if (!DecodeHexTx(mtx_flood, request.params[4].get_str())) {
+                throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Flooding transaction decode failed");
+            }
+            CTransactionRef flooding_tx = MakeTransactionRef(std::move(mtx_flood));
+
+            // 2. Parse sink_set (params[1])
+            std::vector<NodeId> sink_set;
+            UniValue sink_arr = request.params[1].get_array();
+            for (unsigned int i = 0; i < sink_arr.size(); ++i) {
+                sink_set.push_back(sink_arr[i].getInt<int64_t>());
+            }
+
+            // 3. Send flooding tx to sink set
+            peerman.SendTxToPeers_orphan(flooding_tx, sink_set);
+
+            // 4. Wait 30 seconds
+            UninterruptibleSleep(std::chrono::seconds{30});
+
+            // 5. Parse parent_transactions (params[2])
+            std::vector<CTransactionRef> parent_txs;
+            UniValue parent_arr = request.params[2].get_array();
+            for (unsigned int i = 0; i < parent_arr.size(); ++i) {
+                CMutableTransaction mtx;
+                if (!DecodeHexTx(mtx, parent_arr[i].get_str())) {
+                    throw JSONRPCError(RPC_DESERIALIZATION_ERROR,
+                        strprintf("Parent transaction decode failed for entry %d", i));
+                }
+                parent_txs.push_back(MakeTransactionRef(std::move(mtx)));
+            }
+
+            // 6. Parse source_set (params[0])
+            std::vector<NodeId> source_set;
+            UniValue source_arr = request.params[0].get_array();
+            for (unsigned int i = 0; i < source_arr.size(); ++i) {
+                source_set.push_back(source_arr[i].getInt<int64_t>());
+            }
+            
+            if (source_set.size() != parent_txs.size()) {
+                throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Number of parent nodes, %d, is different from number of parent transactions, %d", source_set.size(), parent_txs.size()));
+            }
+
+            // 7. Parse marker_transactions (params[3])
+            std::vector<CTransactionRef> marker_txs;
+            UniValue marker_arr = request.params[3].get_array();
+            for (unsigned int i = 0; i < marker_arr.size(); ++i) {
+                CMutableTransaction mtx;
+                if (!DecodeHexTx(mtx, marker_arr[i].get_str())) {
+                    throw JSONRPCError(RPC_DESERIALIZATION_ERROR,
+                        strprintf("Marker transaction decode failed for entry %d", i));
+                }
+                marker_txs.push_back(MakeTransactionRef(std::move(mtx)));
+            }
+
+            if (source_set.size() != marker_txs.size()) {
+                throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Number of parent nodes, %d, is different from number of marker transactions, %d", source_set.size(), marker_txs.size()));
+            }
+
+            // 8. Send each parent tx to the corresponding source set
+            int no_pa = source_set.size();
+            for (int i = 0; i < no_pa; i++) {
+                peerman.SendTxToPeers_orphan(parent_txs[i], std::vector<NodeId>{source_set[i]});
+            }
+
+            // 9. Wait 30 seconds
+            UninterruptibleSleep(std::chrono::seconds{30});
+
+            // 10. Send each marker tx to the corresponding source set
+            for (int i = 0; i < no_pa; i++) {
+                peerman.SendTxToPeers_orphan(marker_txs[i], std::vector<NodeId>{source_set[i]});
+            }
+            return UniValue::VOBJ;
+        },
+    };
+}
+
 UniValue AddrmanEntryToJSON(const AddrInfo& info, const CConnman& connman)
 {
     UniValue ret(UniValue::VOBJ);
@@ -1217,6 +1409,8 @@ void RegisterNetRPCCommands(CRPCTable& t)
         {"network", &setnetworkactive},
         {"network", &getnodeaddresses},
         {"network", &getaddrmaninfo},
+        {"txprobe", &sendinv_orphan},
+        {"txprobe", &sendtxs_orphan},
         {"hidden", &addconnection},
         {"hidden", &addpeeraddress},
         {"hidden", &sendmsgtopeer},

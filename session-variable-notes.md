@@ -1,3 +1,52 @@
+# Session variables 2026-07-22
+- Infer topology of a graph of 5 nodes:
+  + Node 1
+  + Node 2
+  + Node 3
+  + Node 4
+  + Node 5
+
+- Total number of edges: 5 * 4 / 2 = 10
+
+## Steps for a round
+- Preparing:
+  + (n + 1) conflicting spending transaction: First n transactions = parents, Last one = a flooding transaction.
+  + n marker transactions from n parent transactions.
+- Phase 1: INV Block --> Use: sendinv_orphan().
+  + Sending INV messages of (n + 1) conflicting transaction to all nodes.
+- Phase 2: Sending transactions --> Use: sendtxs_orphan().
+  + Sending all flooding transactions to set B.
+  + Wait 30 seconds.
+  + Sending all parent transactions to set A: ptx1 --> peer1, ptx2 --> peer2, ...
+  + Wait 30 seconds.
+  + Sending all marker transactions to set A: mtx1 --> peer1, mtx2 --> peer2, ...
+- Phase 3: Send INVs of marker transactions to the sink set --> Use: sendinv_orphan()
+  + Sending all the markers to set B.
+- Phase 4: Infer the topology
+  + Wait 30 seconds.
+  + Check for logs of getdata from peers (node 1, 2, 3, 4, 5).
+  + If a peer i does not require data for mtxj then i is connected to j
+- Phase 5: Send real transaction --> Use: original sendrawtransaction()
+  + Send 1 arbitrary parent transaction into mempool
+  + Send the corresponding marker transaction into mempool
+
+## Script:
+### Round 1:
+  - Set A = {4, 5}
+  - Set B = {1, 2, 3}
+  - Number of infered edges = 6: 1-4, 1-5, 2-4, 2-5, 3-4, 3-5
+
+### Round 2:
+  - Set A = {4, 1}
+  - Set B = {2, 3, 5}
+  - Number of infered edges = 3: 1-2, 1-3, 4-5
+
+Round 3:
+  - Set A = {2}
+  - Set B = {3}
+  - Number of infered edges = 1: 2-3
+
+
 # Session variables
 - Node 0 address: tb1qg62dlyjz64gvg2uq5ffp3wwlstfqesw3kpr28t
 - UTXO's txid: 3d37b03fa8751ff48ff8f09d3d2fdb76ab3001b10b682593b848339aa4e4ea06

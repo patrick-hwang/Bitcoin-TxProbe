@@ -547,6 +547,7 @@ public:
     void SendPings() override EXCLUSIVE_LOCKS_REQUIRED(!m_peer_mutex);
     void InitiateTxBroadcastToAll(const Txid& txid, const Wtxid& wtxid) override EXCLUSIVE_LOCKS_REQUIRED(!m_peer_mutex);
     void InitiateTxBroadcastPrivate(const CTransactionRef& tx) override EXCLUSIVE_LOCKS_REQUIRED(!m_peer_mutex);
+    void SendInv_orphan(const std::vector<CTransactionRef>& txs, const std::vector<NodeId>& peer_ids) override;
     void SendTxToPeers_orphan(const CTransactionRef& tx, const std::vector<NodeId>& peer_ids) override;
     void SetBestBlock(int height, std::chrono::seconds time) override
     {
@@ -2274,6 +2275,42 @@ void PeerManagerImpl::InitiateTxBroadcastPrivate(const CTransactionRef& tx)
         m_connman.m_private_broadcast.NumToOpenAdd(NUM_PRIVATE_BROADCAST_PER_TX);
     } else {
         LogDebug(BCLog::PRIVBROADCAST, "Ignoring unnecessary request to schedule an already scheduled transaction: %s", txstr);
+    }
+}
+
+void PeerManagerImpl::SendInv_orphan(const std::vector<CTransactionRef>& txs, const std::vector<NodeId>& peer_ids) {
+    std::vector<CInv> vInv;
+    std::vector<CInv> vWInv;
+
+    for (const CTransactionRef tx : txs) {
+        const Txid& txid = tx->GetHash();
+        const Wtxid& wtxid = tx->GetWitnessHash();
+
+        vInv.emplace_back(MSG_TX, txid.ToUint256());
+        vWInv.emplace_back(MSG_WTX, wtxid.ToUint256());
+
+        LogDebug(BCLog::NET, "SendInv_orphan: preparing inventories about tx %s before sending\n",
+                tx->GetHash().ToString());
+    }
+
+    for (NodeId id : peer_ids) {
+        const bool use_witness = [&]() {
+            PeerRef peer = GetPeerRef(id);
+            return peer && peer->m_wtxid_relay;
+        }();
+
+        m_connman.ForNode(id, [this, &vInv, &vWInv, use_witness](CNode* pnode) {
+            if (pnode->IsBlockOnlyConn() || pnode->IsFeelerConn() || pnode->IsPrivateBroadcastConn()) {
+                LogDebug(BCLog::NET, "SendTxToPeers_orphan: skipping peer=%d (ineligible)\n", pnode->GetId());
+                return false;
+            }
+            if (use_witness) {
+                MakeAndPushMessage(*pnode, NetMsgType::INV, vWInv);
+            } else {
+                MakeAndPushMessage(*pnode, NetMsgType::INV, vInv);
+            }
+            return true;
+        });        
     }
 }
 

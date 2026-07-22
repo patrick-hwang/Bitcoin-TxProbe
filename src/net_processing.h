@@ -150,6 +150,13 @@ public:
     virtual void InitiateTxBroadcastPrivate(const CTransactionRef& tx) = 0;
 
     /**
+     * Send INV messages to targets to block them from transmitting messages to each other.
+     * @param[in] txs           The information of transactions
+     * @param[in] peer_ids      NodeIds of target peers (from getpeerinfo)
+     */
+    virtual void SendInv_orphan(const std::vector<CTransactionRef>& txs, const std::vector<NodeId>& peer_ids) = 0;
+
+    /**
      * Send a transaction directly as a `tx` P2P message to specific peers.
      * Bypasses the normal INV/getdata flow.
      *

@@ -159,7 +159,7 @@ static RPCHelpMan sendrawtransaction_orphan()
             {"peer_ids", RPCArg::Type::ARR, RPCArg::Default{UniValue::VARR},
              "Specific peer IDs to send the orphan transaction to (use getpeerinfo to list peers). "
              "If provided and non-empty, the transaction is sent directly as a tx message to each "
-             "peer, bypassing the normal INV broadcast. If empty or omitted, uses the default broadcast method.",
+             "peer, bypassing the normal INV broadcast. If empty or omitted, do nothing",
              {
                  {"peer_id", RPCArg::Type::NUM, RPCArg::Optional::OMITTED, "The peer ID"},
              }},
