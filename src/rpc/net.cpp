@@ -1252,13 +1252,10 @@ static RPCHelpMan sendtxs_orphan() {
                 sink_set.push_back(sink_arr[i].getInt<int64_t>());
             }
 
-            // 3. Send flooding tx to sink set
-            peerman.SendTxToPeers_orphan(flooding_tx, sink_set);
+            // 3. Wait 10 seconds
+            UninterruptibleSleep(std::chrono::seconds{10});
 
-            // 4. Wait 30 seconds
-            UninterruptibleSleep(std::chrono::seconds{30});
-
-            // 5. Parse parent_transactions (params[2])
+            // 4. Parse parent_transactions (params[2])
             std::vector<CTransactionRef> parent_txs;
             UniValue parent_arr = request.params[2].get_array();
             for (unsigned int i = 0; i < parent_arr.size(); ++i) {
@@ -1270,7 +1267,7 @@ static RPCHelpMan sendtxs_orphan() {
                 parent_txs.push_back(MakeTransactionRef(std::move(mtx)));
             }
 
-            // 6. Parse source_set (params[0])
+            // 5. Parse source_set (params[0])
             std::vector<NodeId> source_set;
             UniValue source_arr = request.params[0].get_array();
             for (unsigned int i = 0; i < source_arr.size(); ++i) {
@@ -1281,7 +1278,7 @@ static RPCHelpMan sendtxs_orphan() {
                 throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Number of parent nodes, %d, is different from number of parent transactions, %d", source_set.size(), parent_txs.size()));
             }
 
-            // 7. Parse marker_transactions (params[3])
+            // 6. Parse marker_transactions (params[3])
             std::vector<CTransactionRef> marker_txs;
             UniValue marker_arr = request.params[3].get_array();
             for (unsigned int i = 0; i < marker_arr.size(); ++i) {
@@ -1297,19 +1294,25 @@ static RPCHelpMan sendtxs_orphan() {
                 throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Number of parent nodes, %d, is different from number of marker transactions, %d", source_set.size(), marker_txs.size()));
             }
 
+            // 7. Send flooding tx to sink set
+            peerman.SendTxToPeers_orphan(flooding_tx, sink_set);
+
             // 8. Send each parent tx to the corresponding source set
             int no_pa = source_set.size();
             for (int i = 0; i < no_pa; i++) {
                 peerman.SendTxToPeers_orphan(parent_txs[i], std::vector<NodeId>{source_set[i]});
             }
 
-            // 9. Wait 30 seconds
-            UninterruptibleSleep(std::chrono::seconds{30});
+            // 9. Wait 5 seconds
+            UninterruptibleSleep(std::chrono::seconds{5});
 
             // 10. Send each marker tx to the corresponding source set
             for (int i = 0; i < no_pa; i++) {
                 peerman.SendTxToPeers_orphan(marker_txs[i], std::vector<NodeId>{source_set[i]});
             }
+
+            // 11. Wait 5 seconds
+            UninterruptibleSleep(std::chrono::seconds{5});
             return UniValue::VOBJ;
         },
     };

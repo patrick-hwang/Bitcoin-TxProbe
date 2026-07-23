@@ -48,6 +48,7 @@
 #include <protocol.h>
 #include <random.h>
 #include <scheduler.h>
+#include <cstdio>
 #include <script/script.h>
 #include <serialize.h>
 #include <span.h>
@@ -2282,7 +2283,7 @@ void PeerManagerImpl::SendInv_orphan(const std::vector<CTransactionRef>& txs, co
     std::vector<CInv> vInv;
     std::vector<CInv> vWInv;
 
-    for (const CTransactionRef tx : txs) {
+    for (const CTransactionRef &tx : txs) {
         const Txid& txid = tx->GetHash();
         const Wtxid& wtxid = tx->GetWitnessHash();
 
@@ -3637,6 +3638,15 @@ void PeerManagerImpl::PushPrivateBroadcastTx(CNode& node)
     MakeAndPushMessage(node, NetMsgType::INV, std::vector<CInv>{{CInv{MSG_TX, tx->GetHash().ToUint256()}}});
 }
 
+static void TxProbeLog(const std::string& msg)
+{
+    FILE* f = std::fopen("txprobe.log", "a");
+    if (f) {
+        std::fprintf(f, "%s", msg.c_str());
+        std::fclose(f);
+    }
+}
+
 void PeerManagerImpl::ProcessMessage(Peer& peer, CNode& pfrom, const std::string& msg_type, DataStream& vRecv,
                                      const std::chrono::microseconds time_received,
                                      const std::atomic<bool>& interruptMsgProc)
@@ -4287,9 +4297,11 @@ void PeerManagerImpl::ProcessMessage(Peer& peer, CNode& pfrom, const std::string
         }
 
         LogDebug(BCLog::NET, "received getdata (%u invsz) peer=%d\n", vInv.size(), pfrom.GetId());
+        TxProbeLog(strprintf("received getdata (%u invsz) peer=%d\n", vInv.size(), pfrom.GetId()));
 
         if (vInv.size() > 0) {
             LogDebug(BCLog::NET, "received getdata for: %s peer=%d\n", vInv[0].ToString(), pfrom.GetId());
+            TxProbeLog(strprintf("received getdata for: %s peer=%d\n", vInv[0].ToString(), pfrom.GetId()));
         }
 
         if (pfrom.IsPrivateBroadcastConn()) {
