@@ -28,3 +28,7 @@ target/
 
 /ci/scratch/
 session-variable-notes.md
+/node_modules
+opencode.json
+package-lock.json
+package.json

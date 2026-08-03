@@ -1184,16 +1184,20 @@ static RPCHelpMan sendinv_orphan() {
 static RPCHelpMan sendtxs_orphan() {
     return RPCHelpMan {
         "sendtxs_orphan",
-        "First send flooding transactions to the sink set, wait for 30 seconds.\n"
-        "Then send parent transactions to the source set:\n"
+        "First, wait for 10 seconds for the previous INV Block.\n"
+        "Then send flooding transaction to the sink set and parent transactions to the source set simutaneously:\n"
         "\t+ First parent transaction is sent to the first parent\n"
         "\t+ Second parent transaction is sent to the second parent\n"
         "\t+ ...\n"
-        "Wait for 30 seconds\n"
+        "\t+ The last parent transaction is sent to the last parent\n"
+        "\t+ Flooding transaction is sent to all nodes in the sink set\n"
+        "Wait for 5 seconds for those transactions to propagate.\n"
         "Send marker transactions to the source set:\n"
         "\t+ First marker transaction is sent to the first parent\n"
         "\t+ Second marker transaction is sent to the second parent\n"
         "\t+ ...\n"
+        "\t+ The last marker transaction is sent to the last parent\n"
+        "Wait for 5 seconds for those transactions to propagate.\n"
         "If you are doing TxProbe method, please run sendinv_orphan() first.\n",
         {
             {
