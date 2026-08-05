@@ -1,14 +1,26 @@
+import json
 import sys
 
-from .node0_manager import node0Manager
-from .topology import Topology
-from .rounds import generate_rounds, preparing_commands_for_a_round
-from .metrics import aggregate_metrics
-from .ui import ProgressUI
+from .groundtruth import GroundTruthError, retrieve_phase1_groundtruth
 
 def main():
     # 1. Parse arguments
     debug = '--debug' in sys.argv
+    if '--validation-groundtruth' in sys.argv:
+        try:
+            snapshot = retrieve_phase1_groundtruth()
+        except GroundTruthError as error:
+            print(f"Validation groundtruth error: {error}", file=sys.stderr)
+            raise SystemExit(1)
+        print(json.dumps(snapshot.as_dict(), indent=2))
+        return
+
+    from .node0_manager import node0Manager
+    from .topology import Topology
+    from .rounds import generate_rounds, preparing_commands_for_a_round
+    from .metrics import aggregate_metrics
+    from .ui import ProgressUI
+
     runs = 1
     if '--runs' in sys.argv:
         idx = sys.argv.index('--runs')

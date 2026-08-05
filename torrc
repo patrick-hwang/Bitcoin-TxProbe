@@ -4,11 +4,13 @@ SOCKSPort 0.0.0.0:9060
 SOCKSPort 0.0.0.0:9070
 SOCKSPort 0.0.0.0:9080
 SOCKSPort 0.0.0.0:9090
+SOCKSPort 0.0.0.0:9100
 ControlPort 0.0.0.0:9041
 ControlPort 0.0.0.0:9051
 ControlPort 0.0.0.0:9061
 ControlPort 0.0.0.0:9071
 ControlPort 0.0.0.0:9081
 ControlPort 0.0.0.0:9091
+ControlPort 0.0.0.0:9101
 HashedControlPassword 16:334410870313A2C5605275B27E8C111376F43E534FAC0EE96A0EFDDF17
 CookieAuthentication 1

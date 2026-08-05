@@ -34,3 +34,7 @@ received getdata (1 invsz) peer=27
 received getdata for: witness-tx 5a3f9203e58fd2ff498827b3d319f514fe16b86e9e12893a58f880c420eac6ac peer=27
 received getdata (1 invsz) peer=34
 received getdata for: wtx 4e372e14caa04f9e5f1da32606c8047ca21b684acbf926174afe7bc9bfbd897c peer=34
+received getdata (1 invsz) peer=6
+received getdata for: cmpctblock 0000000000aec5d27b36c3e5e7acf2ad00e5326c65894977e6a4af10c1770f98 peer=6
+received getdata (1 invsz) peer=6
+received getdata for: witness-block 0000000000aec5d27b36c3e5e7acf2ad00e5326c65894977e6a4af10c1770f98 peer=6

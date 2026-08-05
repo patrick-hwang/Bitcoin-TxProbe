@@ -14,23 +14,62 @@
 
 ## Phase 1: Create groundtruth
 
-### Output: A list of edges gt_edges between the node 1, 2, 3, 4, 5 and their peers (peers_of_node[1] $\cup$ peers_of_node[2] $\cup$ peers_of_node[3] $\cup$ peers_of_node[4] $\cup$ peers_of_node[5]) excluding the nodes 0 and 6.
-In other words, let:
+### Scope and output
+
+- Read `peers_of_node[i]` for every $i \in \{1,2,3,4,5\}$.
+- Nodes 0 and 6 are excluded from the Validation Test Mode ground truth.
+- Besides nodes 1--5, include every **external peer node**: a node whose ID is
+  not in $\{0,1,2,3,4,5,6\}$ and which occurs in at least one of
+  `peers_of_node[1]` through `peers_of_node[5]`.
+- Exclude an external peer that cannot be connected to in the reverse
+  direction. In `getpeerinfo`, these are peers whose `addr` is a localhost
+  endpoint (`127.0.0.1:xxxx`) or an IPv6 endpoint (for example,
+  `[2001:db8::1]:xxxx`).
+- Do **not** require an external peer to occur in every peer list. It is
+  included when it occurs in **any one** of those lists.
+
+Let the external ground-truth vertices be:
 $$
 \begin{align*}
-S_{groundtruth}^{before}= \{ 1,2,3,4,5 \} \cap (\cap_{i=1}^{i=5}\texttt{peers\_of\_node[}i\texttt{]}) \backslash \{0,6\}
+V_{external}^{before} =
+\left(\bigcup_{i=1}^{5}\texttt{peers\_of\_node[}i\texttt{]}\right)
+\backslash \left(\{0,1,2,3,4,5,6\} \cup V_{unconnectable}\right),
+\\
+V_{unconnectable} =
+\{v \mid \texttt{addr}(v)\texttt{ is }127.0.0.1:\texttt{port}
+\texttt{ or is an IPv6 endpoint}\}
 \end{align*}
 $$
-Then you need to output before groundtruth edges $E_{groundtruth}^{before}$:
+
+and the complete Phase 1 vertex set be:
+$$
+\begin{align*}
+S_{groundtruth}^{before}=\{1,2,3,4,5\}\cup V_{external}^{before}
+\end{align*}
+$$
+
+Output the before-groundtruth edges $E_{groundtruth}^{before}$ as directed
+pairs. For every observed connection, include **both** $(u,v)$ and $(v,u)$;
+do not deduplicate them into one canonical undirected pair. Only connections
+observed from a node in $\{1,2,3,4,5\}$ are required in this phase:
 $$
 \begin{align*}
   E_{groundtruth}^{before}= & \{\\
   & (u,v) & | \\
-  & (u\in\{1,2,3,4,5\} & \land & v\in \texttt{peers\_of\_node[}u\texttt{]}) & \lor \\
-  & (v\in\{1,2,3,4,5\} & \land & u \in \texttt{peers\_of\_node[}v\texttt{]})\\
+  & u\in\{1,2,3,4,5\} & \land & v\in \texttt{peers\_of\_node[}u\texttt{]} & \land \\
+  & v\in S_{groundtruth}^{before}\\
+  &\} \cup \{\\
+  & (v,u) & | \\
+  & u\in\{1,2,3,4,5\} & \land & v\in \texttt{peers\_of\_node[}u\texttt{]} & \land \\
+  & v\in S_{groundtruth}^{before}\\
   &\}
 \end{align*}
 $$
+
+For an external peer, use a stable network identity (for example its normalized
+`addr` endpoint) so that the same peer occurring in several lists is one
+vertex. The per-connection RPC `peer id` must not be used as this identity,
+because it is local to the observing node.
 
 ## Phase 2: INVBLOCK Filter
 
