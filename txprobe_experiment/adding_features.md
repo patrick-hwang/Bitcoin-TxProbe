@@ -1,0 +1,142 @@
+# Adding features: Validation Test Mode
+
+## Context information
+- Node 0: run with ./build/bin/bitcoind, wsl, arguments in file [cli.py](./cli.py) line 41.
+- Node 1: run with bitcoind, windows, arguments in file [cli.py](./cli.py) line 42.
+- Node 2: run with bitcoind, windows, arguments in file [cli.py](./cli.py) line 43.
+- Node 3: run with bitcoind, windows, arguments in file [cli.py](./cli.py) line 44.
+- Node 4: run with bitcoind, windows, arguments in file [cli.py](./cli.py) line 45.
+- Node 5: run with bitcoind, windows, arguments in file [cli.py](./cli.py) line 46.
+- Node 6: run with ./build/bin/bitcoind, wsl, arguments in file [cli.py](./cli.py) line 47.
+
+- Peers: for a node let's call peers_of_node[i] be the list of peers of node number i:
+  - For example: peers_of_node[3] = [node i, node j, node k]. Then nodes i, j, k are the nodes that directly fully connect to node 3, i.e. the connections between them are full connections that can relay both blocks and transactions (not a block-only-connection).
+
+## Phase 1: Create groundtruth
+
+### Output: A list of edges gt_edges between the node 1, 2, 3, 4, 5 and their peers (peers_of_node[1] $\cup$ peers_of_node[2] $\cup$ peers_of_node[3] $\cup$ peers_of_node[4] $\cup$ peers_of_node[5]) excluding the nodes 0 and 6.
+In other words, let:
+$$
+\begin{align*}
+S_{groundtruth}^{before}= \{ 1,2,3,4,5 \} \cap (\cap_{i=1}^{i=5}\texttt{peers\_of\_node[}i\texttt{]}) \backslash \{0,6\}
+\end{align*}
+$$
+Then you need to output before groundtruth edges $E_{groundtruth}^{before}$:
+$$
+\begin{align*}
+  E_{groundtruth}^{before}= & \{\\
+  & (u,v) & | \\
+  & (u\in\{1,2,3,4,5\} & \land & v\in \texttt{peers\_of\_node[}u\texttt{]}) & \lor \\
+  & (v\in\{1,2,3,4,5\} & \land & u \in \texttt{peers\_of\_node[}v\texttt{]})\\
+  &\}
+\end{align*}
+$$
+
+## Phase 2: INVBLOCK Filter
+
+### Node 0, 6 setup:
+- Connect nodes 0, 6 to all the nodes in $S_{groundtruth}^{before}$.
+
+## Phase 3: Crafting real TxProbe's transaction
+
+## Phase 4: INVBLOCK (n + 1) conflicting transactions
+- Retrieve nodes (in {1,2,3,4,5}) that did not receive correct transactions. Eliminating them.
+
+## Phase 5: Perform the sending transactions phase of TxProbe
+- Sending nodes $S_{groundtruth}^{before} \backslash \{1,2,3,4,5\}$ the flooding transaction ftx
+- Sending {1,2,3,4,5} transactions ptx_1, ptx_2, ptx_3, ptx_4, ptx_5
+- Sending markers to {1,2,3,4,5} with corresponding transactions mtx_1, mtx_2, mtx_3, mtx_4, mtx_5.
+
+## Phase 6: Retrieve nodes that know transactions that they are not supposed to know or nodes that unknown transactions that they are supposed to know
+- First we sending `getrawtransaction` messages about all (n + 1) conflicting transactions ptx_1, ptx_2, ..., ptx_n, ftx.
+- We need to retrieve the wrong-tx nodes - $S_{wrong}$, the set of nodes knowing/unknowing transactions that they aren't supposed to know. Use the `getrawtransaction` RPC command:
+$$
+\begin{align*}
+S_{wrong} = & \{ \\
+            & u & | \\
+            & u \texttt{ knows ftx} & \lor \\
+            & (u \texttt{ knows ptx\_v} \land v \neq u) & \lor \\
+            & u \texttt{ doesn't know ptx\_u} \\
+            & \}
+\end{align*}
+$$
+
+## Phase 7: Sending inventories about all markers to all nodes in $S_{groundtruth}^{before}$.
+- If a node i requests getdata(mtx_j) then we conclude that node does not have direct connection to node j.
+- Output:
+$$
+\begin{align*}
+    nE = & \{ \\
+         & (u,v) & | \\
+         & (u \in \{1,2,3,4,5\} & \land & v \in S_{groundtruth}^{before} & \land & v \texttt{ requested getdata(} mtx_u \texttt{)}) & \lor \\
+         & (v \in \{1,2,3,4,5\} & \land & u \in S_{groundtruth}^{before} & \land & u \texttt{ requested getdata(} mtx_v \texttt{)})\\
+         & \}
+\end{align*}
+$$
+- For each node in {1, 2, 3, 4, 5}, send the `getrawtransaction` of all the marker transactions mtx_1, mtx_2, ..., mtx_n. Update $S_{wrong}$:
+$$
+\begin{align*}
+S_{wrong} = & S_{wrong} & \cup & \{ \\
+            & u & | \\
+            & \texttt{u knows mtx\_v} & \land & u \ne v \\
+            & \}
+\end{align*}
+$$
+
+## Phase 8: Transitory filter
+- Update: $\texttt{peers\_of\_node[}i\texttt{]} ~~~ \forall i \in [0..5]$. For each node, retrieve the current list of peers and update it.
+- Retrive new groundtruth vertex set $S_{groundtruth}^{after}$: 
+  - Initially: $S_{groundtruth}^{after} = S_{groundtruth}^{before}$
+  - For each node $n_i$ in $S_{groundtruth}^{before}$, check 0 is still connect to $n_i$ or not, i.e. $(n_i \in \texttt{peers\_of\_node[0]})$. If they are not connected, eliminate $n_i$ from $S_{groundtruth}^{after}$.
+- Retrieve after groundtruth edges $E_{groundtruth}^{after}$:
+$$
+\begin{align*}
+E_{groundtruth}^{after} = & \{ \\
+                          & (u,v) & | \\
+                          & (u \in \{1,2,3,4,5\} & \land & v \in \texttt{peers\_of\_node[}u\texttt{]}) & \lor \\
+                          & (v \in \{1,2,3,4,5\} & \land & u \in \texttt{peers\_of\_node[}v\texttt{]}) \\
+                          & \} \\
+\end{align*}
+$$
+- Retrieve $iE$ the ignoring edges:
+$$
+\begin{align*}
+iE = & \{ \\
+     & (u,v) & | \\
+     & ((u,v) \in E_{groundtruth}^{before} & \land & (u,v) \notin E_{groundtruth}^{after}) & \lor \\
+     & ((u,v) \notin E_{groundtruth}^{before} & \land & (u,v) \in E_{groundtruth}^{after}) & \lor \\
+     & (u \in S_{groundtruth}^{before}\backslash\{1,2,3,4,5\} & \land & v \in S_{groundtruth}^{before}\backslash\{1,2,3,4,5\}) & \lor \\
+     & (u \in (S_{groundtruth}^{before} \backslash S_{groundtruth}^{after}) & \cup S_{wrong} & ) & \lor \\
+     & (v \in (S_{groundtruth}^{before} \backslash S_{groundtruth}^{after}) & \cup S_{wrong} & ) & \\
+     & \}
+\end{align*}
+$$
+## Phase 9: Connection Inference
+- Define the first matrix - groundtruth matrix $\texttt{gt}$:
+$$
+\begin{align*}
+\texttt{gt} = & \begin{bmatrix}
+gt_{11} & gt_{12} & \cdots  & gt_{1n} \\
+gt_{21} & gt_{22} & \cdots  & gt_{2n} \\
+\vdots  & \vdots  & \ddots  & \vdots  \\
+gt_{n1} & gt_{n2} & gt_{n3} & gt_{nn}
+\end{bmatrix} \\
+\texttt{Where: } & \texttt{gt}_{ij} = * \texttt{ if } (S^{before}_{groundtruth}[i], S^{before}_{groundtruth}[j]) \in iE \\
+                 & \texttt{gt}_{ij} = 0 \texttt{ if } (S^{before}_{groundtruth}[i], S^{before}_{groundtruth}[j]) \notin E_{groundtruth}^{after} \backslash iE \\
+                 & \texttt{gt}_{ij} = 1 \texttt{ if } (S^{before}_{groundtruth}[i], S_{groundtruth}^{before}[j]) \in E_{groundtruth}^{after} \backslash iE
+\end{align*}
+$$
+- Define the second matrix - inference matrix $\texttt{infer}$:
+$$
+\begin{align*}
+\texttt{infer} = & \begin{bmatrix}
+infer_{11} & infer_{12} & \cdots  & infer_{1n} \\
+infer_{21} & infer_{22} & \cdots  & infer_{2n} \\
+\vdots  & \vdots  & \ddots  & \vdots  \\
+infer_{n1} & infer_{n2} & infer_{n3} & infer_{nn}
+\end{bmatrix} \\
+\texttt{Where: } & \texttt{infer}_{ij} = * \texttt{ if } (S^{before}_{groundtruth}[i], S^{before}_{groundtruth}[j]) \in iE \\
+                 & \texttt{infer}_{ij} = 0 \texttt{ if } (S^{before}_{groundtruth}[i], S^{before}_{groundtruth}[j]) \in nE \backslash iE \\
+                 & \texttt{infer}_{ij} = 1 \texttt{ if } (S^{before}_{groundtruth}[i], S_{groundtruth}^{before}[j]) \in E_{groundtruth}^{after} \backslash (iE \cup nE)
+\end{align*}
+$$

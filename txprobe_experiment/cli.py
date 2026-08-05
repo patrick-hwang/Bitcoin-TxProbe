@@ -44,4 +44,5 @@ nodes_cli = [
     BitcoinCli(3, 48338, "expuser3", "strongpassword3"),
     BitcoinCli(4, 48341, "expuser4", "strongpassword4"),
     BitcoinCli(5, 48344, "expuser5", "strongpassword5"),
+    BitcoinCli(6, 48350, "expuser6", "strongpassword6"),
 ]

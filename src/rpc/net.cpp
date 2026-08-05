@@ -1184,7 +1184,7 @@ static RPCHelpMan sendinv_orphan() {
 static RPCHelpMan sendtxs_orphan() {
     return RPCHelpMan {
         "sendtxs_orphan",
-        "First, wait for 10 seconds for the previous INV Block.\n"
+        "First, wait for 30 seconds for the previous INV Block.\n"
         "Then send flooding transaction to the sink set and parent transactions to the source set simutaneously:\n"
         "\t+ First parent transaction is sent to the first parent\n"
         "\t+ Second parent transaction is sent to the second parent\n"
@@ -1257,7 +1257,7 @@ static RPCHelpMan sendtxs_orphan() {
             }
 
             // 3. Wait 10 seconds
-            UninterruptibleSleep(std::chrono::seconds{10});
+            UninterruptibleSleep(std::chrono::seconds{30});
 
             // 4. Parse parent_transactions (params[2])
             std::vector<CTransactionRef> parent_txs;
