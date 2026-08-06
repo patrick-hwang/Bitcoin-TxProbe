@@ -18,6 +18,7 @@
 
 - Read `peers_of_node[i]` for every $i \in \{1,2,3,4,5\}$.
 - Nodes 0 and 6 are excluded from the Validation Test Mode ground truth.
+- Keep only full-relay peers: while reading `peers_of_node[i]`, exclude peers whose `getpeerinfo.connection_type` is `block-relay-only`, `addr-fetch`, or `feeler`.
 - Besides nodes 1--5, include every **external peer node**: a node whose ID is
   not in $\{0,1,2,3,4,5,6\}$ and which occurs in at least one of
   `peers_of_node[1]` through `peers_of_node[5]`.
@@ -33,11 +34,14 @@ $$
 \begin{align*}
 V_{external}^{before} =
 \left(\bigcup_{i=1}^{5}\texttt{peers\_of\_node[}i\texttt{]}\right)
-\backslash \left(\{0,1,2,3,4,5,6\} \cup V_{unconnectable}\right),
+\backslash \left(\{0,1,2,3,4,5,6\} \cup V_{unconnectable} \cup V_{non\_full\_relay}\right),
 \\
 V_{unconnectable} =
 \{v \mid \texttt{addr}(v)\texttt{ is }127.0.0.1:\texttt{port}
-\texttt{ or is an IPv6 endpoint}\}
+\texttt{ or is an IPv6 endpoint}\},
+\\
+V_{non\_full\_relay} =
+\{v \mid \texttt{connection\_type}(v) \in \{\text{block-relay-only}, \text{addr-fetch}, \text{feeler}\}\}
 \end{align*}
 $$
 
@@ -75,6 +79,35 @@ because it is local to the observing node.
 
 ### Node 0, 6 setup:
 - Connect nodes 0, 6 to all the nodes in $S_{groundtruth}^{before}$.
+
+### Workflow
+
+1. **Full-relay peers filtering.** Verified and filtered in Phase 1 (peers whose `getpeerinfo.connection_type` is `block-relay-only`, `addr-fetch`, or `feeler` are excluded).
+2. **Establish the filter links.** For every target
+   $v \in S_{groundtruth}^{before}$, node 0 and node 6 each initiate and keep
+   one persistent manual connection using `addnode <addr> add`. Use the exact
+   Phase 1 `addr`, including its port. If the qualifying connection already
+   exists, do not change it. Do not remove any of these connections after the
+   experiment.
+3. **Wait for all links.** Poll `getpeerinfo` on nodes 0 and 6 until each node
+   has a qualifying full-relay connection to every target. On a polling timeout,
+   print `timeout`, reset the elapsed counter to zero, and continue waiting.
+4. **First inventory announcement.** Node 0 creates one transaction $itx$ and
+   sends an `INV(itx)` message to every node in
+   $S_{groundtruth}^{before}$.
+5. **Second inventory announcement.** After approximately 30 seconds, node 6
+   sends `INV(itx)` to every node in $S_{groundtruth}^{before}$.
+6. **Collect the INVBLOCK failures.** If a node $v \in
+   S_{groundtruth}^{before}$ responds to node 6 with `getdata(itx)`, add $v$
+   to the set of nodes that cannot be INVBLOCKed:
+   $$
+   S_{noinvblock} = \{v \in S_{groundtruth}^{before} \mid
+   v \texttt{ sent getdata(}itx\texttt{) to node 6}\}.
+   $$
+
+Nodes 0 and 6 are instrumentation nodes: their Phase 2 links are not vertices
+or edges of the topology being inferred. Phase 2 leaves
+$S_{groundtruth}^{before}$ and $E_{groundtruth}^{before}$ unchanged.
 
 ## Phase 3: Crafting real TxProbe's transaction
 

@@ -99,3 +99,25 @@ class Phase1GroundTruthTests(unittest.TestCase):
         snapshot = collect_phase1_groundtruth(self.network_info, peer_info)
 
         self.assertEqual(snapshot.peers[1], ("secondary.node2.onion:19002",))
+
+    def test_filters_non_full_relay_peers(self):
+        peer_info = {
+            1: [
+                {"addr": "connectable.example:8333", "connection_type": "outbound-full-relay"},
+                {"addr": "blockonly.example:8333", "connection_type": "block-relay-only"},
+                {"addr": "addrfetch.example:8333", "connection_type": "addr-fetch"},
+                {"addr": "feeler.example:8333", "connection_type": "feeler"},
+            ],
+            2: [],
+            3: [],
+            4: [],
+            5: [],
+        }
+
+        snapshot = collect_phase1_groundtruth(self.network_info, peer_info)
+
+        self.assertEqual(snapshot.nodes, (1, 2, 3, 4, 5, "connectable.example:8333"))
+        self.assertEqual(
+            snapshot.gt_edges,
+            ((1, "connectable.example:8333"), ("connectable.example:8333", 1)),
+        )

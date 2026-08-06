@@ -15,6 +15,7 @@ from .cli import nodes_cli
 
 TRACKED_NODE_IDS = (1, 2, 3, 4, 5)
 EXCLUDED_NODE_IDS = frozenset((0, 6))
+EXCLUDED_CONNECTION_TYPES = frozenset({"block-relay-only", "addr-fetch", "feeler"})
 NodeIdentity = Union[int, str]
 
 
@@ -194,6 +195,10 @@ def collect_phase1_groundtruth(
         for peer in peer_info_by_node[node_id]:
             address = peer.get("addr", "")
             if not address:
+                continue
+
+            conn_type = peer.get("connection_type")
+            if conn_type in EXCLUDED_CONNECTION_TYPES:
                 continue
 
             experiment_node_id = _resolve_experiment_node(
