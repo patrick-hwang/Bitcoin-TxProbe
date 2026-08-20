@@ -5,6 +5,7 @@
 
 #include <net_processing.h>
 
+#include <common/args.h>
 #include <addrman.h>
 #include <arith_uint256.h>
 #include <banman.h>
@@ -3640,7 +3641,8 @@ void PeerManagerImpl::PushPrivateBroadcastTx(CNode& node)
 
 static void TxProbeLog(const std::string& msg)
 {
-    FILE* f = std::fopen("txprobe.log", "a");
+    std::string filename = gArgs.GetArg("-txprobelogfile", "txprobe.log");
+    FILE* f = std::fopen(filename.c_str(), "a");
     if (f) {
         std::fprintf(f, "%s", msg.c_str());
         std::fclose(f);

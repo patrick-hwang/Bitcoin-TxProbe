@@ -1,2 +1,2 @@
-import mssql_python
-help(mssql_python.connect)
+my_str = ""
+print(len(my_str))

@@ -79,27 +79,20 @@ because it is local to the observing node.
 
 ### Node 0, 6 setup:
 - Connect nodes 0, 6 to all the nodes in $S_{groundtruth}^{before}$.
+- Note: `MAX_ADDNODE_CONNECTIONS` in `src/net.h` is increased from 8 to 125 to allow node 0 and node 6 to establish manual outbound connections to all targets in $S_{groundtruth}^{before}$ simultaneously.
+- Separate log outputs: Node 0 outputs logging to `txprobe_0.log` and Node 6 outputs logging to `txprobe_6.log` (via `-txprobelogfile` configuration).
 
 ### Workflow
 
-1. **Full-relay peers filtering.** Verified and filtered in Phase 1 (peers whose `getpeerinfo.connection_type` is `block-relay-only`, `addr-fetch`, or `feeler` are excluded).
-2. **Establish the filter links.** For every target
-   $v \in S_{groundtruth}^{before}$, node 0 and node 6 each initiate and keep
-   one persistent manual connection using `addnode <addr> add`. Use the exact
-   Phase 1 `addr`, including its port. If the qualifying connection already
-   exists, do not change it. Do not remove any of these connections after the
-   experiment.
-3. **Wait for all links.** Poll `getpeerinfo` on nodes 0 and 6 until each node
-   has a qualifying full-relay connection to every target. On a polling timeout,
-   print `timeout`, reset the elapsed counter to zero, and continue waiting.
-4. **First inventory announcement.** Node 0 creates one transaction $itx$ and
-   sends an `INV(itx)` message to every node in
-   $S_{groundtruth}^{before}$.
-5. **Second inventory announcement.** After approximately 30 seconds, node 6
-   sends `INV(itx)` to every node in $S_{groundtruth}^{before}$.
-6. **Collect the INVBLOCK failures.** If a node $v \in
-   S_{groundtruth}^{before}$ responds to node 6 with `getdata(itx)`, add $v$
-   to the set of nodes that cannot be INVBLOCKed:
+1. **Clean up and establish the filter links.**
+   Before initiating new connections to $S_{groundtruth}^{before}$, perform cleanup on nodes 0 and 6:
+   - Inspect existing `getaddednodeinfo`: for any node not in $S_{groundtruth}^{before}$, execute `addnode <addr> remove`.
+   - Inspect active `getpeerinfo`: for any connected peer not in $S_{groundtruth}^{before}$, execute `disconnectnode <addr>`.
+   - For every target $v \in S_{groundtruth}^{before}$, if $v$ is not yet in `getaddednodeinfo`, node 0 and node 6 each initiate and keep one persistent manual connection using `addnode <addr> add`. Use the exact Phase 1 `addr`, including its port. Do not remove any of these connections after the experiment.
+2. **Wait for all links.** Poll `getpeerinfo` on nodes 0 and 6 until each node has a qualifying full-relay connection to every target. On a polling timeout, print `timeout`, reset the elapsed counter to zero, and continue waiting.
+3. **First inventory announcement.** Node 0 creates one transaction $itx$ and sends an `INV(itx)` message to every node in $S_{groundtruth}^{before}$.
+4. **Second inventory announcement.** After approximately 30 seconds, node 6 sends `INV(itx)` to every node in $S_{groundtruth}^{before}$.
+5. **Collect the INVBLOCK failures.** Inspect `txprobe_6.log` of node 6. If a node $v \in S_{groundtruth}^{before}$ responds to node 6 with `getdata(itx)`, add $v$ to the set of nodes that cannot be INVBLOCKed:
    $$
    S_{noinvblock} = \{v \in S_{groundtruth}^{before} \mid
    v \texttt{ sent getdata(}itx\texttt{) to node 6}\}.
@@ -110,8 +103,10 @@ or edges of the topology being inferred. Phase 2 leaves
 $S_{groundtruth}^{before}$ and $E_{groundtruth}^{before}$ unchanged.
 
 ## Phase 3: Crafting real TxProbe's transaction
+- Preparing: (n + 1) conflicting transactions, n marker transactions
 
 ## Phase 4: INVBLOCK (n + 1) conflicting transactions
+- Sending INV txs to all the target nodes (INVBLOCK)
 - Retrieve nodes (in {1,2,3,4,5}) that did not receive correct transactions. Eliminating them.
 
 ## Phase 5: Perform the sending transactions phase of TxProbe

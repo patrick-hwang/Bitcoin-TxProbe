@@ -1,63 +1,41 @@
+from decimal import Decimal
 import json
 import sys
-import time
-from decimal import Decimal
 from dataclasses import dataclass
 
-from .cli import nodes_cli
+from .groundtruth import (
+    GroundTruthSnapshot,
+    #NodeIdentity
+)
+from .cli import (
+    nodes_cli,
+)
 
 @dataclass
-class RoundInfo:
-    source_set: list
-    sink_set: list
-    marker_txs: list
-    phase_1_command: str
-    phase_2_command: str
-    phase_3_command: str
+class TxProbeTransaction:
+    conflicting_transactions: list
+    marker_transactions: list
 
-def generate_rounds(vertices):
-    nodes_by_height = {}
-
-    def traverse(l, r, height):
-        if r - l <= 1:
-            return
-        mid = (l + r) // 2
-        nodes_by_height.setdefault(height, []).append((l, r))
-        traverse(l, mid, height + 1)
-        traverse(mid, r, height + 1)
-
-    traverse(0, len(vertices), 0)
-
-    rounds = []
-    for h in sorted(nodes_by_height):
-        source = []
-        sink = []
-        for l, r in nodes_by_height[h]:
-            mid = (l + r) // 2
-            source.extend(vertices[l:mid])
-            sink.extend(vertices[mid:r])
-        rounds.append((source, sink))
-
-    return rounds
-
-def preparing_commands_for_a_round(source_list, sink_list, debug=False):
-    n = len(source_list)
-
+def crafting_txprobe_transactions(
+    snapshot: GroundTruthSnapshot,
+    debug: bool = False,
+) -> None:
+    source_set = (identity for identity in snapshot.nodes if isinstance(identity, int))
+    sink_set = (identity for identity in snapshot.nodes if isinstance(identity, int) == False)
     txid, vout, amount_btc = nodes_cli[0].get_utxo()
     final_addr = nodes_cli[0].get_own_address("mywallet")
     amount_sats = int(amount_btc * Decimal(100_000_000))
-    change_addrs = nodes_cli[0].get_change_addresses(n + 1)
+    change_addresses = nodes_cli[0].get_change_addresses(len(source_set) + 1)
 
     parent_sats = amount_sats - 1000
     marker_sats = amount_sats - 2000
     parent_btc = parent_sats / 1e8
     marker_btc = marker_sats / 1e8
-
     conflicting_txs = []
     utxo_input = json.dumps([{"txid": txid, "vout": vout}])
-
+    n = len(source_set)
     for i in range(n + 1):
-        change_addr = change_addrs[i]
+        change_addr = change_addresses[i]
         output = json.dumps({change_addr: parent_btc})
         unsigned_hex = nodes_cli[0].cli_raw("createrawtransaction", utxo_input, output)
         signed = nodes_cli[0].cli_json("signrawtransactionwithwallet", unsigned_hex)
@@ -77,7 +55,6 @@ def preparing_commands_for_a_round(source_list, sink_list, debug=False):
 
     parent_txs = conflicting_txs[:n]
     flooding_tx = conflicting_txs[n].copy()
-
     marker_txs = []
     for i in range(n):
         parent = conflicting_txs[i]
@@ -101,30 +78,12 @@ def preparing_commands_for_a_round(source_list, sink_list, debug=False):
             "txid": txid_m, "wtxid": wtxid_m,
         })
 
-    cli_base = "build/bin/bitcoin-cli -rpcwallet=mywallet -rpcport=48347 -rpcuser=expuser0 -rpcpassword=strongpassword0"
-
-    all_txs  = json.dumps([t["hex"] for t in conflicting_txs])
-    parents  = json.dumps([t["hex"] for t in parent_txs])
-    markers  = json.dumps([t["hex"] for t in marker_txs])
-    src      = json.dumps(source_list)
-    snk      = json.dumps(sink_list)
-    all_peer = json.dumps(source_list + sink_list)
-
-    phase_1_command = f"{cli_base} sendinv_orphan '{all_txs}' '{all_peer}'"
-    phase_2_command = f"{cli_base} sendtxs_orphan '{src}' '{snk}' '{parents}' '{markers}' '{flooding_tx['hex']}'"
-    phase_3_command = f"{cli_base} sendinv_orphan '{markers}' '{snk}'"
-
-    for item in parent_txs + [flooding_tx]:
-        del item["spk"]
-        del item["amount_btc"]
-
-    result = RoundInfo(
-        source_set=source_list, sink_set=sink_list, marker_txs=marker_txs,
-        phase_1_command=phase_1_command, phase_2_command=phase_2_command,
-        phase_3_command=phase_3_command,
+    result = TxProbeTransaction(
+        conflicting_transactions = conflicting_txs,
+        marker_transactions = marker_txs
     )
 
-    if debug:
+    if (debug): 
         print(result.__str__())
 
     return result

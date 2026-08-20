@@ -179,8 +179,7 @@ class Topology:
             if ui:
                 ui.update_phase(3, "done")
                 ui.finalize_round()
-
-            round_infos += 1
+            round_id += 1
 
         wait_seconds = 15
         if ui:

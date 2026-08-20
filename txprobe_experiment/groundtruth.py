@@ -11,7 +11,7 @@ import json
 from typing import Dict, Iterable, Mapping, Optional, Sequence, Set, Tuple, Union
 
 from .cli import nodes_cli
-
+from .address import endpoint_str_to_tuple
 
 TRACKED_NODE_IDS = (1, 2, 3, 4, 5)
 EXCLUDED_NODE_IDS = frozenset((0, 6))
@@ -21,6 +21,9 @@ NodeIdentity = Union[int, str]
 
 class GroundTruthError(RuntimeError):
     """The peer data cannot be mapped unambiguously to experiment nodes."""
+
+def _identity_sort_key(identity: NodeIdentity):
+    return (0, identity) if isinstance(identity, int) else (1, identity)
 
 
 @dataclass(frozen=True)
@@ -36,6 +39,25 @@ class GroundTruthSnapshot:
     peers: Mapping[int, Tuple[NodeIdentity, ...]]
     gt_edges: Tuple[Tuple[NodeIdentity, NodeIdentity], ...]
 
+    def remove_nodes(
+        self,
+        removing_nodes: Iterable[NodeIdentity],
+    ):
+        set_removing_nodes = set(removing_nodes)
+        nodes = tuple(sorted((identity for identity in self.nodes if identity not in set_removing_nodes), key=_identity_sort_key))
+        peers = {key: value for key, value in self.peers.items() if key in nodes}
+        for node_id, peers_of_node in peers:
+            peers_of_node = tuple(sorted((identity for identity in peers_of_node if identity in nodes)))
+            peers[node_id] = peers_of_node
+        gt_edges = tuple(sorted((pair for 
+            pair in self.gt_edges
+            if pair[0] in nodes and pair[1] in nodes), 
+            key=lambda edge: (_identity_sort_key(edge[0]), _identity_sort_key(edge[1]))))
+        return GroundTruthSnapshot(
+            nodes = nodes, peers = peers,
+            gt_edges = gt_edges
+        )
+
     def as_dict(self):
         return {
             "nodes": list(self.nodes),
@@ -44,29 +66,10 @@ class GroundTruthSnapshot:
         }
 
 
-def _endpoint(address: str) -> Tuple[str, Optional[int]]:
-    """Return a normalized ``(host, port)`` pair for a Bitcoin peer address."""
-
-    address = address.strip()
-    if address.startswith("["):
-        closing = address.find("]")
-        if closing != -1:
-            host = address[1:closing]
-            rest = address[closing + 1:]
-            if rest.startswith(":") and rest[1:].isdigit():
-                return host.lower(), int(rest[1:])
-            return host.lower(), None
-
-    host, separator, port = address.rpartition(":")
-    if separator and host and port.isdigit():
-        return host.lower(), int(port)
-    return address.lower(), None
-
-
 def _normalized_endpoint(address: str) -> str:
     """Create the stable external-peer identity required by the specification."""
 
-    host, port = _endpoint(address)
+    host, port = endpoint_str_to_tuple(address)
     if ":" in host:
         return f"[{host}]:{port}" if port is not None else f"[{host}]"
     return f"{host}:{port}" if port is not None else host
@@ -75,7 +78,7 @@ def _normalized_endpoint(address: str) -> str:
 def _is_unconnectable_external_peer(address: str) -> bool:
     """Whether ``addr`` is localhost or IPv6, both excluded by Phase 1."""
 
-    host, _ = _endpoint(address)
+    host, _ = endpoint_str_to_tuple(address)
     if host == "127.0.0.1":
         return True
     try:
@@ -153,18 +156,13 @@ def _resolve_experiment_node(
     address = peer.get("addr", "")
     if not address:
         return None
-    host, port = _endpoint(address)
+    host, port = endpoint_str_to_tuple(address)
     node_id = endpoint_to_node.get((host, port))
     if node_id is not None:
         return node_id
 
     candidates = host_to_nodes.get(host, set())
     return next(iter(candidates)) if len(candidates) == 1 else None
-
-
-def _identity_sort_key(identity: NodeIdentity):
-    return (0, identity) if isinstance(identity, int) else (1, identity)
-
 
 def collect_phase1_groundtruth(
     network_info_by_node: Mapping[int, Mapping],
