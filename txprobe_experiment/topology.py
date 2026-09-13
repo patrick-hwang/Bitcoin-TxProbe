@@ -5,7 +5,7 @@ import subprocess
 import sys
 import time
 
-from .cli import nodes_cli
+from .classes.BitcoinCli.BitcoinCli import nodes_cli
 from .utils import _addr_host
 from .utils import _matrix_to_string
 from .rounds import generate_rounds, preparing_commands_for_a_round

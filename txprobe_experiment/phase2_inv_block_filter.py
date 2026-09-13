@@ -17,7 +17,7 @@ from .address import (
     endpoint_tuple_to_str,
     endpoint_str_to_tuple,
 )
-from .cli import BitcoinCli, nodes_cli
+from .classes.BitcoinCli.BitcoinCli import BitcoinCli, nodes_cli
 from .groundtruth import (
     EXCLUDED_CONNECTION_TYPES,
     GroundTruthSnapshot,

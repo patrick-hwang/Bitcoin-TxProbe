@@ -4,7 +4,7 @@ import time
 from decimal import Decimal
 from dataclasses import dataclass
 
-from .cli import nodes_cli
+from .classes.BitcoinCli.BitcoinCli import nodes_cli
 
 @dataclass
 class RoundInfo:

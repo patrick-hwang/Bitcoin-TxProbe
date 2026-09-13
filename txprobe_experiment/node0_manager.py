@@ -1,7 +1,7 @@
 import sys
 import time
 
-from .cli import nodes_cli
+from .classes.BitcoinCli.BitcoinCli import nodes_cli
 from .utils import _addr_host
 
 class node0Manager:

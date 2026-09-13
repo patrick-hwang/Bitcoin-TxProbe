@@ -1,15 +1,16 @@
-import subprocess
 import json
+import re
+import subprocess
 import sys
 import shlex
 import time
-from typing import Dict, Iterable, Mapping, Optional, Sequence, Set, Tuple
+
+from collections.abc import Mapping, Iterable, Sequence
 from decimal import Decimal
 
-from .address import endpoint_tuple_to_str
-
-class BitcoinCliError(RuntimeError):
-    """BitcoinCliError cannot proceed as the specification requires."""
+from .BitcoinCliError import BitcoinCliError
+from ...dataclasses.NodeIdentity import NodeIdentity
+from ...address import endpoint_tuple_to_str
 
 class BitcoinCli:
     def __init__(self, id: int, rpcport: int, rpcuser: str, rpcpassword: str, wsl: bool = False,
@@ -20,24 +21,29 @@ class BitcoinCli:
         self.wallet_name = wallet_name
         if (len(self.wallet_name) > 0):
             self.load_wallet()
-            self.RPCARGS.append(f"-rpcwallet={self.wallet_name}")
 
     def wsl_cli(self, *args, ignore: bool = False):
         quoted = [shlex.quote(a) for a in ["build/bin/bitcoin-cli"] + self.RPCARGS + list(args)]
         cmd = "wsl " + " ".join(quoted)
         result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
         if ignore == False and result.returncode != 0:
-            print(f"bitcoin-cli error (node {self.id}): {result.stderr.strip()}", file=sys.stderr)
-            sys.exit(1)
-        return result
+            err_str = result.stderr.strip()
+            code_match = re.search(r"error code:\s*(-?\d+)", err_str)
+            code = int(code_match.group(1)) if code_match else None
+            raise BitcoinCliError(self.id, code, err_str.splitlines()[-1], err_str)
+        else:
+            return result
 
     def win_cli(self, *args, ignore: bool = False):
         cmd = ["bitcoin-cli"] + self.RPCARGS + list(args)
         result = subprocess.run(cmd, capture_output=True, text=True)
         if ignore == False and result.returncode != 0:
-            print(f"bitcoin-cli error (node {self.id}): {result.stderr.strip()}", file=sys.stderr)
-            sys.exit(1)
-        return result
+            err_str = result.stderr.strip()
+            code_match = re.search(r"error code:\s*(-?\d+)", err_str)
+            code = int(code_match.group(1)) if code_match else None
+            raise BitcoinCliError(self.id, code, err_str.splitlines()[-1], err_str)
+        else:
+            return result
 
     def cli_raw(self, *args, ignore: bool = False):
         if self.wsl:
@@ -50,68 +56,6 @@ class BitcoinCli:
             return json.loads(self.wsl_cli(*args).stdout)
         else:
             return json.loads(self.win_cli(*args).stdout)
-
-    def delete_peers(
-            self,
-            deleting_peers: Iterable[str],
-            wait: bool = True,
-            debug: bool = False,
-    ):
-        if debug:
-            print(f"Deleting peers {deleting_peers} from node {self.id}")
-        for add in deleting_peers:
-            self.cli_raw("disconnectnode", add, ignore=True)
-
-        elapse = 0
-        timeout = 30
-        interval = 2
-        while True:
-            while elapse < timeout:
-                done_delete = True
-                current_peers = [peer.get("addr", "") for peer in self.cli_json("getpeerinfo")]
-                for add in deleting_peers:
-                    if add in current_peers:
-                        done_delete = False
-                if done_delete:
-                    if debug:
-                        print('Done delete peers.')
-                    return
-                time.sleep(interval)
-                elapse += interval
-            elapse = 0
-            current_peers = [peer.get("addr", "") for peer in self.cli_json("getpeerinfo")]
-            count_not_deleted = len(set(deleting_peers) & set(current_peers))
-            print(f'Timeout: there are/is {count_not_deleted} peer(s) needed to be deleted left')
-
-    def add_peers(
-                self,
-                adding_peers: Iterable[str],
-                wait: bool = True,
-                debug: bool = False,
-        ):
-            for add in adding_peers:
-                self.cli_raw("addnode", add, "add", ignore=True)
-    
-            elapse = 0
-            timeout = 30
-            interval = 2
-            while True:
-                while elapse < timeout:
-                    done_add = True
-                    current_peers = [peer.get("addr", "") for peer in self.cli_json("getpeerinfo")]
-                    for add in adding_peers:
-                        if add not in current_peers:
-                            done_add = False
-                    if done_add:
-                        if debug:
-                            print('Done add peers.')
-                        return
-                    time.sleep(interval)
-                    elapse += interval
-                elapse = 0
-                current_peers = [peer.get("addr", "") for peer in self.cli_json("getpeerinfo")]
-                count_added = len(set(adding_peers) & set(current_peers))
-                print(f'Timeout: already added {count_added} peer(s) out of {len(adding_peers)}')
 
     def get_localaddress(self) -> str:
         network_info = self.cli_json("getnetworkinfo")
@@ -197,16 +141,19 @@ class BitcoinCli:
             elapsed = 0
 
     def get_own_address(self, target_wallet: str = "") -> str:
-        if len(target_wallet) > 0:
-            self.ensure_wallet(target_wallet)
-        return nodes_cli[0].cli_raw("getnewaddress")
+        self.ensure_wallet(target_wallet)
+        return self.cli_raw("getnewaddress")
 
-nodes_cli = [
-    BitcoinCli(0, 48347, "expuser0", "strongpassword0", wsl = True, wallet_name = "mywallet"),
-    BitcoinCli(1, 48332, "expuser1", "strongpassword1", wsl = False),
-    BitcoinCli(2, 48335, "expuser2", "strongpassword2", wsl = False),
-    BitcoinCli(3, 48338, "expuser3", "strongpassword3", wsl = False),
-    BitcoinCli(4, 48341, "expuser4", "strongpassword4", wsl = False),
-    BitcoinCli(5, 48344, "expuser5", "strongpassword5", wsl = False),
-    BitcoinCli(6, 48350, "expuser6", "strongpassword6", wsl = True),
-]
+    def get_identity(self) -> NodeIdentity:
+        local_addresses = self.cli_json("getnetworkinfo")["localaddresses"]
+        onion_entry = next(
+            (item for item in local_addresses if item.get("address", "").endswith(".onion")),
+            None
+        )
+        if onion_entry is None:
+            raise LookupError(f"Node {id} does not have a .onion address!")
+        return NodeIdentity(f"{onion_entry['address']}:{onion_entry['port']}")
+
+    def get_peer_list(self) -> list[NodeIdentity]:
+        peers = self.cli_json("getpeerinfo")
+        return [NodeIdentity(peer["addr"]) for peer in peers if not peer["addr"].startswith("127.0.0.1")]

@@ -4,13 +4,10 @@ This module deliberately does not add, remove, or disconnect any peers. The
 older random-topology experiment remains separate; Validation Test Mode needs
 an observed ground truth that includes connectable external peers.
 """
-
-from dataclasses import dataclass
 import ipaddress
 import json
-from typing import Dict, Iterable, Mapping, Optional, Sequence, Set, Tuple, Union
 
-from .cli import nodes_cli
+from .classes.BitcoinCli.BitcoinCli import nodes_cli
 from .address import endpoint_str_to_tuple
 
 TRACKED_NODE_IDS = (1, 2, 3, 4, 5)
@@ -24,46 +21,6 @@ class GroundTruthError(RuntimeError):
 
 def _identity_sort_key(identity: NodeIdentity):
     return (0, identity) if isinstance(identity, int) else (1, identity)
-
-
-@dataclass(frozen=True)
-class GroundTruthSnapshot:
-    """The observed Phase 1 topology.
-
-    Integer identities represent configured experiment nodes. A string identity
-    represents an external peer's normalized ``addr`` endpoint. ``gt_edges``
-    intentionally contains both directed pairs for every observed connection.
-    """
-
-    nodes: Tuple[NodeIdentity, ...]
-    peers: Mapping[int, Tuple[NodeIdentity, ...]]
-    gt_edges: Tuple[Tuple[NodeIdentity, NodeIdentity], ...]
-
-    def remove_nodes(
-        self,
-        removing_nodes: Iterable[NodeIdentity],
-    ):
-        set_removing_nodes = set(removing_nodes)
-        nodes = tuple(sorted((identity for identity in self.nodes if identity not in set_removing_nodes), key=_identity_sort_key))
-        peers = {key: value for key, value in self.peers.items() if key in nodes}
-        for node_id, peers_of_node in peers:
-            peers_of_node = tuple(sorted((identity for identity in peers_of_node if identity in nodes)))
-            peers[node_id] = peers_of_node
-        gt_edges = tuple(sorted((pair for 
-            pair in self.gt_edges
-            if pair[0] in nodes and pair[1] in nodes), 
-            key=lambda edge: (_identity_sort_key(edge[0]), _identity_sort_key(edge[1]))))
-        return GroundTruthSnapshot(
-            nodes = nodes, peers = peers,
-            gt_edges = gt_edges
-        )
-
-    def as_dict(self):
-        return {
-            "nodes": list(self.nodes),
-            "peers": {str(node_id): list(peers) for node_id, peers in sorted(self.peers.items())},
-            "gt_edges": [list(edge) for edge in self.gt_edges],
-        }
 
 
 def _normalized_endpoint(address: str) -> str:

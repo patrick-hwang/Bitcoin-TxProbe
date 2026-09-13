@@ -23,9 +23,7 @@ if (Test-Path $torLogPath) {
     Remove-Item $torLogPath -Force
 }
 
-Start-Process -FilePath $torProgramPath -ArgumentList "-f", "`"$torConfigurationPath`"", "--Log", "`"notice file $torLogPath`"" -WindowStyle Normal
-
-cmd.exe /c start "`"$torTitle`"" /min "`"$torPath`"" -f "`"$torrcPath`""
+Start-Process -FilePath $torProgramPath -ArgumentList "-f", "`"$torConfigurationPath`"", "--Log", "`"notice file $torLogPath`"" -WindowStyle Minimize
 
 # Wait for Tor to bootstrap 100%
 Write-Host "    Waiting for Tor to bootstrap..." -NoNewline -ForegroundColor Gray

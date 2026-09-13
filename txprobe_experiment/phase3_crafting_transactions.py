@@ -7,7 +7,7 @@ from .groundtruth import (
     GroundTruthSnapshot,
     #NodeIdentity
 )
-from .cli import (
+from .classes.BitcoinCli.BitcoinCli import (
     nodes_cli,
 )
 
