@@ -8,7 +8,8 @@ import time
 from collections.abc import Mapping, Iterable, Sequence
 from decimal import Decimal
 
-from .BitcoinCliError import BitcoinCliError
+from .BitcoinCliError import BitcoinCliError, BitcoinCliNoWallet
+from ...dataclasses.INV_message import INV_message
 from ...dataclasses.NodeIdentity import NodeIdentity
 from ...address import endpoint_tuple_to_str
 
@@ -57,23 +58,6 @@ class BitcoinCli:
         else:
             return json.loads(self.win_cli(*args).stdout)
 
-    def get_localaddress(self) -> str:
-        network_info = self.cli_json("getnetworkinfo")
-        if not isinstance(network_info, Mapping):
-            raise BitcoinCliError(f"Node {id}: getnetworkinfo response is unavailable.")
-        local_addresses = network_info.get("localaddresses")
-        if not isinstance(local_addresses, Sequence):
-            raise BitcoinCliError(f"Node {id}: getnetworkinfo.localaddresses is unavailable.")
-        if not local_addresses or not isinstance(local_addresses[0], Mapping):
-            raise BitcoinCliError(f"Node {id}: getnetworkinfo.localaddresses[0] is unavailable.")
-        host = local_addresses[0].get("address")
-        port = local_addresses[0].get("port")
-        if not isinstance(host, str) or not host:
-            raise BitcoinCliError(f"Node {id}: getnetworkinfo.localaddresses[0].address is unavailable.")
-        if not isinstance(port, int):
-            port = None
-        return endpoint_tuple_to_str((host.lower(), port))
-
     def get_change_descriptors(
         self,
         type: str
@@ -105,10 +89,12 @@ class BitcoinCli:
         if self.wallet_name not in self.cli_json("listwallets"):
             print(f'Node {self.id} load_wallet: Loading wallet {self.wallet_name}')
             self.cli_json("loadwallet", self.wallet_name)
-            if len(self.RPCARGS) < 4:
-                self.RPCARGS.append(f"-rpcwallet={self.wallet_name}")
+        if len(self.RPCARGS) < 4:
+            self.RPCARGS.append(f"-rpcwallet={self.wallet_name}")
 
     def ensure_wallet(self, target_wallet: str, debug: bool = False):
+        if len(target_wallet) == 0:
+            raise BitcoinCliNoWallet(f"Ensure wallet: Did not specified a wallet for node {self.id}")
         if target_wallet not in self.cli_json("listwallets"):
             if debug:
                 print(f'Node {self.id} ensure_wallet: The wallet is not loaded, now load it\n')
@@ -155,5 +141,61 @@ class BitcoinCli:
         return NodeIdentity(f"{onion_entry['address']}:{onion_entry['port']}")
 
     def get_peer_list(self) -> list[NodeIdentity]:
+        """Get peers' NodeIdentity list"""
         peers = self.cli_json("getpeerinfo")
         return [NodeIdentity(peer["addr"]) for peer in peers if not peer["addr"].startswith("127.0.0.1")]
+
+    def get_peerid_list(self) -> list[int]:
+        """Get peers' index list"""
+        peers = self.cli_json("getpeerinfo")
+        return [peer["id"] for peer in peers if not peer["addr"].startswith("127.0.0.1")]
+
+    def create_a_new_tx(self) -> INV_message:
+        """Create a new transaction manually"""
+        txid, vout, amount_btc = self.get_utxo()
+        final_addr = self.get_own_address(self.wallet_name)
+        out_btc = amount_btc - Decimal("0.00010000")
+
+        unsigned_hex = self.cli_raw(
+            "createrawtransaction",
+            json.dumps([{"txid": txid, "vout": vout}]), 
+            json.dumps({final_addr: out_btc}, default=str)
+        )
+        signed = self.cli_json("signrawtransactionwithwallet", unsigned_hex)
+        if not signed.get("complete"):
+            raise BitcoinCliError("Create a new tx: Failed to sign the transaction.")
+        decoded = self.cli_json("decoderawtransaction", signed["hex"])
+        txid_new = decoded["txid"]
+        wtxid = decoded["hash"]
+        return INV_message(
+            hexstr=txid_new,
+            wtxid=wtxid
+        )
+
+    def send_an_inv_to_all(self, inv: INV_message):
+        """Send an INV message to all peers"""
+        self.cli_json("sendinv_orphan", inv.hexstr, json.dumps(self.get_peerid_list()))
+
+    def eliminate_cannot_invblock_nodes(self, inv: INV_message):
+        """Eliminate peers that send GETDATA message about INV message inv"""
+        filepath: str = f"txprobe_{self.id}.log"
+        txid_list: list[str] = [inv.hexstr, inv.wtxid]
+        peerid_list: list[int] = self.get_peerid_list()
+        try:
+            with open(filepath) as log_file:
+                for line in log_file:
+                    match = re.compile(r"received getdata for: \S+ ([0-9a-f]{64}) peer=(\d+)")
+                    log_hash = match.group(1)
+                    log_peer = int(match.group(2))
+                    if log_hash in txid_list and log_peer in peerid_list:
+                        addr_peer = self.get_peer_address(log_peer)
+                        self.cli_raw("addnode", addr_peer, "remove")
+                        self.cli_raw("disconnectnode", addr_peer)
+        except Exception as e:
+            print(f"Encounter an exception when eliminating cannot invblock nodes: {e}")
+
+    def get_peer_address(self, id: int) -> str:
+        peers = self.cli_json("getpeerinfo")
+        for peer in peers:
+            if peer["id"] == id:
+                return peer["addr"]

@@ -6,3 +6,6 @@ class BitcoinCliError(RuntimeError):
         self.message = message
         self.raw_stderr = raw_stderr
         super().__init__(f"bitcoin-cli error (node {node_id}: {raw_stderr})")
+
+class BitcoinCliNoWallet(Exception):
+    """BitcoinCliNoWallet did not specified what wallet to use"""

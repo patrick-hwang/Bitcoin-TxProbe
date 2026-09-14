@@ -4301,9 +4301,9 @@ void PeerManagerImpl::ProcessMessage(Peer& peer, CNode& pfrom, const std::string
         LogDebug(BCLog::NET, "received getdata (%u invsz) peer=%d\n", vInv.size(), pfrom.GetId());
         TxProbeLog(strprintf("received getdata (%u invsz) peer=%d\n", vInv.size(), pfrom.GetId()));
 
-        if (vInv.size() > 0) {
-            LogDebug(BCLog::NET, "received getdata for: %s peer=%d\n", vInv[0].ToString(), pfrom.GetId());
-            TxProbeLog(strprintf("received getdata for: %s peer=%d\n", vInv[0].ToString(), pfrom.GetId()));
+        for (const auto& inv : vInv) {
+            LogDebug(BCLog::NET, "received getdata for: %s peer=%d\n", inv.ToString(), pfrom.GetId());
+            TxProbeLog(strprintf("received getdata for: %s peer=%d\n", inv.ToString(), pfrom.GetId()));
         }
 
         if (pfrom.IsPrivateBroadcastConn()) {

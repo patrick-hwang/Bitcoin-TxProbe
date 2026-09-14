@@ -1,21 +1,23 @@
 import json
 import sys
 
-from .groundtruth import GroundTruthError, retrieve_phase1_groundtruth
 from .classes.BitcoinCli.BitcoinCli import BitcoinCliError
+from .dataclasses.GroundTruthSnapshot import GroundTruthSnapshot
 from .phase2_inv_block_filter import Phase2Error, no_invblock_filter
 from .phase3_crafting_transactions import crafting_txprobe_transactions
 
-from .steps import step_1_capture_initial_groundtruth
+import graph
+from .steps.step_1_capture_initial_groundtruth import step_1_capture_initial_groundtruth
+from .steps.step_2_filter_no_invblock_nodes import step_2_filter_no_invblock_nodes
 
 def main():
-    step_1_capture_initial_groundtruth()
+    graph.graph = step_1_capture_initial_groundtruth()
+    graph.graph = step_2_filter_no_invblock_nodes(graph.graph)
     # 1. Parse arguments
     # debug = '--debug' in sys.argv
 
     # if '--validation-test' in sys.argv:
     #     try:
-    #         snapshot = retrieve_phase1_groundtruth()
     #         no_invblock_result = no_invblock_filter(snapshot, debug = debug)
     #         # tx_probecommands = crafting_txprobe_transactions(no_invblock_result.snapshot, debug = debug)
     #     except (GroundTruthError, Phase2Error, BitcoinCliError) as error:
