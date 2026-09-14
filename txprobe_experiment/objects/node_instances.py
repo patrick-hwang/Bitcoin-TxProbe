@@ -1,8 +1,4 @@
-from .classes.BitcoinCli.BitcoinCli import BitcoinCli
-from .dataclasses.NodeIdentity import NodeIdentity
-
-groundtruth_nodes: list[int] = [1, 2, 3, 4, 5]
-probe_nodes: list[int] = [0, 6]
+from ..classes.BitcoinCli.BitcoinCli import BitcoinCli
 
 nodes_cli: list[BitcoinCli] = [
     BitcoinCli(0, 48347, "expuser0", "strongpassword0", wsl = True, wallet_name = "mywallet"),
@@ -13,5 +9,3 @@ nodes_cli: list[BitcoinCli] = [
     BitcoinCli(5, 48344, "expuser5", "strongpassword5", wsl = False),
     BitcoinCli(6, 48350, "expuser6", "strongpassword6", wsl = True),
 ]
-
-groundtruth_dict_identity_into_index: dict[NodeIdentity, int] = {}

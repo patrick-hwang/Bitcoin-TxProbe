@@ -3,16 +3,13 @@ import sys
 
 from .classes.BitcoinCli.BitcoinCli import BitcoinCliError
 from .dataclasses.GroundTruthSnapshot import GroundTruthSnapshot
-from .phase2_inv_block_filter import Phase2Error, no_invblock_filter
-from .phase3_crafting_transactions import crafting_txprobe_transactions
 
-import graph
 from .steps.step_1_capture_initial_groundtruth import step_1_capture_initial_groundtruth
 from .steps.step_2_filter_no_invblock_nodes import step_2_filter_no_invblock_nodes
 
 def main():
-    graph.graph = step_1_capture_initial_groundtruth()
-    graph.graph = step_2_filter_no_invblock_nodes(graph.graph)
+    initial_graph: GroundTruthSnapshot = step_1_capture_initial_groundtruth()
+    INVBLOCK_graph: GroundTruthSnapshot = step_2_filter_no_invblock_nodes(initial_graph)
     # 1. Parse arguments
     # debug = '--debug' in sys.argv
 

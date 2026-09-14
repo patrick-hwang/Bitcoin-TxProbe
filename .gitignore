@@ -32,4 +32,4 @@ session-variable-notes.md
 opencode.json
 package-lock.json
 package.json
-txprobe.log
+*.log

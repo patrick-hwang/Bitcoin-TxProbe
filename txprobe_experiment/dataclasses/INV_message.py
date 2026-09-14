@@ -4,4 +4,5 @@ from dataclasses import dataclass
 class INV_message:
     """INV message object"""
     hexstr: str
+    txid: str
     wtxid: str
