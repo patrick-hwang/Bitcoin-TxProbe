@@ -550,6 +550,7 @@ public:
     void InitiateTxBroadcastToAll(const Txid& txid, const Wtxid& wtxid) override EXCLUSIVE_LOCKS_REQUIRED(!m_peer_mutex);
     void InitiateTxBroadcastPrivate(const CTransactionRef& tx) override EXCLUSIVE_LOCKS_REQUIRED(!m_peer_mutex);
     void SendInv_orphan(const std::vector<CTransactionRef>& txs, const std::vector<NodeId>& peer_ids) override;
+    void ClearInv_probe(void) override;
     void SendTxToPeers_orphan(const CTransactionRef& tx, const std::vector<NodeId>& peer_ids) override;
     void SetBestBlock(int height, std::chrono::seconds time) override
     {
@@ -1098,6 +1099,10 @@ private:
 
     /// The transactions to be broadcast privately.
     PrivateBroadcast m_tx_for_private_broadcast;
+
+    mutable Mutex m_probe_mutex;
+    // Store information of probing transactions
+    std::set<uint256> m_probe_tx_hashes GUARDED_BY(m_probe_mutex);
 };
 
 const CNodeState* PeerManagerImpl::State(NodeId pnode) const
@@ -1547,6 +1552,22 @@ void PeerManagerImpl::FindNextBlocks(std::vector<const CBlockIndex*>& vBlocks, c
     }
 }
 
+
+static Mutex g_txprobe_log_mutex;
+static void TxProbeLog(const std::string& msg)
+{
+    LOCK(g_txprobe_log_mutex);
+    std::string filename = gArgs.GetArg("-txprobelogfile", "txprobe.log");
+
+    FILE* f = std::fopen(filename.c_str(), "a");
+    if (f) {
+        auto now = std::chrono::system_clock::now();
+        int64_t now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
+        std::fprintf(f, "[%ld] %s\n", now_ms, msg.c_str());
+        std::fflush(f);
+        std::fclose(f);
+    }
+}
 } // namespace
 
 void PeerManagerImpl::PushNodeVersion(CNode& pnode, const Peer& peer)
@@ -2284,15 +2305,18 @@ void PeerManagerImpl::SendInv_orphan(const std::vector<CTransactionRef>& txs, co
     std::vector<CInv> vInv;
     std::vector<CInv> vWInv;
 
-    for (const CTransactionRef &tx : txs) {
-        const Txid& txid = tx->GetHash();
-        const Wtxid& wtxid = tx->GetWitnessHash();
+    {
+        LOCK(m_probe_mutex);
+        for (const CTransactionRef &tx : txs) {
+            const Txid& txid = tx->GetHash();
+            const Wtxid& wtxid = tx->GetWitnessHash();
 
-        vInv.emplace_back(MSG_TX, txid.ToUint256());
-        vWInv.emplace_back(MSG_WTX, wtxid.ToUint256());
+            m_probe_tx_hashes.insert(txid.ToUint256());
+            m_probe_tx_hashes.insert(wtxid.ToUint256());
 
-        LogDebug(BCLog::NET, "SendInv_orphan: preparing inventories about tx %s before sending\n",
-                tx->GetHash().ToString());
+            vInv.emplace_back(MSG_TX, txid.ToUint256());
+            vWInv.emplace_back(MSG_WTX, wtxid.ToUint256());
+        }
     }
 
     for (NodeId id : peer_ids) {
@@ -2301,9 +2325,10 @@ void PeerManagerImpl::SendInv_orphan(const std::vector<CTransactionRef>& txs, co
             return peer && peer->m_wtxid_relay;
         }();
 
-        m_connman.ForNode(id, [this, &vInv, &vWInv, use_witness](CNode* pnode) {
+        m_connman.ForNode(id, [this, &vInv, &vWInv, use_witness, id](CNode* pnode) {
             if (pnode->IsBlockOnlyConn() || pnode->IsFeelerConn() || pnode->IsPrivateBroadcastConn()) {
-                LogDebug(BCLog::NET, "SendTxToPeers_orphan: skipping peer=%d (ineligible)\n", pnode->GetId());
+                TxProbeLog(strprintf("SendTxToPeers_orphan: skipping peer=%d (ineligible)", 
+                    pnode->GetId()));
                 return false;
             }
             if (use_witness) {
@@ -2311,9 +2336,19 @@ void PeerManagerImpl::SendInv_orphan(const std::vector<CTransactionRef>& txs, co
             } else {
                 MakeAndPushMessage(*pnode, NetMsgType::INV, vInv);
             }
+            TxProbeLog(strprintf("SENT_INV peer=%d addr=%s inv_count=%d", 
+                    id, pnode->addr.ToStringAddrPort(), 
+                    use_witness ? vWInv.size() : vInv.size()));
             return true;
         });        
     }
+}
+
+void PeerManagerImpl::ClearInv_probe(void) {
+    LOCK(m_probe_mutex);
+    size_t count = m_probe_tx_hashes.size();
+    m_probe_tx_hashes.clear();
+    TxProbeLog(strprintf("ClearInv_probe: Cleared %zu probe transaction hashes", count));
 }
 
 void PeerManagerImpl::SendTxToPeers_orphan(const CTransactionRef& tx, const std::vector<NodeId>& peer_ids)
@@ -2615,7 +2650,29 @@ void PeerManagerImpl::ProcessGetData(CNode& pfrom, Peer& peer, const std::atomic
             MakeAndPushMessage(pfrom, NetMsgType::TX, maybe_with_witness(*tx));
             m_mempool.RemoveUnbroadcastTx(tx->GetHash());
         } else {
-            vNotFound.push_back(inv);
+            bool is_probe_tx = false;
+
+            {
+                LOCK(m_probe_mutex);
+                if (m_probe_tx_hashes.count(inv.hash)) {
+                    is_probe_tx = true;
+                }
+            }
+
+            if (is_probe_tx) {
+                std::string addr_str = "unknown";
+                m_connman.ForNode(peer.m_id, [&addr_str](CNode* pnode) {
+                    addr_str = pnode->addr.ToStringAddrPort();
+                    return true;
+                });
+                TxProbeLog(strprintf("BLOCKED_NOTFOUND peer=%d addr=%s type=%s hash=%s",
+                        peer.m_id,
+                        addr_str,
+                        inv.GetMessageType(),
+                        inv.hash.ToString()));
+            }
+            else 
+                vNotFound.push_back(inv);
         }
     }
 
@@ -3637,16 +3694,6 @@ void PeerManagerImpl::PushPrivateBroadcastTx(CNode& node)
              node.GetId(), node.LogIP(fLogIPs));
 
     MakeAndPushMessage(node, NetMsgType::INV, std::vector<CInv>{{CInv{MSG_TX, tx->GetHash().ToUint256()}}});
-}
-
-static void TxProbeLog(const std::string& msg)
-{
-    std::string filename = gArgs.GetArg("-txprobelogfile", "txprobe.log");
-    FILE* f = std::fopen(filename.c_str(), "a");
-    if (f) {
-        std::fprintf(f, "%s", msg.c_str());
-        std::fclose(f);
-    }
 }
 
 void PeerManagerImpl::ProcessMessage(Peer& peer, CNode& pfrom, const std::string& msg_type, DataStream& vRecv,
@@ -6296,3 +6343,6 @@ bool PeerManagerImpl::SendMessages(CNode& node)
     MaybeSendFeefilter(node, peer, current_time);
     return true;
 }
+
+namespace {
+} // namespace

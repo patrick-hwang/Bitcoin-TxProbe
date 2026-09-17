@@ -157,6 +157,11 @@ public:
     virtual void SendInv_orphan(const std::vector<CTransactionRef>& txs, const std::vector<NodeId>& peer_ids) = 0;
 
     /**
+     * Clear tracked inventories probe transactions.
+     */
+    virtual void ClearInv_probe() = 0;
+
+    /**
      * Send a transaction directly as a `tx` P2P message to specific peers.
      * Bypasses the normal INV/getdata flow.
      *

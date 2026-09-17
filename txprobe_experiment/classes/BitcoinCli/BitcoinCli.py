@@ -9,7 +9,7 @@ from collections.abc import Mapping, Iterable, Sequence
 from decimal import Decimal
 
 from .BitcoinCliError import BitcoinCliError, BitcoinCliNoWallet
-from ...dataclasses.INV_message import INV_message
+from ...dataclasses.INV_message import TX_message
 from ...dataclasses.NodeIdentity import NodeIdentity
 from ...objects.node_indices import probe_nodes
 
@@ -140,6 +140,20 @@ class BitcoinCli:
             raise LookupError(f"Node {id} does not have a .onion address!")
         return NodeIdentity(f"{onion_entry['address']}:{onion_entry['port']}")
 
+    def get_peer_address(self, id: int) -> str:
+        peers = self.cli_json("getpeerinfo")
+        for peer in peers:
+            if peer["id"] == id:
+                return peer["addr"]
+        raise BitcoinCliError(f"Cannot find the peer with id = {id} in node {self.id}!")
+
+    def get_peer_id(self, addr: str) -> str:
+        peers = self.cli_json("getpeerinfo")
+        for peer in peers:
+            if peer["addr"] == addr:
+                return peer["id"]
+        raise BitcoinCliError(f"Cannot find the peer with addr = {addr} in node {self.id}!")
+
     def get_peer_list(self, block_relay_only: bool = False, local_addr: bool = False) -> list[NodeIdentity]:
         """Get peers' NodeIdentity list"""
         peers = self.cli_json("getpeerinfo")
@@ -149,7 +163,7 @@ class BitcoinCli:
                    (not local_addr and peer["addr"].startswith("127.0.0.1"))
             if skip:
                 continue
-            result.append(NodeIdentity(peer["addr"]))
+            result.append(NodeIdentity(addr = peer["addr"]))
         return result
 
     def get_peerid_list(self, block_relay_only: bool = False, local_addr: bool = False) -> list[int]:
@@ -164,7 +178,7 @@ class BitcoinCli:
             result.append(peer["id"])
         return result
 
-    def create_a_new_tx(self) -> INV_message:
+    def create_a_new_tx(self) -> TX_message:
         """Create a new transaction manually"""
         txid, vout, amount_btc = self.get_utxo()
         final_addr = self.get_own_address(self.wallet_name)
@@ -181,13 +195,13 @@ class BitcoinCli:
         decoded = self.cli_json("decoderawtransaction", signed["hex"])
         txid_new = decoded["txid"]
         wtxid = decoded["hash"]
-        return INV_message(
+        return TX_message(
             hexstr=signed["hex"],
             txid=txid_new,
             wtxid=wtxid
         )
 
-    def send_an_inv_to_all(self, inv: INV_message):
+    def send_an_inv_to_all(self, inv: TX_message):
         """Send an INV message to all peers"""
         if self.id not in probe_nodes:
             raise BitcoinCliError(
@@ -195,7 +209,7 @@ class BitcoinCli:
                 f"But node {self.id} which is not a probe node called this!")
         self.cli_json("sendinv_orphan", json.dumps([inv.hexstr]), json.dumps(self.get_peerid_list(block_relay_only = False, local_addr = False)))
 
-    def eliminate_cannot_invblock_nodes(self, inv: INV_message, debug: bool = False):
+    def eliminate_cannot_invblock_nodes(self, inv: TX_message, debug: bool = False):
         """Eliminate peers that send GETDATA message about INV message inv"""
         filepath: str = f"txprobe_{self.id}.log"
         txid_list: list[str] = [inv.txid, inv.wtxid]
@@ -217,12 +231,6 @@ class BitcoinCli:
                         peerid_list.remove(log_peer)
         except Exception as e:
             print(f"Encounter an exception when eliminating cannot invblock nodes: {e}")
-
-    def get_peer_address(self, id: int) -> str:
-        peers = self.cli_json("getpeerinfo")
-        for peer in peers:
-            if peer["id"] == id:
-                return peer["addr"]
 
     def eliminate_nodes_not_in_list(self, peer_list: list[NodeIdentity], debug: bool = False):
         """Eliminate nodes that do not belong to a specific list."""

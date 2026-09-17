@@ -23,7 +23,9 @@ class GroundTruthSnapshot:
 
         new_adj_list: dict[NodeIdentity, list[NodeIdentity]] = {node: [] for node in new_nodes_set}
         for node in new_nodes:
-            original_peer_list: list[NodeIdentity] = self.adj_list[node]
+            original_peer_list: list[NodeIdentity] = self.adj_list.get(node)
+            if (original_peer_list is None):
+                continue
             new_adj_list[node] = [peer for peer in original_peer_list if peer in new_nodes_set]
             
         return GroundTruthSnapshot(

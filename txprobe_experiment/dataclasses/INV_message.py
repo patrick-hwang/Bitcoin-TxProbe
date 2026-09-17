@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 @dataclass(frozen=True)
-class INV_message:
+class TX_message:
     """INV message object"""
     hexstr: str
     txid: str

@@ -1181,6 +1181,33 @@ static RPCHelpMan sendinv_orphan() {
     };
 }
 
+static RPCHelpMan clearinv_probe() {
+    return RPCHelpMan {
+        "clearinv_probe",
+        "Clear all tracked probe transaction used for INVBLOCK.\n",
+        {},
+        RPCResult{RPCResult::Type::OBJ, "", "",
+            {
+                {RPCResult::Type::BOOL, "success", "Whether the probe transaction list was cleared"},
+            }
+        },
+        RPCExamples{
+            HelpExampleCli("clearinv_probe", "")
+        },
+        [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue
+        {
+            NodeContext& node = EnsureAnyNodeContext(request.context);
+            PeerManager& peerman = EnsurePeerman(node);
+
+            peerman.ClearInv_probe();
+
+            UniValue ret(UniValue::VOBJ);
+            ret.pushKV("success", true);
+            return ret;
+        },
+    };
+}
+
 static RPCHelpMan sendtxs_orphan() {
     return RPCHelpMan {
         "sendtxs_orphan",
@@ -1417,6 +1444,7 @@ void RegisterNetRPCCommands(CRPCTable& t)
         {"network", &getnodeaddresses},
         {"network", &getaddrmaninfo},
         {"txprobe", &sendinv_orphan},
+        {"probe", &clearinv_probe},
         {"txprobe", &sendtxs_orphan},
         {"hidden", &addconnection},
         {"hidden", &addpeeraddress},
