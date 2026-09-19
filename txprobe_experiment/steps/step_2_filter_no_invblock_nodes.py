@@ -1,5 +1,5 @@
 from ..dataclasses.GroundTruthSnapshot import GroundTruthSnapshot
-from ..dataclasses.INV_message import TX_message
+from ..dataclasses.TX_message import TX_message
 from ..objects.node_instances import nodes_cli
 from ..ui.progress_bar import wait_seconds_with_progressbar
 
