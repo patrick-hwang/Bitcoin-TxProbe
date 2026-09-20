@@ -2369,9 +2369,7 @@ void PeerManagerImpl::SendTxToPeers_orphan(const CTransactionRef& tx, const std:
             } else {
                 MakeAndPushMessage(*pnode, NetMsgType::TX, TX_NO_WITNESS(*tx));
             }
-            LogDebug(BCLog::NET, "SendTxToPeers_orphan: sent tx %s to peer=%d%s\n",
-                     tx->GetHash().ToString(), pnode->GetId(),
-                     use_witness ? " (witness)" : "");
+            TxProbeLog(strprintf("SendTxToPeers_orphan: sent tx %s to peer=%d%s", tx->GetHash().ToString(), pnode->GetId(), use_witness ?  " (witness)" : ""));
             return true;
         });
     }

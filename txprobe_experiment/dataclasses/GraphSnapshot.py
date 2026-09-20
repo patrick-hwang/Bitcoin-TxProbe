@@ -5,8 +5,8 @@ from types import MappingProxyType
 from .NodeIdentity import NodeIdentity
 
 @dataclass(frozen=True)
-class GroundTruthSnapshot:
-    """The snapshot of the groundtruth"""
+class GraphSnapshot:
+    """The snapshot of the graph"""
 
     nodes: tuple[NodeIdentity, ...]
     adj_list: Mapping[NodeIdentity, tuple[NodeIdentity, ...]]
@@ -15,7 +15,7 @@ class GroundTruthSnapshot:
             self,
             peer_list_1: list[NodeIdentity],
             peer_list_2: list[NodeIdentity]
-    ) -> GroundTruthSnapshot:
+    ) -> GraphSnapshot:
         valid_nodes_set: set[NodeIdentity] = set(peer_list_1) & set(peer_list_2)
 
         new_nodes: list[NodeIdentity] = [node for node in self.nodes if node in valid_nodes_set]
@@ -28,7 +28,7 @@ class GroundTruthSnapshot:
                 continue
             new_adj_list[node] = [peer for peer in original_peer_list if peer in new_nodes_set]
             
-        return GroundTruthSnapshot(
+        return GraphSnapshot(
             nodes = tuple(new_nodes),
             adj_list = MappingProxyType({
                 node: tuple(peers)

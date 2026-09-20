@@ -4,12 +4,12 @@ from collections.abc import Mapping
 from tqdm import tqdm
 from types import MappingProxyType
 
-from ..dataclasses.GroundTruthSnapshot import GroundTruthSnapshot, NodeIdentity
+from ..dataclasses.GraphSnapshot import GraphSnapshot, NodeIdentity
 from ..objects.node_indices import groundtruth_nodes, probe_nodes
 from ..objects.node_instances import nodes_cli
 from ..ui.progress_bar import wait_seconds_with_progressbar
 
-def step_1_capture_initial_groundtruth() -> GroundTruthSnapshot:
+def step_1_capture_initial_groundtruth() -> GraphSnapshot:
     """Collect the initial ground-truth snapshot."""
     nodes_raw: set[NodeIdentity] = set()
     adj_list_raw: dict[NodeIdentity, set[NodeIdentity]] = {}
@@ -21,7 +21,7 @@ def step_1_capture_initial_groundtruth() -> GroundTruthSnapshot:
         waiting_probe_nodes_to_connect(nodes_raw)
         retrieve_adj_list(nodes_raw, adj_list_raw)
         eliminate_not_probe_connected(nodes_raw, adj_list_raw)
-        return GroundTruthSnapshot(
+        return GraphSnapshot(
             nodes = tuple(nodes_raw),
             adj_list = MappingProxyType({
                 node_id: tuple(neighbors)
@@ -65,10 +65,10 @@ def connect_probe_nodes(collected_nodes: set[NodeIdentity]):
 def waiting_probe_nodes_to_connect(collected_nodes: set[NodeIdentity]):
     """Wait 3 seconds for each collected nodes"""
     elapse_timer = 0
-    wait_seconds = 2
+    wait_seconds = 0.5
     total_nodes = len(collected_nodes)
     seconds_per_node = 6
-    num_mini_period = 3
+    num_mini_period = 20
     mini_break_period = total_nodes * seconds_per_node / num_mini_period
     timeout_seconds = total_nodes * seconds_per_node
 

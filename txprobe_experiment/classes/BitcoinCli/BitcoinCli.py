@@ -5,6 +5,7 @@ import sys
 import shlex
 import time
 
+from collections import defaultdict
 from collections.abc import Mapping, Iterable, Sequence
 from decimal import Decimal
 
@@ -58,6 +59,7 @@ class BitcoinCli:
         else:
             return json.loads(self.win_cli(*args).stdout)
 
+    ### Identity
     def get_identity(self) -> NodeIdentity:
         local_addresses = self.cli_json("getnetworkinfo")["localaddresses"]
         onion_entry = next(
@@ -68,19 +70,43 @@ class BitcoinCli:
             raise LookupError(f"Node {id} does not have a .onion address!")
         return NodeIdentity(f"{onion_entry['address']}:{onion_entry['port']}")
 
-    def get_peer_address(self, id: int) -> str:
+    def get_peer_address(self, id: int, ignore: bool = False) -> str | None:
         peers = self.cli_json("getpeerinfo")
         for peer in peers:
             if peer["id"] == id:
                 return peer["addr"]
-        raise BitcoinCliError(f"Cannot find the peer with id = {id} in node {self.id}!")
+        if ignore:
+            return None
+        else:
+            raise RuntimeError(f"Cannot find the peer with id = {id} in node {self.id}!")
 
-    def get_peer_id(self, addr: str) -> str:
+    def get_peer_identity(self, id: int, ignore: bool = False) -> NodeIdentity | None:
+        addr = self.get_peer_address(id, ignore=True)
+        if addr:
+            return NodeIdentity(addr = addr)
+        if ignore:
+            return None
+        raise RuntimeError(f"Cannot find identity of peer with id = {id} in node {self.id}!")
+
+    def get_peer_id(self, addr: str, ignore = False) -> int | None:
         peers = self.cli_json("getpeerinfo")
         for peer in peers:
             if peer["addr"] == addr:
                 return peer["id"]
-        raise BitcoinCliError(f"Cannot find the peer with addr = {addr} in node {self.id}!")
+        if ignore:
+            return None
+        else:
+            raise RuntimeError(str(f"Cannot find the peer with addr = {addr} in node {self.id}!"))
+
+    def get_peer_id_from_node_list(self, nodes: list[NodeIdentity]) -> list[int]:
+        peers = self.get_peer_list()
+        result: list[int] = list()
+        for node in peers:
+            if node in nodes:
+                id = self.get_peer_id(node.addr, ignore=True)
+                if id:
+                    result.append(id)
+        return result
 
     def get_peer_list(self, block_relay_only: bool = False, local_addr: bool = False) -> list[NodeIdentity]:
         """Get peers' NodeIdentity list"""
@@ -106,14 +132,34 @@ class BitcoinCli:
             result.append(peer["id"])
         return result
 
-    def send_an_inv_to_all(self, inv: TX_message):
+    ### Sending messages
+    def send_an_inv_to_all(self, tx: TX_message):
         """Send an INV message to all peers"""
         if self.id not in probe_nodes:
-            raise BitcoinCliError(
+            raise RuntimeError(
                 f"Only probe nodes can call send_an_inv_to_all() function.\n"
                 f"But node {self.id} which is not a probe node called this!")
-        self.cli_json("sendinv_orphan", json.dumps([inv.hexstr]), json.dumps(self.get_peerid_list(block_relay_only = False, local_addr = False)))
+        self.cli_json("sendinv_orphan", json.dumps([tx.hexstr]), json.dumps(self.get_peerid_list(block_relay_only = False, local_addr = False)))
 
+    def send_txs_to(self, txs: list[TX_message], ids: list[int]):
+        """Send transactions to specific peers"""
+        if self.id not in probe_nodes:
+            raise RuntimeError(str(f"The node {self.id} is not a probe node while this send_txs_to function required to be called by a probe node."))
+        for tx in txs:
+            hexstring = tx.hexstr
+
+            with open("txprobe_debug.log", "a") as f:
+                f.write(
+                    f"Sending transaction:\n"
+                    f"    txid: {tx.txid}\n"
+                    f"    wtxid: {tx.wtxid}\n"
+                    f"    hexstring: {hexstring}\n"
+                    f"    peer_ids: {json.dumps(ids)}\n"
+                )
+
+            self.cli_raw("sendrawtransaction_orphan", hexstring, json.dumps(0), json.dumps(0), json.dumps(ids)) 
+
+    ### Wallet
     def get_change_descriptors(
         self,
         type: str
@@ -192,6 +238,7 @@ class BitcoinCli:
         self.ensure_wallet(target_wallet)
         return self.cli_raw("getnewaddress")
 
+    ### Create transactions
     def create_a_raw_tx(self,
                         inputs: list[dict[str, str | int]],
                         outputs: list[dict[str, Decimal]]
@@ -206,7 +253,7 @@ class BitcoinCli:
         else:
             signed_information = self.cli_json("signrawtransactionwithwallet", rawhexstr)
         if not signed_information.get("complete"):
-            raise BitcoinCliError("Create a new tx: Failed to sign the transaction.")
+            raise RuntimeError("Create a new tx: Failed to sign the transaction.")
         return signed_information["hex"]
 
     def create_a_new_tx(self) -> TX_message:
@@ -281,13 +328,36 @@ class BitcoinCli:
             ))
         return result
 
+    ### Mempool
+    def get_mempool_txids(self) -> set[str]:
+        """Retrieve all the txids in the mempool"""
+        tx_list = self.cli_json("getrawmempool")
+        return set(tx_list)
+
+    def retrieve_getdata_requests(self) -> dict[str, set[int]]:
+        GETDATA_PATTERN = re.compile(r"received getdata for: \S+ ([0-9a-f]{64}) peer=(\d+)")
+        file_path: str = f"txprobe_{self.id}.log"
+        result: dict[str, set[int]] = defaultdict(set)
+        with open(file_path) as log_file:
+            for line in log_file:
+                if "received getdata for:" not in line:
+                    continue
+
+                match = GETDATA_PATTERN.search(line)
+                if match:
+                    logged_hash = match.group(1)
+                    logged_peer = int(match.group(2))
+                    result[logged_hash].add(logged_peer)
+        return result
+
+    ### Eliminate nodes
     def eliminate_cannot_invblock_nodes(self, inv: TX_message, debug: bool = False):
         """Eliminate peers that send GETDATA message about INV message inv"""
-        filepath: str = f"txprobe_{self.id}.log"
+        file_path: str = f"txprobe_{self.id}.log"
         txid_list: list[str] = [inv.txid, inv.wtxid]
         peerid_list: list[int] = self.get_peerid_list(block_relay_only = False, local_addr = False)
         try:
-            with open(filepath) as log_file:
+            with open(file_path) as log_file:
                 for line in log_file:
                     match = re.search(r"received getdata for: \S+ ([0-9a-f]{64}) peer=(\d+)", line)
                     if match is None:
@@ -313,6 +383,6 @@ class BitcoinCli:
                     if debug:
                         print(f"Eliminating peer {peer.addr} from node {self.id}'s peer list.")
                     self.cli_raw("addnode", peer.addr, "remove", ignore=True)
-                    self.cli_raw("disconnectnode", peer.addr)
+                    self.cli_raw("disconnectnode", peer.addr, ignore=True)
         except Exception as e:
             print(f"Encounter an exception when eliminate nodes not in a specified peer list from node {self.id}!")
