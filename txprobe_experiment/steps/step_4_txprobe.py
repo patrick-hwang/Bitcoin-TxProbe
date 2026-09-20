@@ -13,34 +13,37 @@ def step_4_txprobe(
     parent_tx_list: list[TX_message],
     flooding_tx: TX_message,
     marker_tx_list: list[TX_message]
-) -> tuple[GraphSnapshot, list[int], GraphSnapshot]:
+) -> tuple[GraphSnapshot, GraphSnapshot]:
     """Perform the TxProbe technique to infer the topology.
         There are two outputs:
             - The inferred topology of the network
             - The order of groundtruth nodes in which the marker transactions was sent: order[i] = the id of the groundtruth nodes who the mtx number i was sent to
     """
-    A_FEW_SECONDS = 2
+    A_FEW_SECONDS = 10
     try:
         source_set, sink_set = extract_source_and_sink(list(groundtruth_graph.nodes))
         if len(set(source_set) & set(sink_set)) > 0:
             raise RuntimeError("[!] There is a node in both source set and sink set!")
         
-        source_set_id_list = nodes_cli[0].get_peer_id_from_node_list(source_set)
+        source_set_id_list = [nodes_cli[0].get_peer_id(node.addr) for node in source_set]
 
         send_txprobe_transactions(source_set_id_list, sink_set, parent_tx_list, flooding_tx, marker_tx_list)
         wait_seconds_with_progressbar(A_FEW_SECONDS, "Wait a few seconds after sending transactions", 0.5)
 
+        print(f"Filtering nodes received wrong transactions...")
         new_groundtruth_snapshot = filter_nodes_received_wrong_txs(
             groundtruth_graph, 
-            source_set_id_list, 
-            parent_tx_list, flooding_tx, marker_tx_list)
+            source_set, 
+            parent_tx_list, flooding_tx, marker_tx_list
+        )
 
         marker_ids_requested_by_each_sink_node = request_markers_back(sink_set, marker_tx_list)
 
-        result = infer_topology(sink_set, source_set, source_set_id_list, marker_ids_requested_by_each_sink_node), source_set_id_list
+        print(f"Infering topology...")
+        result = infer_topology(sink_set, source_set, source_set_id_list, marker_ids_requested_by_each_sink_node)
         nodes_cli[0].cli_raw("clearinv_probe", ignore = True)
 
-        return result, source_set_id_list, new_groundtruth_snapshot
+        return result, new_groundtruth_snapshot
     except Exception as e:
         print(f"step_4_txprobe: Encountered an exception when performing TxProbe: {e}")
 
@@ -92,7 +95,7 @@ def send_transaction_in_order(tx_list: list[TX_message], id_list: list[int]) -> 
 
 def filter_nodes_received_wrong_txs(
         old_graph: GraphSnapshot,
-        groundtruth_nodes_sending_order: list[int],
+        source_set: list[NodeIdentity],
         parent_tx_list: list[TX_message],
         flooding_tx: TX_message,
         marker_tx_list: list[TX_message]
@@ -105,9 +108,9 @@ def filter_nodes_received_wrong_txs(
                 received_tx_list = nodes_cli[index].get_mempool_txids()
                 properly_function: bool = (flooding_tx.txid not in received_tx_list)
                 for i in range(len(parent_tx_list)):
-                    if groundtruth_nodes_sending_order[i] == index:
+                    if source_set[i] == node:
                         properly_function &= (parent_tx_list[i].txid in received_tx_list)
-                        properly_function &= (marker_tx_list[i].txid in received_tx_list)
+                        # properly_function &= (marker_tx_list[i].txid in received_tx_list)
                     else:
                         properly_function &= (parent_tx_list[i].txid not in received_tx_list)
                 if not properly_function:

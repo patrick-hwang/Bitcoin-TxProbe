@@ -101,8 +101,8 @@ class BitcoinCli:
     def get_peer_id_from_node_list(self, nodes: list[NodeIdentity]) -> list[int]:
         peers = self.get_peer_list()
         result: list[int] = list()
-        for node in peers:
-            if node in nodes:
+        for node in nodes:
+            if node in peers:
                 id = self.get_peer_id(node.addr, ignore=True)
                 if id:
                     result.append(id)
@@ -386,3 +386,8 @@ class BitcoinCli:
                     self.cli_raw("disconnectnode", peer.addr, ignore=True)
         except Exception as e:
             print(f"Encounter an exception when eliminate nodes not in a specified peer list from node {self.id}!")
+
+    ### Logging
+    def clear_log_file(self):
+        with open(f"txprobe_{self.id}.log", "w") as f:
+            pass

@@ -30,79 +30,96 @@ def step_1_capture_initial_groundtruth() -> GraphSnapshot:
         )
     except Exception as e:
         print(f"Encounter exception when capturing initial groundtruth: {e}")
+        raise
 
 
 def add_groundtruth_addresses(nodes: set[NodeIdentity]):
     """Add onion addresses of the groundtruth nodes (1,2,3,4,5)"""
-    for node_index in groundtruth_nodes:
-        new_identity = nodes_cli[node_index].get_identity()
-        nodes.add(new_identity)
+    try:
+        for node_index in groundtruth_nodes:
+            new_identity = nodes_cli[node_index].get_identity()
+            nodes.add(new_identity)
+    except Exception as e:
+        print(f"Step 1 - Adding groundtruth addresses: encounter exception {e}")
+        raise
 
 def add_peers_of_groundtruth_nodes(nodes: set[NodeIdentity]):
     """Add peers of nodes in a specified list, considering IPv4 and tor connections only"""
-    for index in groundtruth_nodes:
-        if nodes_cli[index].get_identity() not in nodes:
-            continue
-        node_peers = nodes_cli[index].get_peer_list(block_relay_only=False, local_addr=False)
-        for peer in node_peers:
-            nodes.add(peer)
+    try:
+        for index in groundtruth_nodes:
+            if nodes_cli[index].get_identity() not in nodes:
+                continue
+            node_peers = nodes_cli[index].get_peer_list(block_relay_only=False, local_addr=False)
+            for peer in node_peers:
+                nodes.add(peer)
+    except Exception as e:
+        print(f"Step 1 - Add peers of groundtruth nodes: encounter an exception {e}")
+        raise
 
 def connect_probe_nodes(collected_nodes: set[NodeIdentity]):
     """Connect probe nodes (0,6) to the collected nodes"""
-    for probe_index in probe_nodes:
-        current_peer_addresses = nodes_cli[probe_index].get_peer_list(block_relay_only=True, local_addr=False)
-        for node in collected_nodes:
-            if node not in current_peer_addresses:
-                try:
-                    nodes_cli[probe_index].cli_raw("addnode", node.addr, "add")
-                except Exception as e:
-                    print(f"Encounter an exception when add nodes to probe node {probe_index}: {e}")
-        for node in current_peer_addresses:
-            if node not in collected_nodes:
-                nodes_cli[probe_index].cli_raw("disconnectnode", node.addr)
-                nodes_cli[probe_index].cli_raw("addnode", node.addr, "remove", ignore=True)
+    try:
+        for probe_index in probe_nodes:
+            current_peer_addresses = nodes_cli[probe_index].get_peer_list(block_relay_only=True, local_addr=False)
+            for node in collected_nodes:
+                if node not in current_peer_addresses:
+                    try:
+                        nodes_cli[probe_index].cli_raw("addnode", node.addr, "add", ignore = True)
+                    except Exception as e:
+                        print(f"Encounter an exception when add nodes to probe node {probe_index}: {e}")
+            for node in current_peer_addresses:
+                if node not in collected_nodes:
+                    nodes_cli[probe_index].cli_raw("disconnectnode", node.addr, ignore = True)
+                    nodes_cli[probe_index].cli_raw("addnode", node.addr, "remove", ignore=True)
+    except Exception as e:
+        print(f"Step 1 - connect probe nodes: Encounter an exception {e}")
+        raise
 
 def waiting_probe_nodes_to_connect(collected_nodes: set[NodeIdentity]):
     """Wait 3 seconds for each collected nodes"""
-    elapse_timer = 0
-    wait_seconds = 0.5
-    total_nodes = len(collected_nodes)
-    seconds_per_node = 6
-    num_mini_period = 20
-    mini_break_period = total_nodes * seconds_per_node / num_mini_period
-    timeout_seconds = total_nodes * seconds_per_node
+    try:
+        elapse_timer = 0
+        wait_seconds = 0.5
+        total_nodes = len(collected_nodes)
+        seconds_per_node = 6
+        num_mini_period = 0.8
+        mini_break_period = total_nodes * seconds_per_node / num_mini_period
+        timeout_seconds = total_nodes * seconds_per_node
 
-    with tqdm(total=timeout_seconds, desc="Connecting peers") as pbar:
-        while (elapse_timer < timeout_seconds):
-            done = True
-            status = {}
+        with tqdm(total=timeout_seconds, desc="Connecting peers") as pbar:
+            while (elapse_timer < timeout_seconds):
+                done = True
+                status = {}
 
-            for node_index in probe_nodes:
-                peer_list = nodes_cli[node_index].get_peer_list(block_relay_only=True, local_addr=False)
-                connected_peers = [peer for peer in peer_list if peer in collected_nodes]
-                status[f"Node_{node_index}"] = f"{len(connected_peers)}/{total_nodes}"
+                for node_index in probe_nodes:
+                    peer_list = nodes_cli[node_index].get_peer_list(block_relay_only=True, local_addr=False)
+                    connected_peers = [peer for peer in peer_list if peer in collected_nodes]
+                    status[f"Node_{node_index}"] = f"{len(connected_peers)}/{total_nodes}"
 
-                if len(connected_peers) < total_nodes:
-                    done = False
+                    if len(connected_peers) < total_nodes:
+                        done = False
 
-            pbar.set_postfix_str(status)
+                pbar.set_postfix_str(status)
 
-            if elapse_timer >= mini_break_period:
-                pbar.clear()
-                inp = input(f"Waited for {elapse_timer} seconds. Do you want to halt? (type \'h\'): ")
-                pbar.refresh()
-                if inp.lower().startswith('h'):
-                    done = True
-                else:
-                    mini_break_period += total_nodes * seconds_per_node / num_mini_period
+                if elapse_timer >= mini_break_period:
+                    pbar.clear()
+                    inp = input(f"Waited for {elapse_timer} seconds. Do you want to halt? (type \'h\'): ")
+                    pbar.refresh()
+                    if inp.lower().startswith('h'):
+                        done = True
+                    else:
+                        mini_break_period += total_nodes * seconds_per_node / num_mini_period
 
-            if done:
-                pbar.set_postfix_str(f"Halt after {elapse_timer} seconds.")
-                break
+                if done:
+                    pbar.set_postfix_str(f"Halt after {elapse_timer} seconds.")
+                    break
 
-            time.sleep(wait_seconds)
-            pbar.update(wait_seconds)
-            elapse_timer += wait_seconds
+                time.sleep(wait_seconds)
+                pbar.update(wait_seconds)
+                elapse_timer += wait_seconds
+    except Exception as e:
+        print(f"Step 1 - waiting for probe nodes to connect: Encounter an exception {e}")
+        raise
 
 def retrieve_adj_list(nodes: set[NodeIdentity], adj_list: dict[NodeIdentity, set[NodeIdentity]]):
     """Retrieve adjacent peers of each node in the node list."""
@@ -119,6 +136,7 @@ def retrieve_adj_list(nodes: set[NodeIdentity], adj_list: dict[NodeIdentity, set
                 adj_list.setdefault(peer_identity, set()).add(node_identity)
     except Exception as e:
         print(f"Encounter exception when retrieve raw adjacent list: {e}")
+        raise
 
 def eliminate_not_probe_connected(nodes: set[NodeIdentity], adj_list: dict[NodeIdentity, set[NodeIdentity]]):
     """Eliminate nodes that cannot be connected by both of probe nodes."""
@@ -129,10 +147,12 @@ def eliminate_not_probe_connected(nodes: set[NodeIdentity], adj_list: dict[NodeI
     for node in nodes:
         if not(node in peer_of_0 and node in peer_of_6):
             nodes_to_remove.add(node)
-            adj_nodes = adj_list.pop(node, None)
+            adj_nodes = adj_list.pop(node, set())
             for adj_node in adj_nodes:
                 if adj_node in adj_list:
                     adj_list[adj_node].discard(node)
+            nodes_cli[0].cli_raw("disconnectnode", node.addr, ignore = True)
+            nodes_cli[6].cli_raw("disconnectnode", node.addr, ignore = True)
             nodes_cli[0].cli_raw("addnode", node.addr, "remove", ignore=True)
             nodes_cli[6].cli_raw("addnode", node.addr, "remove", ignore=True)
 

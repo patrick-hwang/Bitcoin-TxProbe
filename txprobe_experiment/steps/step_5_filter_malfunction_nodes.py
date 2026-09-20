@@ -3,14 +3,11 @@ from types import MappingProxyType
 
 from ..dataclasses.GraphSnapshot import GraphSnapshot
 from ..dataclasses.NodeIdentity import NodeIdentity
-from ..dataclasses.TX_message import TX_message
 from ..objects.node_indices import groundtruth_nodes
 from ..objects.node_instances import nodes_cli
 
 def step_5_filter_malfunction_nodes(
-        old_groundtruth: GraphSnapshot, 
-        node_received_mtx: list[int],
-        marker_transaction_list: list[TX_message]
+        old_groundtruth: GraphSnapshot
 ) -> GraphSnapshot:
     try:
         result = filter_transitory_edges(old_groundtruth)

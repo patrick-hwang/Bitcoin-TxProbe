@@ -14,6 +14,8 @@ from .steps.step_1_capture_initial_groundtruth import step_1_capture_initial_gro
 from .steps.step_2_filter_no_invblock_nodes import step_2_filter_no_invblock_nodes, eliminate_no_invblock_nodes
 from .steps.step_3_crafting_txprobe_transactions import step_3_crafting_txprobe_transactions
 from .steps.step_4_txprobe import step_4_txprobe, extract_source_and_sink, send_txprobe_transactions, invblock, send_flooding_transaction, send_transaction_in_order, request_markers_back, infer_topology
+from .steps.step_5_filter_malfunction_nodes import step_5_filter_malfunction_nodes
+from .steps.step_6_calculating_metrics import step_6_calculating_metrics
 from .ui.progress_bar import wait_seconds_with_progressbar
 
 initial_graph = step_1_capture_initial_groundtruth()
@@ -58,7 +60,7 @@ with open("txprobe_debug.log", "a") as f:
         f.write(f"    txid: {tx.txid}\n")
         f.write(f"    wtxid: {tx.wtxid}\n")
 
-inferred_graph, groundtruth_nodes_order = step_4_txprobe(list(INVBLOCK_graph.nodes), parent_tx_list, flooding_tx, marker_tx_list)
+inferred_graph, filtered_groundtruth_graph = step_4_txprobe(INVBLOCK_graph, parent_tx_list, flooding_tx, marker_tx_list)
 with open("txprobe_debug.log", "a") as f:
     f.write(f"\nStep 4: The inferred topology:\n")
     for node in inferred_graph.nodes:
@@ -66,3 +68,14 @@ with open("txprobe_debug.log", "a") as f:
         peers = inferred_graph.adj_list[node]
         for peer in peers:
             f.write(f"    {peer.addr}\n")
+
+filtered_groundtruth_graph = step_5_filter_malfunction_nodes(filtered_groundtruth_graph)
+with open("txprobe_debug.log", "a") as f:
+    f.write(f"\nStep 5: The final groundtruth topology:\n")
+    for node in filtered_groundtruth_graph.nodes:
+        f.write(f"Node {node.addr}'s adjacent list:\n")
+        peers = filtered_groundtruth_graph.adj_list[node]
+        for peer in peers:
+            f.write(f"    {peer.addr}\n")
+
+step_6_calculating_metrics(filtered_groundtruth_graph, inferred_graph)
