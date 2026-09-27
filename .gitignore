@@ -34,3 +34,5 @@ package-lock.json
 package.json
 *.log
 a temporary note.txt
+
+.vscode 

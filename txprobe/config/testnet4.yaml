@@ -1,0 +1,58 @@
+network: testnet4
+default_port: 48333
+
+# Our 7 nodes: 2 probes (0,6) + 5 groundtruth (1-5)
+nodes:
+  - id: 0
+    role: probe
+    rpcport: 48347
+    rpcuser: expuser0
+    rpcpassword: strongpassword0
+    wallet: mywallet
+  - id: 1
+    role: groundtruth
+    rpcport: 48332
+    rpcuser: expuser1
+    rpcpassword: strongpassword1
+  - id: 2
+    role: groundtruth
+    rpcport: 48335
+    rpcuser: expuser2
+    rpcpassword: strongpassword2
+  - id: 3
+    role: groundtruth
+    rpcport: 48338
+    rpcuser: expuser3
+    rpcpassword: strongpassword3
+  - id: 4
+    role: groundtruth
+    rpcport: 48341
+    rpcuser: expuser4
+    rpcpassword: strongpassword4
+  - id: 5
+    role: groundtruth
+    rpcport: 48344
+    rpcuser: expuser5
+    rpcpassword: strongpassword5
+  - id: 6
+    role: probe
+    rpcport: 48350
+    rpcuser: expuser6
+    rpcpassword: strongpassword6
+
+discovery:
+  target_count: 1000
+  crawling_time_sec: 180
+  poll_interval_sec: 10
+
+reachability:
+  tor_proxy_host: "127.0.0.1"
+  tor_proxy_port: 9050
+  clearnet_timeout_sec: 5.0
+  tor_timeout_sec: 30.0
+  clearnet_concurrency: 50
+  tor_concurrency: 20
+
+dns_seeds:
+  - seed.testnet4.bitcoin.sprovoost.nl
+  - seed.testnet4.wiz.biz
