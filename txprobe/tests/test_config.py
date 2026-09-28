@@ -93,8 +93,18 @@ def test_discovery_config():
 
     assert cfg.discovery.target_count == 500
     assert cfg.discovery.crawling_time_sec == 60.0
-    # Default value for poll_interval_sec
+    # Default value for poll_interval_sec and onetry_concurrency
     assert cfg.discovery.poll_interval_sec == 10.0
+    assert cfg.discovery.onetry_concurrency == 12
+
+
+def test_testnet4_yaml_probes_are_0_and_1():
+    yaml_path = Path(__file__).resolve().parent.parent / "config" / "testnet4.yaml"
+    cfg = load_config(yaml_path)
+    assert [n.id for n in cfg.probe_nodes] == [0, 1]
+    assert [n.id for n in cfg.groundtruth_nodes] == [2, 3, 4, 5, 6]
+    assert cfg.discovery.crawling_time_sec == 600.0
+    assert cfg.discovery.onetry_concurrency == 12
 
 
 def test_reachability_config():
@@ -112,3 +122,4 @@ def test_reachability_config():
 def test_load_missing_file():
     with pytest.raises(FileNotFoundError):
         load_config("/nonexistent/path.yaml")
+

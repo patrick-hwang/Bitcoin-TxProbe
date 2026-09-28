@@ -1,0 +1,12 @@
+aiohttp>=3.9
+pyyaml>=6.0
+tqdm>=4.66
+python-socks[asyncio]>=2.4
+
+[analysis]
+networkx>=3.0
+matplotlib>=3.8
+
+[dev]
+pytest>=8.0
+pytest-asyncio>=0.24

@@ -125,3 +125,44 @@ async def test_batch_sends_array():
     assert posted_json[0]["method"] == "addnode"
     assert posted_json[0]["params"] == ["1.2.3.4:48333", "onetry"]
     assert len(results) == 2
+
+
+@pytest.mark.asyncio
+async def test_batch_raise_on_error_false():
+    """call_batch(..., raise_on_error=False) should return None for failed items without raising."""
+    rpc = AsyncBitcoinRpc("127.0.0.1", 48347, "u", "p")
+
+    mock_resp = AsyncMock()
+    mock_resp.json = AsyncMock(return_value=[
+        {"id": 1, "result": "ok", "error": None},
+        {"id": 2, "result": None, "error": {"code": -29, "message": "Node not connected"}},
+    ])
+    mock_resp.__aenter__ = AsyncMock(return_value=mock_resp)
+    mock_resp.__aexit__ = AsyncMock(return_value=False)
+
+    mock_session = AsyncMock()
+    mock_session.post = MagicMock(return_value=mock_resp)
+    rpc._session = mock_session
+
+    results = await rpc.call_batch(
+        [
+            ("disconnectnode", "1.2.3.4:48333"),
+            ("disconnectnode", "5.6.7.8:48333"),
+        ],
+        raise_on_error=False,
+    )
+    assert results == ["ok", None]
+
+
+@pytest.mark.asyncio
+async def test_batch_empty():
+    """call_batch([]) should return an empty list without making an HTTP POST."""
+    rpc = AsyncBitcoinRpc("127.0.0.1", 48347, "u", "p")
+    mock_session = AsyncMock()
+    mock_session.post = MagicMock()
+    rpc._session = mock_session
+
+    results = await rpc.call_batch([])
+    assert results == []
+    mock_session.post.assert_not_called()
+

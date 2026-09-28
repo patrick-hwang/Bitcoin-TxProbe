@@ -20,8 +20,8 @@ def _make_config(**overrides) -> Config:
         default_port=48333,
         nodes=[
             NodeConfig(0, "probe", 48347, "u0", "p0"),
-            NodeConfig(1, "groundtruth", 48332, "u1", "p1"),
-            NodeConfig(6, "probe", 48350, "u6", "p6"),
+            NodeConfig(1, "probe", 48332, "u1", "p1"),
+            NodeConfig(2, "groundtruth", 48335, "u2", "p2"),
         ],
         discovery=DiscoveryConfig(target_count=100),
         reachability=ReachabilityConfig(clearnet_concurrency=5, tor_concurrency=2),
@@ -245,3 +245,57 @@ async def test_priority_ordering():
     assert candidates[1].priority == CandidatePriority.PROBE_PEER
     assert candidates[2].priority == CandidatePriority.DNS_SEED
     assert candidates[3].priority == CandidatePriority.ADDRMAN
+
+
+def test_harvest_result_save_and_load(tmp_path):
+    """HarvestResult.save() and HarvestResult.load() should preserve all fields."""
+    from txprobe.discovery.harvester import HarvestResult, HarvestStats
+
+    original = HarvestResult(
+        candidates=[
+            CandidateNode(
+                NodeIdentity("1.2.3.4:48333"),
+                CandidatePriority.GROUNDTRUTH_PEER,
+                "ipv4",
+                2,
+                0,
+            ),
+            CandidateNode(
+                NodeIdentity("abc.onion:48333"),
+                CandidatePriority.ADDRMAN,
+                "onion",
+                0,
+                1700000000,
+            ),
+        ],
+        already_connected_probes={
+            0: {NodeIdentity("1.2.3.4:48333")},
+            1: {NodeIdentity("9.9.9.9:48333")},
+        },
+        stats=HarvestStats(
+            groundtruth_peer_count=1,
+            probe_peer_count=0,
+            dns_seed_count=0,
+            addrman_count=1,
+            reachability_tested=2,
+            reachability_passed=2,
+            total_unique=2,
+            timestamp="2026-09-29T00:00:00Z",
+            elapsed_sec=12.34,
+        ),
+    )
+
+    out_path = tmp_path / "harvest.json"
+    original.save(out_path)
+    loaded = HarvestResult.load(out_path)
+
+    assert len(loaded.candidates) == 2
+    assert loaded.candidates[0].identity.addr == "1.2.3.4:48333"
+    assert loaded.candidates[0].priority == CandidatePriority.GROUNDTRUTH_PEER
+    assert loaded.candidates[1].identity.addr == "abc.onion:48333"
+    assert loaded.candidates[1].priority == CandidatePriority.ADDRMAN
+    assert loaded.already_connected_probes[0] == {NodeIdentity("1.2.3.4:48333")}
+    assert loaded.already_connected_probes[1] == {NodeIdentity("9.9.9.9:48333")}
+    assert loaded.stats.total_unique == 2
+    assert loaded.stats.elapsed_sec == 12.34
+

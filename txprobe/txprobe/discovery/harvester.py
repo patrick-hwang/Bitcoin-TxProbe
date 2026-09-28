@@ -46,8 +46,7 @@ class HarvestStats:
 class HarvestResult:
     """Output of Phase 1 address harvesting."""
     candidates: list[CandidateNode]
-    already_connected_probe0: set[NodeIdentity] = field(default_factory=set)
-    already_connected_probe6: set[NodeIdentity] = field(default_factory=set)
+    already_connected_probes: dict[int, set[NodeIdentity]] = field(default_factory=dict)
     stats: HarvestStats = field(default_factory=HarvestStats)
 
     def to_dict(self) -> dict:
@@ -64,16 +63,14 @@ class HarvestResult:
                 "reachability_passed": self.stats.reachability_passed,
                 "total_unique": self.stats.total_unique,
             },
-            "already_connected_probe0": sorted(
-                n.addr for n in self.already_connected_probe0
-            ),
-            "already_connected_probe6": sorted(
-                n.addr for n in self.already_connected_probe6
-            ),
+            "already_connected_probes": {
+                str(probe_id): sorted(n.addr for n in peers)
+                for probe_id, peers in sorted(self.already_connected_probes.items())
+            },
             "candidates": [
                 {
                     "addr": c.identity.addr,
-                    "priority": c.priority,
+                    "priority": int(c.priority),
                     "network": c.network,
                     "source_node_id": c.source_node_id,
                     "last_seen": c.last_seen,
@@ -88,13 +85,60 @@ class HarvestResult:
         with open(path, "w") as f:
             json.dump(self.to_dict(), f, indent=2)
 
+    @classmethod
+    def from_dict(cls, data: dict) -> HarvestResult:
+        """Deserialize a HarvestResult from a JSON dict."""
+        raw_stats = data.get("stats", {})
+        stats = HarvestStats(
+            groundtruth_peer_count=int(raw_stats.get("groundtruth_peer_count", 0)),
+            probe_peer_count=int(raw_stats.get("probe_peer_count", 0)),
+            dns_seed_count=int(raw_stats.get("dns_seed_count", 0)),
+            addrman_count=int(raw_stats.get("addrman_count", 0)),
+            reachability_tested=int(raw_stats.get("reachability_tested", 0)),
+            reachability_passed=int(raw_stats.get("reachability_passed", 0)),
+            total_unique=int(raw_stats.get("total_unique", 0)),
+            timestamp=str(data.get("timestamp", "")),
+            elapsed_sec=float(data.get("elapsed_sec", 0.0)),
+        )
+
+        already_connected_probes: dict[int, set[NodeIdentity]] = {}
+        raw_probes = data.get("already_connected_probes", {})
+        for probe_id_str, addr_list in raw_probes.items():
+            already_connected_probes[int(probe_id_str)] = {
+                NodeIdentity(addr=a) for a in addr_list
+            }
+
+        candidates = [
+            CandidateNode(
+                identity=NodeIdentity(addr=c["addr"]),
+                priority=CandidatePriority(int(c["priority"])),
+                network=str(c["network"]),
+                source_node_id=int(c["source_node_id"]),
+                last_seen=int(c.get("last_seen", 0)),
+            )
+            for c in data.get("candidates", [])
+        ]
+
+        return cls(
+            candidates=candidates,
+            already_connected_probes=already_connected_probes,
+            stats=stats,
+        )
+
+    @classmethod
+    def load(cls, path: str | Path) -> HarvestResult:
+        """Load a HarvestResult from a JSON file."""
+        with open(path) as f:
+            data = json.load(f)
+        return cls.from_dict(data)
+
 
 async def harvest_addresses(config: Config) -> HarvestResult:
     """Main Phase 1 entry point — collect and validate candidate addresses.
 
     Steps (in priority order):
-        1.1  getpeerinfo on groundtruth nodes [1,2,3,4,5]  → priority 0
-        1.2  getpeerinfo on probe nodes [0,6]               → priority 1
+        1.1  getpeerinfo on groundtruth nodes [2,3,4,5,6]  → priority 0
+        1.2  getpeerinfo on probe nodes [0,1]               → priority 1
         1.3  DNS seed resolution                             → priority 2
         1.4  getnodeaddresses(0) on all nodes [0..6]         → priority 3
         1.5  Batch reachability test on candidates that need it
@@ -109,8 +153,9 @@ async def harvest_addresses(config: Config) -> HarvestResult:
     seen: set[NodeIdentity] = set()
     candidates: list[CandidateNode] = []
     probe_peers: list[CandidateNode] = []  # probe peers skip reachability test
-    connected_probe0: set[NodeIdentity] = set()
-    connected_probe6: set[NodeIdentity] = set()
+    connected_probes: dict[int, set[NodeIdentity]] = {
+        n.id: set() for n in config.probe_nodes
+    }
 
     stats = HarvestStats()
 
@@ -136,11 +181,7 @@ async def harvest_addresses(config: Config) -> HarvestResult:
         seen,
         probe_peers,  # separate list — these skip reachability
         skip_block_relay=True,
-        connected_out={
-            n.id: (connected_probe0 if n.id == config.probe_nodes[0].id
-                   else connected_probe6)
-            for n in config.probe_nodes
-        },
+        connected_out=connected_probes,
     )
     stats.probe_peer_count = probe_count
     log.info("  Found %d unique probe peers", probe_count)
@@ -190,8 +231,7 @@ async def harvest_addresses(config: Config) -> HarvestResult:
 
     return HarvestResult(
         candidates=all_candidates,
-        already_connected_probe0=connected_probe0,
-        already_connected_probe6=connected_probe6,
+        already_connected_probes=connected_probes,
         stats=stats,
     )
 
@@ -251,7 +291,7 @@ async def _harvest_peers_one(
     """getpeerinfo() on one node, append new candidates."""
     added = 0
     try:
-        async with AsyncBitcoinRpc("127.0.0.1", nc.rpcport, nc.rpcuser, nc.rpcpassword) as rpc:
+        async with AsyncBitcoinRpc(nc.rpchost, nc.rpcport, nc.rpcuser, nc.rpcpassword) as rpc:
             peers = await rpc.getpeerinfo()
     except Exception as e:
         log.warning("RPC to node %d failed: %s", nc.id, e)
@@ -320,7 +360,7 @@ async def _harvest_addrman_one(
     """getnodeaddresses(0) on one node, append new candidates."""
     added = 0
     try:
-        async with AsyncBitcoinRpc("127.0.0.1", nc.rpcport, nc.rpcuser, nc.rpcpassword) as rpc:
+        async with AsyncBitcoinRpc(nc.rpchost, nc.rpcport, nc.rpcuser, nc.rpcpassword) as rpc:
             entries = await rpc.getnodeaddresses(0)
     except Exception as e:
         log.warning("RPC getnodeaddresses on node %d failed: %s", nc.id, e)

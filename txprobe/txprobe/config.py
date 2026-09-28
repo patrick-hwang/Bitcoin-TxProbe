@@ -17,14 +17,16 @@ class NodeConfig:
     rpcuser: str
     rpcpassword: str
     wallet: str = ""
+    rpchost: str = "127.0.0.1"
 
 
 @dataclass
 class DiscoveryConfig:
     """Configuration for the node discovery process."""
     target_count: int = 1000
-    crawling_time_sec: float = 180.0
+    crawling_time_sec: float = 600.0
     poll_interval_sec: float = 10.0
+    onetry_concurrency: int = 12
 
 
 @dataclass
@@ -91,6 +93,7 @@ def load_config(path: str | Path) -> Config:
             rpcuser=n["rpcuser"],
             rpcpassword=n["rpcpassword"],
             wallet=n.get("wallet", ""),
+            rpchost=n.get("rpchost", "127.0.0.1"),
         )
         for n in raw["nodes"]
     ]
@@ -98,8 +101,9 @@ def load_config(path: str | Path) -> Config:
     disc_raw = raw.get("discovery", {})
     discovery = DiscoveryConfig(
         target_count=disc_raw.get("target_count", 1000),
-        crawling_time_sec=float(disc_raw.get("crawling_time_sec", 180.0)),
+        crawling_time_sec=float(disc_raw.get("crawling_time_sec", 600.0)),
         poll_interval_sec=float(disc_raw.get("poll_interval_sec", 10.0)),
+        onetry_concurrency=int(disc_raw.get("onetry_concurrency", 12)),
     )
 
     reach_raw = raw.get("reachability", {})

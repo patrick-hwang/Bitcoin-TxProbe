@@ -106,19 +106,30 @@ class AsyncBitcoinRpc:
             raise RpcError(err.get("code", -1), err.get("message", ""))
         return body.get("result")
 
-    async def call_batch(self, calls: list[tuple[str, ...]]) -> list[Any]:
+    async def call_batch(
+        self,
+        calls: list[tuple[str, ...]],
+        *,
+        raise_on_error: bool = True,
+    ) -> list[Any]:
         """Make a batch JSON-RPC call (multiple methods in one HTTP request).
 
         Args:
             calls: List of tuples, each being ``(method, *params)``.
+            raise_on_error: If True (default), raise RpcError on the first
+                error response. If False, log a warning and append None for
+                any failed call.
 
         Returns:
             List of ``result`` values, in the same order as *calls*.
 
         Raises:
-            RpcError: If any individual call returns an error.
+            RpcError: If *raise_on_error* is True and any call returns an error.
         """
         assert self._session is not None, "Call open() or use 'async with' first"
+        if not calls:
+            return []
+
         batch = []
         for call_args in calls:
             method = call_args[0]
@@ -139,8 +150,16 @@ class AsyncBitcoinRpc:
         for body in bodies:
             if body.get("error"):
                 err = body["error"]
-                raise RpcError(err.get("code", -1), err.get("message", ""))
-            results.append(body.get("result"))
+                if raise_on_error:
+                    raise RpcError(err.get("code", -1), err.get("message", ""))
+                log.debug(
+                    "Ignoring RPC batch error %s: %s",
+                    err.get("code", -1),
+                    err.get("message", ""),
+                )
+                results.append(None)
+            else:
+                results.append(body.get("result"))
         return results
 
     # ── Convenience wrappers ──

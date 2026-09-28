@@ -1,7 +1,7 @@
 network: testnet4
 default_port: 48333
 
-# Our 7 nodes: 2 probes (0,6) + 5 groundtruth (1-5)
+# Our 7 nodes: 2 probes (0,1) + 5 groundtruth (2-6)
 nodes:
   - id: 0
     role: probe
@@ -10,7 +10,7 @@ nodes:
     rpcpassword: strongpassword0
     wallet: mywallet
   - id: 1
-    role: groundtruth
+    role: probe
     rpcport: 48332
     rpcuser: expuser1
     rpcpassword: strongpassword1
@@ -35,15 +35,16 @@ nodes:
     rpcuser: expuser5
     rpcpassword: strongpassword5
   - id: 6
-    role: probe
+    role: groundtruth
     rpcport: 48350
     rpcuser: expuser6
     rpcpassword: strongpassword6
 
 discovery:
   target_count: 1000
-  crawling_time_sec: 180
+  crawling_time_sec: 600
   poll_interval_sec: 10
+  onetry_concurrency: 12
 
 reachability:
   tor_proxy_host: "127.0.0.1"
