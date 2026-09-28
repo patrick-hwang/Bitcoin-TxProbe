@@ -24,9 +24,10 @@ class NodeConfig:
 class DiscoveryConfig:
     """Configuration for the node discovery process."""
     target_count: int = 1000
-    crawling_time_sec: float = 600.0
-    poll_interval_sec: float = 10.0
-    onetry_concurrency: int = 12
+    crawling_time_sec: float = 180.0
+    poll_interval_sec: float = 5.0
+    clearnet_onetry_concurrency: int = 32
+    tor_onetry_concurrency: int = 8
 
 
 @dataclass
@@ -101,9 +102,12 @@ def load_config(path: str | Path) -> Config:
     disc_raw = raw.get("discovery", {})
     discovery = DiscoveryConfig(
         target_count=disc_raw.get("target_count", 1000),
-        crawling_time_sec=float(disc_raw.get("crawling_time_sec", 600.0)),
-        poll_interval_sec=float(disc_raw.get("poll_interval_sec", 10.0)),
-        onetry_concurrency=int(disc_raw.get("onetry_concurrency", 12)),
+        crawling_time_sec=float(disc_raw.get("crawling_time_sec", 180.0)),
+        poll_interval_sec=float(disc_raw.get("poll_interval_sec", 5.0)),
+        clearnet_onetry_concurrency=int(
+            disc_raw.get("clearnet_onetry_concurrency", 32)
+        ),
+        tor_onetry_concurrency=int(disc_raw.get("tor_onetry_concurrency", 8)),
     )
 
     reach_raw = raw.get("reachability", {})

@@ -42,9 +42,10 @@ nodes:
 
 discovery:
   target_count: 1000
-  crawling_time_sec: 600
-  poll_interval_sec: 10
-  onetry_concurrency: 12
+  crawling_time_sec: 180
+  poll_interval_sec: 5
+  clearnet_onetry_concurrency: 32
+  tor_onetry_concurrency: 8
 
 reachability:
   tor_proxy_host: "127.0.0.1"

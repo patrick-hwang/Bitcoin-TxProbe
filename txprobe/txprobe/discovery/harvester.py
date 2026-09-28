@@ -31,6 +31,7 @@ _SKIP_CONN_TYPES = frozenset({"feeler", "addr-fetch"})
 @dataclass
 class HarvestStats:
     """Statistics from the harvest process."""
+    groundtruth_self_count: int = 0
     groundtruth_peer_count: int = 0
     probe_peer_count: int = 0
     dns_seed_count: int = 0
@@ -55,6 +56,7 @@ class HarvestResult:
             "timestamp": self.stats.timestamp,
             "elapsed_sec": round(self.stats.elapsed_sec, 2),
             "stats": {
+                "groundtruth_self_count": self.stats.groundtruth_self_count,
                 "groundtruth_peer_count": self.stats.groundtruth_peer_count,
                 "probe_peer_count": self.stats.probe_peer_count,
                 "dns_seed_count": self.stats.dns_seed_count,
@@ -90,6 +92,7 @@ class HarvestResult:
         """Deserialize a HarvestResult from a JSON dict."""
         raw_stats = data.get("stats", {})
         stats = HarvestStats(
+            groundtruth_self_count=int(raw_stats.get("groundtruth_self_count", 0)),
             groundtruth_peer_count=int(raw_stats.get("groundtruth_peer_count", 0)),
             probe_peer_count=int(raw_stats.get("probe_peer_count", 0)),
             dns_seed_count=int(raw_stats.get("dns_seed_count", 0)),
@@ -137,10 +140,11 @@ async def harvest_addresses(config: Config) -> HarvestResult:
     """Main Phase 1 entry point — collect and validate candidate addresses.
 
     Steps (in priority order):
-        1.1  getpeerinfo on groundtruth nodes [2,3,4,5,6]  → priority 0
-        1.2  getpeerinfo on probe nodes [0,1]               → priority 1
-        1.3  DNS seed resolution                             → priority 2
-        1.4  getnodeaddresses(0) on all nodes [0..6]         → priority 3
+        1.0  getnetworkinfo on groundtruth nodes [2,3,4,5,6] (self .onion) → priority 0
+        1.1  getpeerinfo on groundtruth nodes [2,3,4,5,6]                  → priority 0
+        1.2  getpeerinfo on probe nodes [0,1]                               → priority 1
+        1.3  DNS seed resolution                                             → priority 2
+        1.4  getnodeaddresses(0) on all nodes [0..6]                         → priority 3
         1.5  Batch reachability test on candidates that need it
 
     Args:
@@ -151,6 +155,7 @@ async def harvest_addresses(config: Config) -> HarvestResult:
     """
     t0 = time.monotonic()
     seen: set[NodeIdentity] = set()
+    gt_self_candidates: list[CandidateNode] = []  # confirmed online via RPC, skip reachability
     candidates: list[CandidateNode] = []
     probe_peers: list[CandidateNode] = []  # probe peers skip reachability test
     connected_probes: dict[int, set[NodeIdentity]] = {
@@ -158,6 +163,17 @@ async def harvest_addresses(config: Config) -> HarvestResult:
     }
 
     stats = HarvestStats()
+
+    # ── Step 1.0: Groundtruth nodes' own identities (priority 0, front of queue) ──
+    log.info("Step 1.0: Harvesting groundtruth nodes' own identities...")
+    gt_self_count = await _harvest_groundtruth_self_parallel(
+        config.groundtruth_nodes,
+        config.default_port,
+        seen,
+        gt_self_candidates,
+    )
+    stats.groundtruth_self_count = gt_self_count
+    log.info("  Found %d groundtruth self-identities", gt_self_count)
 
     # ── Step 1.1: Groundtruth peers (priority 0) ──
     log.info("Step 1.1: Harvesting peers of groundtruth nodes...")
@@ -219,8 +235,8 @@ async def harvest_addresses(config: Config) -> HarvestResult:
     else:
         reachable = []
 
-    # ── Combine: probe peers (already reachable) + tested candidates ──
-    all_candidates = probe_peers + reachable
+    # ── Combine: groundtruth self + tested candidates + probe peers ──
+    all_candidates = gt_self_candidates + reachable + probe_peers
     all_candidates.sort(key=lambda c: c.priority)
     stats.total_unique = len(all_candidates)
 
@@ -237,6 +253,84 @@ async def harvest_addresses(config: Config) -> HarvestResult:
 
 
 # ── Internal helpers ──
+
+
+async def _harvest_groundtruth_self_parallel(
+    node_configs: list[NodeConfig],
+    default_port: int,
+    seen: set[NodeIdentity],
+    candidates: list[CandidateNode],
+) -> int:
+    """Call getnetworkinfo() on groundtruth nodes to harvest their own .onion identities."""
+    added = 0
+    tasks = [
+        _harvest_groundtruth_self_one(nc, default_port, seen, candidates)
+        for nc in node_configs
+    ]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    for nc, result in zip(node_configs, results):
+        if isinstance(result, Exception):
+            log.warning("getnetworkinfo failed on groundtruth node %d: %s", nc.id, result)
+        else:
+            added += result
+    return added
+
+
+async def _harvest_groundtruth_self_one(
+    nc: NodeConfig,
+    default_port: int,
+    seen: set[NodeIdentity],
+    candidates: list[CandidateNode],
+) -> int:
+    """Extract the .onion (or external) localaddress of a groundtruth node via getnetworkinfo()."""
+    try:
+        async with AsyncBitcoinRpc(nc.rpchost, nc.rpcport, nc.rpcuser, nc.rpcpassword) as rpc:
+            info = await rpc.getnetworkinfo()
+    except Exception as e:
+        log.warning("RPC getnetworkinfo on node %d failed: %s", nc.id, e)
+        return 0
+
+    local_addrs: list[dict] = info.get("localaddresses", [])
+    if not local_addrs:
+        return 0
+
+    # Prefer .onion entry; fallback to first non-local address
+    chosen = next(
+        (item for item in local_addrs if str(item.get("address", "")).endswith(".onion")),
+        None,
+    )
+    if chosen is None:
+        chosen = next(
+            (
+                item
+                for item in local_addrs
+                if item.get("address") and not str(item.get("address")).startswith("127.0.0.1")
+            ),
+            None,
+        )
+    if chosen is None:
+        return 0
+
+    raw_addr = str(chosen["address"])
+    port = int(chosen.get("port", default_port))
+    network = "onion" if raw_addr.endswith(".onion") else ("ipv6" if ":" in raw_addr else "ipv4")
+    addr_str = normalize_addr(raw_addr, port, network)
+    identity = NodeIdentity(addr=addr_str)
+
+    if identity in seen:
+        return 0
+
+    seen.add(identity)
+    candidates.append(
+        CandidateNode(
+            identity=identity,
+            priority=CandidatePriority.GROUNDTRUTH_PEER,
+            network=network,
+            source_node_id=nc.id,
+            last_seen=0,
+        )
+    )
+    return 1
 
 
 async def _harvest_peers_parallel(

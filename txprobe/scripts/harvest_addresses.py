@@ -69,6 +69,7 @@ def main() -> None:
     print("=" * 60)
     print("  Phase 1 Harvest Summary")
     print("=" * 60)
+    print(f"  Groundtruth self (P0):   {s.groundtruth_self_count}")
     print(f"  Groundtruth peers (P0):  {s.groundtruth_peer_count}")
     print(f"  Probe peers (P1):        {s.probe_peer_count}")
     print(f"  DNS seed addrs (P2):     {s.dns_seed_count}")

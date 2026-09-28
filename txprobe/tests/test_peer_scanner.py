@@ -14,7 +14,7 @@ from txprobe.discovery.peer_scanner import (
     ScanStats,
     _disconnect_excess_peers,
     _extract_valid_probe_peers,
-    _order_candidates_for_dispatch,
+    _split_clearnet_and_tor,
     scan_and_select_peers,
 )
 from txprobe.models.node import CandidateNode, CandidatePriority, NodeIdentity
@@ -34,7 +34,8 @@ def _make_config(**overrides) -> Config:
             target_count=3,
             crawling_time_sec=5.0,
             poll_interval_sec=0.05,
-            onetry_concurrency=4,
+            clearnet_onetry_concurrency=4,
+            tor_onetry_concurrency=2,
         ),
         reachability=ReachabilityConfig(),
         dns_seeds=[],
@@ -76,19 +77,19 @@ def _peer(
 # ── Unit tests for internal helpers ──
 
 
-def test_order_candidates_for_dispatch_clearnet_before_onion():
-    """Within the same priority tier, clearnet addresses are dispatched before onion."""
-    c_onion_p0 = _cand("a.onion:48333", CandidatePriority.GROUNDTRUTH_PEER, "onion")
+def test_split_clearnet_and_tor_separates_and_skips_already_connected():
+    """_split_clearnet_and_tor separates clearnet and onion queues while skipping already connected."""
+    c_onion_p0 = _cand("gt2.onion:48333", CandidatePriority.GROUNDTRUTH_PEER, "onion")
     c_ipv4_p0 = _cand("1.1.1.1:48333", CandidatePriority.GROUNDTRUTH_PEER, "ipv4")
     c_ipv4_p2 = _cand("2.2.2.2:48333", CandidatePriority.DNS_SEED, "ipv4")
 
-    ordered = _order_candidates_for_dispatch([c_ipv4_p2, c_onion_p0, c_ipv4_p0])
+    clearnet, tor = _split_clearnet_and_tor(
+        [c_onion_p0, c_ipv4_p0, c_ipv4_p2],
+        already_connected={NodeIdentity("1.1.1.1:48333")},
+    )
 
-    assert [c.identity.addr for c in ordered] == [
-        "1.1.1.1:48333",  # P0 clearnet
-        "a.onion:48333",  # P0 onion
-        "2.2.2.2:48333",  # P2 clearnet
-    ]
+    assert clearnet == ["2.2.2.2:48333"]
+    assert tor == ["gt2.onion:48333"]
 
 
 def test_extract_valid_probe_peers_filters_invalid_types():
@@ -154,14 +155,14 @@ async def test_scan_requires_two_probes():
 async def test_scan_early_exit_and_priority_preservation():
     """scan_and_select_peers exits early at target_count, preserves priority, and disconnects excess."""
     c_p3 = _cand("4.0.0.1:48333", CandidatePriority.ADDRMAN)
-    c_p0 = _cand("1.0.0.1:48333", CandidatePriority.GROUNDTRUTH_PEER)
+    c_p0 = _cand("gt2.onion:48333", CandidatePriority.GROUNDTRUTH_PEER, "onion")
     c_p1 = _cand("2.0.0.1:48333", CandidatePriority.PROBE_PEER)
     c_p2 = _cand("3.0.0.1:48333", CandidatePriority.DNS_SEED)
 
     harvest = HarvestResult(
         candidates=[c_p3, c_p0, c_p1, c_p2],
         already_connected_probes={
-            0: {NodeIdentity("1.0.0.1:48333")},  # already connected on Probe 0
+            0: {NodeIdentity("gt2.onion:48333")},  # already connected on Probe 0
             1: set(),
         },
         stats=HarvestStats(total_unique=4),
@@ -172,7 +173,8 @@ async def test_scan_early_exit_and_priority_preservation():
             target_count=3,
             crawling_time_sec=10.0,
             poll_interval_sec=0.02,
-            onetry_concurrency=4,
+            clearnet_onetry_concurrency=4,
+            tor_onetry_concurrency=2,
         )
     )
 
@@ -181,14 +183,14 @@ async def test_scan_early_exit_and_priority_preservation():
 
     # Both probes connect to all 4 candidates + 1 non-candidate excess peer
     rpc_0.getpeerinfo = AsyncMock(return_value=[
-        _peer("1.0.0.1:48333"),
+        _peer("gt2.onion:48333", network="onion"),
         _peer("2.0.0.1:48333"),
         _peer("3.0.0.1:48333"),
         _peer("4.0.0.1:48333"),
         _peer("9.9.9.9:48333"),
     ])
     rpc_1.getpeerinfo = AsyncMock(return_value=[
-        _peer("1.0.0.1:48333"),
+        _peer("gt2.onion:48333", network="onion"),
         _peer("2.0.0.1:48333"),
         _peer("3.0.0.1:48333"),
         _peer("4.0.0.1:48333"),
@@ -211,7 +213,7 @@ async def test_scan_early_exit_and_priority_preservation():
 
     # Selected nodes MUST be top 3 by priority (P0, P1, P2), dropping P3 (4.0.0.1)
     assert [n.identity.addr for n in result.selected_nodes] == [
-        "1.0.0.1:48333",
+        "gt2.onion:48333",
         "2.0.0.1:48333",
         "3.0.0.1:48333",
     ]
@@ -221,9 +223,9 @@ async def test_scan_early_exit_and_priority_preservation():
     # Probe 1 had 4 peers (3 selected + 4.0.0.1) → 1 excess disconnected
     assert result.stats.excess_disconnected_probes[1] == 1
 
-    # Verify Probe 0 did NOT send onetry to 1.0.0.1:48333 since it was in already_connected_probes[0]
+    # Verify Probe 0 did NOT send onetry to gt2.onion:48333 since it was in already_connected_probes[0]
     onetry_addrs_p0 = [call.args[0] for call in rpc_0.addnode.call_args_list]
-    assert "1.0.0.1:48333" not in onetry_addrs_p0
+    assert "gt2.onion:48333" not in onetry_addrs_p0
 
 
 @pytest.mark.asyncio
@@ -242,7 +244,8 @@ async def test_scan_graceful_when_below_target():
             target_count=10,
             crawling_time_sec=0.2,
             poll_interval_sec=0.05,
-            onetry_concurrency=2,
+            clearnet_onetry_concurrency=2,
+            tor_onetry_concurrency=2,
         )
     )
 

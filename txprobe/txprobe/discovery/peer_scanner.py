@@ -148,12 +148,13 @@ async def scan_and_select_peers(
     """Main Phase 2 entry point — connect probes to candidates and select mutual peers.
 
     Steps:
-        2.1  Order candidates by (priority, is_onion) and filter out already-connected
-             peers per probe node.
+        2.1  Split prioritized candidates into clearnet and Tor (.onion) queues per
+             probe node, excluding peers already connected on that probe.
         2.2  Concurrently dispatch ``addnode(addr, "onetry")`` on both probe nodes
-             using a bounded worker pool while polling ``getpeerinfo()`` every
-             ``poll_interval_sec`` up to ``crawling_time_sec``. Exit early as soon
-             as ``|P_a ∩ P_b ∩ Candidates| >= target_count``.
+             using two independent worker pools per probe (Clearnet pool + Tor pool)
+             while polling ``getpeerinfo()`` every ``poll_interval_sec`` up to
+             ``crawling_time_sec``. Exit early as soon as
+             ``|P_a ∩ P_b ∩ Candidates| >= target_count``.
         2.3  Select up to ``target_count`` mutual peers in priority order and
              disconnect excess peers on both probe nodes via ``disconnectnode``.
 
@@ -180,24 +181,18 @@ async def scan_and_select_peers(
     target_count = config.discovery.target_count
     crawling_time_sec = config.discovery.crawling_time_sec
     poll_interval_sec = config.discovery.poll_interval_sec
-    concurrency = config.discovery.onetry_concurrency
+    clearnet_conc = config.discovery.clearnet_onetry_concurrency
+    tor_conc = config.discovery.tor_onetry_concurrency
 
-    # Ensure candidates are sorted by priority for final selection
+    # Ensure candidates are sorted by priority (stable sort preserves groundtruth-self first)
     prioritized_candidates = sorted(harvest.candidates, key=lambda c: c.priority)
     candidate_set: set[NodeIdentity] = {c.identity for c in prioritized_candidates}
-
-    # Order for connection dispatch: within each priority tier, try clearnet before onion
-    dispatch_order = _order_candidates_for_dispatch(prioritized_candidates)
 
     already_a = harvest.already_connected_probes.get(probe_a.id, set())
     already_b = harvest.already_connected_probes.get(probe_b.id, set())
 
-    addrs_to_try_a = [
-        c.identity.addr for c in dispatch_order if c.identity not in already_a
-    ]
-    addrs_to_try_b = [
-        c.identity.addr for c in dispatch_order if c.identity not in already_b
-    ]
+    clearnet_a, tor_a = _split_clearnet_and_tor(prioritized_candidates, already_a)
+    clearnet_b, tor_b = _split_clearnet_and_tor(prioritized_candidates, already_b)
 
     stats = ScanStats(
         candidates_input=len(prioritized_candidates),
@@ -207,11 +202,14 @@ async def scan_and_select_peers(
     )
 
     log.info(
-        "Step 2.1: Starting connection scan on Probe %d (%d to try) and Probe %d (%d to try), target=%d, timeout=%.0fs",
+        "Step 2.1: Starting dual-pool connection scan on Probe %d (%d clearnet, %d tor) "
+        "and Probe %d (%d clearnet, %d tor), target=%d, timeout=%.0fs",
         probe_a.id,
-        len(addrs_to_try_a),
+        len(clearnet_a),
+        len(tor_a),
         probe_b.id,
-        len(addrs_to_try_b),
+        len(clearnet_b),
+        len(tor_b),
         target_count,
         crawling_time_sec,
     )
@@ -225,27 +223,29 @@ async def scan_and_select_peers(
         AsyncBitcoinRpc(probe_a.rpchost, probe_a.rpcport, probe_a.rpcuser, probe_a.rpcpassword) as rpc_a,
         AsyncBitcoinRpc(probe_b.rpchost, probe_b.rpcport, probe_b.rpcuser, probe_b.rpcpassword) as rpc_b,
     ):
-        # ── Step 2.2: Concurrent onetry workers + polling loop ──
-        worker_a = asyncio.create_task(
-            _dispatch_onetry_worker(
-                rpc_a,
-                addrs_to_try_a,
-                concurrency,
-                stop_event,
-                stats.onetry_sent_probes,
-                probe_a.id,
-            )
-        )
-        worker_b = asyncio.create_task(
-            _dispatch_onetry_worker(
-                rpc_b,
-                addrs_to_try_b,
-                concurrency,
-                stop_event,
-                stats.onetry_sent_probes,
-                probe_b.id,
-            )
-        )
+        # ── Step 2.2: Independent Clearnet & Tor worker pools + polling loop ──
+        workers = [
+            asyncio.create_task(
+                _dispatch_onetry_worker(
+                    rpc_a, clearnet_a, clearnet_conc, stop_event, stats.onetry_sent_probes, probe_a.id,
+                )
+            ),
+            asyncio.create_task(
+                _dispatch_onetry_worker(
+                    rpc_a, tor_a, tor_conc, stop_event, stats.onetry_sent_probes, probe_a.id,
+                )
+            ),
+            asyncio.create_task(
+                _dispatch_onetry_worker(
+                    rpc_b, clearnet_b, clearnet_conc, stop_event, stats.onetry_sent_probes, probe_b.id,
+                )
+            ),
+            asyncio.create_task(
+                _dispatch_onetry_worker(
+                    rpc_b, tor_b, tor_conc, stop_event, stats.onetry_sent_probes, probe_b.id,
+                )
+            ),
+        ]
 
         grace_waited = False
         try:
@@ -293,9 +293,9 @@ async def scan_and_select_peers(
                     )
                     break
 
-                # If both workers have finished sending all onetry calls, wait one
+                # If all 4 workers have finished sending all onetry calls, wait one
                 # final grace interval for in-flight handshakes, poll once more, and exit.
-                if worker_a.done() and worker_b.done():
+                if all(w.done() for w in workers):
                     if grace_waited:
                         log.info(
                             "  All connection attempts completed (%d mutual peers found).",
@@ -310,10 +310,10 @@ async def scan_and_select_peers(
                     await asyncio.sleep(sleep_dur)
         finally:
             stop_event.set()
-            for w in (worker_a, worker_b):
+            for w in workers:
                 if not w.done():
                     w.cancel()
-            await asyncio.gather(worker_a, worker_b, return_exceptions=True)
+            await asyncio.gather(*workers, return_exceptions=True)
 
         stats.connected_probes[probe_a.id] = len(peers_a)
         stats.connected_probes[probe_b.id] = len(peers_b)
@@ -362,14 +362,21 @@ async def scan_and_select_peers(
 # ── Internal helpers ──
 
 
-def _order_candidates_for_dispatch(
+def _split_clearnet_and_tor(
     candidates: list[CandidateNode],
-) -> list[CandidateNode]:
-    """Order candidates by (priority, is_onion) so clearnet connects before Tor within each tier."""
-    return sorted(
-        candidates,
-        key=lambda c: (int(c.priority), 1 if c.network == "onion" else 0),
-    )
+    already_connected: set[NodeIdentity],
+) -> tuple[list[str], list[str]]:
+    """Split prioritized candidates into (clearnet_addrs, tor_addrs) excluding already_connected."""
+    clearnet_addrs: list[str] = []
+    tor_addrs: list[str] = []
+    for c in candidates:
+        if c.identity in already_connected:
+            continue
+        if c.network == "onion" or c.identity.addr.endswith(".onion") or ".onion:" in c.identity.addr:
+            tor_addrs.append(c.identity.addr)
+        else:
+            clearnet_addrs.append(c.identity.addr)
+    return clearnet_addrs, tor_addrs
 
 
 def _extract_valid_probe_peers(peers_raw: list[dict]) -> set[NodeIdentity]:
@@ -420,6 +427,9 @@ async def _dispatch_onetry_worker(
     probe_id: int,
 ) -> None:
     """Concurrently dispatch ``addnode(addr, "onetry")`` calls using a semaphore."""
+    if not addrs:
+        return
+
     sem = asyncio.Semaphore(max(1, concurrency))
 
     async def _try_one(addr: str) -> None:

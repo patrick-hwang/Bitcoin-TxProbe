@@ -299,3 +299,33 @@ def test_harvest_result_save_and_load(tmp_path):
     assert loaded.stats.total_unique == 2
     assert loaded.stats.elapsed_sec == 12.34
 
+
+@pytest.mark.asyncio
+async def test_harvest_groundtruth_self_identity():
+    """_harvest_groundtruth_self_one extracts .onion localaddress with GROUNDTRUTH_PEER priority."""
+    from txprobe.discovery.harvester import _harvest_groundtruth_self_one
+
+    nc = NodeConfig(2, "groundtruth", 48335, "u2", "p2")
+    seen: set[NodeIdentity] = set()
+    candidates: list[CandidateNode] = []
+
+    with patch("txprobe.discovery.harvester.AsyncBitcoinRpc") as MockRpc:
+        mock_rpc = AsyncMock()
+        mock_rpc.getnetworkinfo = AsyncMock(return_value={
+            "localaddresses": [
+                {"address": "gt2node.onion", "port": 48333, "score": 4},
+            ],
+        })
+        MockRpc.return_value.__aenter__ = AsyncMock(return_value=mock_rpc)
+        MockRpc.return_value.__aexit__ = AsyncMock(return_value=False)
+
+        added = await _harvest_groundtruth_self_one(nc, 48333, seen, candidates)
+
+    assert added == 1
+    assert len(candidates) == 1
+    assert candidates[0].identity.addr == "gt2node.onion:48333"
+    assert candidates[0].priority == CandidatePriority.GROUNDTRUTH_PEER
+    assert candidates[0].network == "onion"
+    assert candidates[0].source_node_id == 2
+
+

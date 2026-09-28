@@ -93,9 +93,10 @@ def test_discovery_config():
 
     assert cfg.discovery.target_count == 500
     assert cfg.discovery.crawling_time_sec == 60.0
-    # Default value for poll_interval_sec and onetry_concurrency
-    assert cfg.discovery.poll_interval_sec == 10.0
-    assert cfg.discovery.onetry_concurrency == 12
+    # Default value for poll_interval_sec, clearnet_onetry_concurrency, tor_onetry_concurrency
+    assert cfg.discovery.poll_interval_sec == 5.0
+    assert cfg.discovery.clearnet_onetry_concurrency == 32
+    assert cfg.discovery.tor_onetry_concurrency == 8
 
 
 def test_testnet4_yaml_probes_are_0_and_1():
@@ -103,8 +104,10 @@ def test_testnet4_yaml_probes_are_0_and_1():
     cfg = load_config(yaml_path)
     assert [n.id for n in cfg.probe_nodes] == [0, 1]
     assert [n.id for n in cfg.groundtruth_nodes] == [2, 3, 4, 5, 6]
-    assert cfg.discovery.crawling_time_sec == 600.0
-    assert cfg.discovery.onetry_concurrency == 12
+    assert cfg.discovery.crawling_time_sec == 180.0
+    assert cfg.discovery.poll_interval_sec == 5.0
+    assert cfg.discovery.clearnet_onetry_concurrency == 32
+    assert cfg.discovery.tor_onetry_concurrency == 8
 
 
 def test_reachability_config():

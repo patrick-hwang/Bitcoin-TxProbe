@@ -207,3 +207,8 @@ class AsyncBitcoinRpc:
     async def getaddrmaninfo(self) -> dict:
         """Return address manager statistics."""
         return await self.call("getaddrmaninfo")
+
+    async def getnetworkinfo(self) -> dict:
+        """Return P2P network state and local addresses (including .onion)."""
+        return await self.call("getnetworkinfo")
+

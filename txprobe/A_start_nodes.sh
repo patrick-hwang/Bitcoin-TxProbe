@@ -104,11 +104,11 @@ for i in {0..6}; do
 
     echo "    Launching node at $DATA_DIR: $NODE_TITLE $NOTE"
 
-    # Khởi động bitcoind ở chế độ daemon
+    # Khởi động bitcoind ở chế độ daemon (tăng rpcthreads và rpcworkqueue để xử lý kết nối song song)
     if [ -f "$CONF_FILE" ]; then
-        "$BITCOIND_BIN" -datadir="$DATA_DIR" -conf="$CONF_FILE" -daemon
+        "$BITCOIND_BIN" -datadir="$DATA_DIR" -conf="$CONF_FILE" -rpcthreads=64 -rpcworkqueue=256 -daemon
     else
-        "$BITCOIND_BIN" -datadir="$DATA_DIR" -daemon
+        "$BITCOIND_BIN" -datadir="$DATA_DIR" -rpcthreads=64 -rpcworkqueue=256 -daemon
     fi
 done
 
