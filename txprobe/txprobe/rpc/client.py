@@ -44,11 +44,30 @@ class AsyncBitcoinRpc:
         self._url = f"http://{host}:{port}"
         if wallet:
             self._url += f"/wallet/{wallet}"
+        self._host = host
+        self._port = port
+        self._wallet = wallet
         self._user = user
         self._password = password
         self._auth_header = aiohttp.encode_basic_auth(user, password)
         self._session: aiohttp.ClientSession | None = None
         self._id_counter = 0
+
+    @classmethod
+    def from_node_config(
+        cls,
+        node_cfg: Any,
+        *,
+        use_wallet: bool = True,
+    ) -> AsyncBitcoinRpc:
+        """Create an AsyncBitcoinRpc client from a NodeConfig instance."""
+        return cls(
+            host=getattr(node_cfg, "rpchost", "127.0.0.1"),
+            port=node_cfg.rpcport,
+            user=node_cfg.rpcuser,
+            password=node_cfg.rpcpassword,
+            wallet=getattr(node_cfg, "wallet", "") if use_wallet else "",
+        )
 
     async def open(self) -> None:
         """Create the HTTP session. Must be called before any RPC."""
@@ -108,7 +127,7 @@ class AsyncBitcoinRpc:
 
     async def call_batch(
         self,
-        calls: list[tuple[str, ...]],
+        calls: list[tuple[Any, ...]],
         *,
         raise_on_error: bool = True,
     ) -> list[Any]:
@@ -238,4 +257,86 @@ class AsyncBitcoinRpc:
     async def decoderawtransaction(self, hexstr: str) -> dict:
         """Decode a serialized transaction hex string."""
         return await self.call("decoderawtransaction", hexstr)
+
+    async def listwallets(self) -> list[str]:
+        """Return a list of currently loaded wallet names."""
+        return await self.call("listwallets")
+
+    async def loadwallet(self, wallet_name: str) -> dict:
+        """Load a wallet by name."""
+        return await self.call("loadwallet", wallet_name)
+
+    async def listunspent(
+        self,
+        minconf: int = 1,
+        maxconf: int = 9999999,
+        addresses: list[str] | None = None,
+    ) -> list[dict]:
+        """Return array of unspent transaction outputs."""
+        if addresses is not None:
+            return await self.call("listunspent", minconf, maxconf, addresses)
+        return await self.call("listunspent", minconf, maxconf)
+
+    async def listdescriptors(self, private: bool = False) -> dict:
+        """List descriptors imported into a descriptor-enabled wallet."""
+        if private:
+            return await self.call("listdescriptors", True)
+        return await self.call("listdescriptors")
+
+    async def deriveaddresses(
+        self,
+        descriptor: str,
+        range_spec: list[int] | int | None = None,
+    ) -> list[str]:
+        """Derive one or more addresses corresponding to an output descriptor."""
+        if range_spec is not None:
+            return await self.call("deriveaddresses", descriptor, range_spec)
+        return await self.call("deriveaddresses", descriptor)
+
+    async def getnewaddress(
+        self, label: str = "", address_type: str = ""
+    ) -> str:
+        """Return a new Bitcoin address for receiving payments."""
+        if address_type:
+            return await self.call("getnewaddress", label, address_type)
+        if label:
+            return await self.call("getnewaddress", label)
+        return await self.call("getnewaddress")
+
+    async def signrawtransactionwithwallet(
+        self,
+        hexstring: str,
+        prevtxs: list[dict[str, Any]] | None = None,
+    ) -> dict:
+        """Sign inputs for raw transaction using the node's wallet."""
+        if prevtxs is not None:
+            return await self.call("signrawtransactionwithwallet", hexstring, prevtxs)
+        return await self.call("signrawtransactionwithwallet", hexstring)
+
+    async def sendrawtransaction(
+        self,
+        hexstring: str,
+        maxfeerate: float | int | str | None = None,
+    ) -> str:
+        """Submit a raw transaction to local node and network."""
+        if maxfeerate is not None:
+            return await self.call("sendrawtransaction", hexstring, maxfeerate)
+        return await self.call("sendrawtransaction", hexstring)
+
+    async def sendrawtransaction_orphan(
+        self,
+        hexstring: str,
+        maxfeerate: float | int = 0,
+        maxburnamount: float | int = 0,
+        peer_ids: list[int] | None = None,
+    ) -> str:
+        """Send raw transaction directly to specific peer IDs using custom TxProbe RPC."""
+        return await self.call(
+            "sendrawtransaction_orphan",
+            hexstring,
+            maxfeerate,
+            maxburnamount,
+            peer_ids if peer_ids is not None else [],
+        )
+
 

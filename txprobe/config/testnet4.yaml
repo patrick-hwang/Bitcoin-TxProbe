@@ -45,6 +45,16 @@ nodes:
 invblock:
   wait_time_sec: 5.0
 
+tx_crafting:
+  utxo_target_sats: 2000
+  parent_fee_sats: 500
+  marker_fee_sats: 500
+  split_fee_rate_sat_vb: 2
+  max_outputs_per_split_tx: 500
+  max_source_size: 75
+  poll_interval_sec: 10.0
+  block_propagation_wait_sec: 15.0
+
 discovery:
   target_count: 1000
   crawling_time_sec: 180

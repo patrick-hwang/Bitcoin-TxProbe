@@ -28,6 +28,19 @@ class InvblockConfig:
 
 
 @dataclass
+class TxCraftingConfig:
+    """Configuration for Step 3 raw transaction crafting and UTXO management."""
+    utxo_target_sats: int = 2000
+    parent_fee_sats: int = 500
+    marker_fee_sats: int = 500
+    split_fee_rate_sat_vb: int = 2
+    max_outputs_per_split_tx: int = 500
+    max_source_size: int = 75
+    poll_interval_sec: float = 10.0
+    block_propagation_wait_sec: float = 15.0
+
+
+@dataclass
 class DiscoveryConfig:
     """Configuration for the node discovery process."""
     target_count: int = 1000
@@ -58,10 +71,13 @@ class Config:
     reachability: ReachabilityConfig
     dns_seeds: list[str]
     invblock: InvblockConfig = None  # type: ignore[assignment]
+    tx_crafting: TxCraftingConfig = None  # type: ignore[assignment]
 
     def __post_init__(self) -> None:
         if self.invblock is None:
             self.invblock = InvblockConfig()
+        if self.tx_crafting is None:
+            self.tx_crafting = TxCraftingConfig()
 
     @property
     def probe_nodes(self) -> list[NodeConfig]:
@@ -138,6 +154,22 @@ def load_config(path: str | Path) -> Config:
         wait_time_sec=float(inv_raw.get("wait_time_sec", 5.0)),
     )
 
+    craft_raw = raw.get("tx_crafting", {})
+    tx_crafting = TxCraftingConfig(
+        utxo_target_sats=int(craft_raw.get("utxo_target_sats", 2000)),
+        parent_fee_sats=int(craft_raw.get("parent_fee_sats", 500)),
+        marker_fee_sats=int(craft_raw.get("marker_fee_sats", 500)),
+        split_fee_rate_sat_vb=int(craft_raw.get("split_fee_rate_sat_vb", 2)),
+        max_outputs_per_split_tx=int(
+            craft_raw.get("max_outputs_per_split_tx", 500)
+        ),
+        max_source_size=int(craft_raw.get("max_source_size", 75)),
+        poll_interval_sec=float(craft_raw.get("poll_interval_sec", 10.0)),
+        block_propagation_wait_sec=float(
+            craft_raw.get("block_propagation_wait_sec", 15.0)
+        ),
+    )
+
     return Config(
         network=raw["network"],
         default_port=int(raw["default_port"]),
@@ -146,4 +178,5 @@ def load_config(path: str | Path) -> Config:
         reachability=reachability,
         dns_seeds=raw.get("dns_seeds", []),
         invblock=invblock,
+        tx_crafting=tx_crafting,
     )
