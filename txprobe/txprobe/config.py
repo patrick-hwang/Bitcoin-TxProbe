@@ -18,6 +18,13 @@ class NodeConfig:
     rpcpassword: str
     wallet: str = ""
     rpchost: str = "127.0.0.1"
+    txprobe_log_file: str = ""
+
+
+@dataclass
+class InvblockConfig:
+    """Configuration for the INVBLOCK pre-filtering step."""
+    wait_time_sec: float = 5.0
 
 
 @dataclass
@@ -50,6 +57,11 @@ class Config:
     discovery: DiscoveryConfig
     reachability: ReachabilityConfig
     dns_seeds: list[str]
+    invblock: InvblockConfig = None  # type: ignore[assignment]
+
+    def __post_init__(self) -> None:
+        if self.invblock is None:
+            self.invblock = InvblockConfig()
 
     @property
     def probe_nodes(self) -> list[NodeConfig]:
@@ -95,6 +107,7 @@ def load_config(path: str | Path) -> Config:
             rpcpassword=n["rpcpassword"],
             wallet=n.get("wallet", ""),
             rpchost=n.get("rpchost", "127.0.0.1"),
+            txprobe_log_file=n.get("txprobe_log_file", ""),
         )
         for n in raw["nodes"]
     ]
@@ -120,6 +133,11 @@ def load_config(path: str | Path) -> Config:
         tor_concurrency=int(reach_raw.get("tor_concurrency", 20)),
     )
 
+    inv_raw = raw.get("invblock", {})
+    invblock = InvblockConfig(
+        wait_time_sec=float(inv_raw.get("wait_time_sec", 5.0)),
+    )
+
     return Config(
         network=raw["network"],
         default_port=int(raw["default_port"]),
@@ -127,4 +145,5 @@ def load_config(path: str | Path) -> Config:
         discovery=discovery,
         reachability=reachability,
         dns_seeds=raw.get("dns_seeds", []),
+        invblock=invblock,
     )

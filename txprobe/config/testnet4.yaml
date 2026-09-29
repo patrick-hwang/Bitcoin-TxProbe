@@ -9,11 +9,13 @@ nodes:
     rpcuser: expuser0
     rpcpassword: strongpassword0
     wallet: mywallet
+    txprobe_log_file: txprobe_0.log
   - id: 1
     role: probe
     rpcport: 48332
     rpcuser: expuser1
     rpcpassword: strongpassword1
+    txprobe_log_file: txprobe_1.log
   - id: 2
     role: groundtruth
     rpcport: 48335
@@ -39,6 +41,9 @@ nodes:
     rpcport: 48350
     rpcuser: expuser6
     rpcpassword: strongpassword6
+
+invblock:
+  wait_time_sec: 5.0
 
 discovery:
   target_count: 1000

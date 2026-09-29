@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from types import MappingProxyType
@@ -32,6 +32,23 @@ class GraphSnapshot:
                 edge = (u.addr, v.addr) if u.addr <= v.addr else (v.addr, u.addr)
                 unique_edges.add(edge)
         return len(unique_edges)
+
+    def prune_nodes(self, keep_nodes: Iterable[NodeIdentity]) -> GraphSnapshot:
+        """Return a new GraphSnapshot keeping only specified nodes and their mutual edges."""
+        keep_set = set(keep_nodes)
+        new_nodes = tuple(n for n in self.nodes if n in keep_set)
+        new_adj: dict[NodeIdentity, tuple[NodeIdentity, ...]] = {}
+        for node in new_nodes:
+            new_adj[node] = tuple(p for p in self.adj_list.get(node, ()) if p in keep_set)
+        return GraphSnapshot(
+            nodes=new_nodes,
+            adj_list=MappingProxyType(new_adj),
+        )
+
+    def remove_nodes(self, remove_nodes: Iterable[NodeIdentity]) -> GraphSnapshot:
+        """Return a new GraphSnapshot removing specified nodes and their incident edges."""
+        rem_set = set(remove_nodes)
+        return self.prune_nodes(n for n in self.nodes if n not in rem_set)
 
     def to_dict(self) -> dict:
         """Serialize to a JSON-compatible dict."""

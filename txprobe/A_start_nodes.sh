@@ -102,13 +102,16 @@ for i in {0..6}; do
         continue
     fi
 
-    echo "    Launching node at $DATA_DIR: $NODE_TITLE $NOTE"
+    EXTRA_ARGS=""
+    if [ "$i" -eq 0 ] || [ "$i" -eq 1 ]; then
+        EXTRA_ARGS="-txprobelogfile=txprobe_${i}.log"
+    fi
 
     # Khởi động bitcoind ở chế độ daemon (tăng rpcthreads và rpcworkqueue để xử lý kết nối song song)
     if [ -f "$CONF_FILE" ]; then
-        "$BITCOIND_BIN" -datadir="$DATA_DIR" -conf="$CONF_FILE" -rpcthreads=64 -rpcworkqueue=256 -daemon
+        "$BITCOIND_BIN" -datadir="$DATA_DIR" -conf="$CONF_FILE" -rpcthreads=64 -rpcworkqueue=256 $EXTRA_ARGS -daemon
     else
-        "$BITCOIND_BIN" -datadir="$DATA_DIR" -rpcthreads=64 -rpcworkqueue=256 -daemon
+        "$BITCOIND_BIN" -datadir="$DATA_DIR" -rpcthreads=64 -rpcworkqueue=256 $EXTRA_ARGS -daemon
     fi
 done
 

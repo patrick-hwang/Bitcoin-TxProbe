@@ -212,3 +212,30 @@ class AsyncBitcoinRpc:
         """Return P2P network state and local addresses (including .onion)."""
         return await self.call("getnetworkinfo")
 
+    async def sendinv_orphan(
+        self, txs_hex: list[str], peer_ids: list[int]
+    ) -> None:
+        """Send inventory messages directly to specific peer IDs using custom TxProbe RPC.
+
+        Args:
+            txs_hex: List of raw transaction hex strings.
+            peer_ids: List of peer numeric IDs to send INVs to.
+        """
+        await self.call("sendinv_orphan", txs_hex, peer_ids)
+
+    async def clearinv_probe(self) -> dict:
+        """Clear all tracked probe transactions used for INVBLOCK in memory."""
+        return await self.call("clearinv_probe")
+
+    async def createrawtransaction(
+        self,
+        inputs: list[dict[str, Any]],
+        outputs: list[dict[str, Any]] | dict[str, Any],
+    ) -> str:
+        """Create a raw transaction from inputs and outputs."""
+        return await self.call("createrawtransaction", inputs, outputs)
+
+    async def decoderawtransaction(self, hexstr: str) -> dict:
+        """Decode a serialized transaction hex string."""
+        return await self.call("decoderawtransaction", hexstr)
+
