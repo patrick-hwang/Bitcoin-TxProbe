@@ -55,6 +55,14 @@ tx_crafting:
   poll_interval_sec: 10.0
   block_propagation_wait_sec: 15.0
 
+txprobe_execution:
+  invblock_wait_sec: 5.0
+  flood_wait_sec: 1.0
+  parent_wait_sec: 5.0
+  marker_propagation_wait_sec: 10.0
+  getdata_wait_sec: 5.0
+  cleanup_wait_sec: 2.0
+
 discovery:
   target_count: 1000
   crawling_time_sec: 180

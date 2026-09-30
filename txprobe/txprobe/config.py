@@ -41,6 +41,17 @@ class TxCraftingConfig:
 
 
 @dataclass
+class TxProbeExecutionConfig:
+    """Configuration for Step 4 TxProbe execution loop."""
+    invblock_wait_sec: float = 5.0
+    flood_wait_sec: float = 1.0
+    parent_wait_sec: float = 5.0
+    marker_propagation_wait_sec: float = 10.0
+    getdata_wait_sec: float = 5.0
+    cleanup_wait_sec: float = 2.0
+
+
+@dataclass
 class DiscoveryConfig:
     """Configuration for the node discovery process."""
     target_count: int = 1000
@@ -72,12 +83,15 @@ class Config:
     dns_seeds: list[str]
     invblock: InvblockConfig = None  # type: ignore[assignment]
     tx_crafting: TxCraftingConfig = None  # type: ignore[assignment]
+    txprobe_execution: TxProbeExecutionConfig = None  # type: ignore[assignment]
 
     def __post_init__(self) -> None:
         if self.invblock is None:
             self.invblock = InvblockConfig()
         if self.tx_crafting is None:
             self.tx_crafting = TxCraftingConfig()
+        if self.txprobe_execution is None:
+            self.txprobe_execution = TxProbeExecutionConfig()
 
     @property
     def probe_nodes(self) -> list[NodeConfig]:
@@ -170,6 +184,18 @@ def load_config(path: str | Path) -> Config:
         ),
     )
 
+    exec_raw = raw.get("txprobe_execution", {})
+    txprobe_execution = TxProbeExecutionConfig(
+        invblock_wait_sec=float(exec_raw.get("invblock_wait_sec", 5.0)),
+        flood_wait_sec=float(exec_raw.get("flood_wait_sec", 1.0)),
+        parent_wait_sec=float(exec_raw.get("parent_wait_sec", 5.0)),
+        marker_propagation_wait_sec=float(
+            exec_raw.get("marker_propagation_wait_sec", 10.0)
+        ),
+        getdata_wait_sec=float(exec_raw.get("getdata_wait_sec", 5.0)),
+        cleanup_wait_sec=float(exec_raw.get("cleanup_wait_sec", 2.0)),
+    )
+
     return Config(
         network=raw["network"],
         default_port=int(raw["default_port"]),
@@ -179,4 +205,5 @@ def load_config(path: str | Path) -> Config:
         dns_seeds=raw.get("dns_seeds", []),
         invblock=invblock,
         tx_crafting=tx_crafting,
+        txprobe_execution=txprobe_execution,
     )

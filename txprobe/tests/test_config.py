@@ -126,3 +126,41 @@ def test_load_missing_file():
     with pytest.raises(FileNotFoundError):
         load_config("/nonexistent/path.yaml")
 
+
+def test_txprobe_execution_config_defaults_and_custom():
+    # Defaults when section is omitted
+    with tempfile.NamedTemporaryFile("w", suffix=".yaml", delete=False) as f:
+        f.write(SAMPLE_YAML)
+        f.flush()
+        cfg_default = load_config(f.name)
+
+    assert cfg_default.txprobe_execution.invblock_wait_sec == 5.0
+    assert cfg_default.txprobe_execution.flood_wait_sec == 1.0
+    assert cfg_default.txprobe_execution.parent_wait_sec == 5.0
+    assert cfg_default.txprobe_execution.marker_propagation_wait_sec == 10.0
+    assert cfg_default.txprobe_execution.getdata_wait_sec == 5.0
+    assert cfg_default.txprobe_execution.cleanup_wait_sec == 2.0
+
+    # Custom values when section is present
+    custom_yaml = SAMPLE_YAML + """\
+txprobe_execution:
+  invblock_wait_sec: 3.5
+  flood_wait_sec: 0.5
+  parent_wait_sec: 4.0
+  marker_propagation_wait_sec: 8.0
+  getdata_wait_sec: 6.0
+  cleanup_wait_sec: 1.5
+"""
+    with tempfile.NamedTemporaryFile("w", suffix=".yaml", delete=False) as f:
+        f.write(custom_yaml)
+        f.flush()
+        cfg_custom = load_config(f.name)
+
+    assert cfg_custom.txprobe_execution.invblock_wait_sec == 3.5
+    assert cfg_custom.txprobe_execution.flood_wait_sec == 0.5
+    assert cfg_custom.txprobe_execution.parent_wait_sec == 4.0
+    assert cfg_custom.txprobe_execution.marker_propagation_wait_sec == 8.0
+    assert cfg_custom.txprobe_execution.getdata_wait_sec == 6.0
+    assert cfg_custom.txprobe_execution.cleanup_wait_sec == 1.5
+
+
