@@ -50,6 +50,40 @@ class GraphSnapshot:
         rem_set = set(remove_nodes)
         return self.prune_nodes(n for n in self.nodes if n not in rem_set)
 
+    def remove_edges(
+        self,
+        edges_to_remove: Iterable[tuple[NodeIdentity, NodeIdentity] | tuple[str, str]],
+    ) -> GraphSnapshot:
+        """Return a new GraphSnapshot removing specified undirected edges.
+
+        Accepts edges as tuples of either NodeIdentity or address strings.
+        Preserves all nodes and non-removed edges.
+        """
+        edge_set: set[tuple[str, str]] = set()
+        for edge in edges_to_remove:
+            u_addr = edge[0].addr if hasattr(edge[0], "addr") else str(edge[0])
+            v_addr = edge[1].addr if hasattr(edge[1], "addr") else str(edge[1])
+            edge_set.add((u_addr, v_addr) if u_addr <= v_addr else (v_addr, u_addr))
+
+        new_adj: dict[NodeIdentity, tuple[NodeIdentity, ...]] = {}
+        for node in self.nodes:
+            current_peers = self.adj_list.get(node, ())
+            filtered_peers: list[NodeIdentity] = []
+            for peer in current_peers:
+                canonical = (
+                    (node.addr, peer.addr)
+                    if node.addr <= peer.addr
+                    else (peer.addr, node.addr)
+                )
+                if canonical not in edge_set:
+                    filtered_peers.append(peer)
+            new_adj[node] = tuple(filtered_peers)
+
+        return GraphSnapshot(
+            nodes=self.nodes,
+            adj_list=MappingProxyType(new_adj),
+        )
+
     def to_dict(self) -> dict:
         """Serialize to a JSON-compatible dict."""
         return {
