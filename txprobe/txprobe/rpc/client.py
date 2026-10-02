@@ -118,7 +118,16 @@ class AsyncBitcoinRpc:
             "params": list(params),
         }
         async with self._session.post(self._url, json=payload) as resp:
-            body = await resp.json(content_type=None)
+            if resp.status == 401:
+                raise RpcError(401, f"HTTP 401 Unauthorized for {self._user}@{self._url}")
+            try:
+                body = await resp.json(content_type=None)
+            except Exception:
+                text = await resp.text()
+                raise RpcError(resp.status, f"HTTP {resp.status} {resp.reason}: {text}")
+
+        if not isinstance(body, dict):
+            raise RpcError(-1, f"Invalid JSON-RPC response from {self._url}: {body}")
 
         if body.get("error"):
             err = body["error"]
@@ -161,7 +170,16 @@ class AsyncBitcoinRpc:
             })
 
         async with self._session.post(self._url, json=batch) as resp:
-            bodies = await resp.json(content_type=None)
+            if resp.status == 401:
+                raise RpcError(401, f"HTTP 401 Unauthorized for {self._user}@{self._url}")
+            try:
+                bodies = await resp.json(content_type=None)
+            except Exception:
+                text = await resp.text()
+                raise RpcError(resp.status, f"HTTP {resp.status} {resp.reason}: {text}")
+
+        if not isinstance(bodies, list):
+            raise RpcError(-1, f"Invalid JSON-RPC batch response from {self._url}: {bodies}")
 
         # Sort by id to maintain original order
         bodies.sort(key=lambda b: b.get("id", 0))

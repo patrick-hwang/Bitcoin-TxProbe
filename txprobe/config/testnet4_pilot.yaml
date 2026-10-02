@@ -51,7 +51,7 @@ tx_crafting:
   marker_fee_sats: 500
   split_fee_rate_sat_vb: 2
   max_outputs_per_split_tx: 500
-  max_source_size: 75
+  max_source_size: 10
   poll_interval_sec: 10.0
   block_propagation_wait_sec: 15.0
 
@@ -64,8 +64,8 @@ txprobe_execution:
   cleanup_wait_sec: 2.0
 
 discovery:
-  target_count: 1000
-  crawling_time_sec: 180
+  target_count: 25
+  crawling_time_sec: 45
   poll_interval_sec: 5
   clearnet_onetry_concurrency: 32
   tor_onetry_concurrency: 8
