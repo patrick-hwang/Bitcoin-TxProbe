@@ -1,0 +1,204 @@
+{
+  "timestamp": "2026-10-02T04:29:41.575643+00:00",
+  "elapsed_sec": 5.14,
+  "probe_ids": [
+    0,
+    1
+  ],
+  "stats": {
+    "candidates_input": 193,
+    "onetry_sent_probes": {
+      "0": 185,
+      "1": 185
+    },
+    "connected_probes": {
+      "0": 179,
+      "1": 178
+    },
+    "mutual_connected": 171,
+    "selected_count": 25,
+    "excess_disconnected_probes": {
+      "0": 154,
+      "1": 153
+    },
+    "early_exit": true,
+    "polls_count": 2
+  },
+  "selected_nodes": [
+    {
+      "addr": "136.49.112.63:47333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 2,
+      "last_seen": 0
+    },
+    {
+      "addr": "89.117.50.252:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 2,
+      "last_seen": 0
+    },
+    {
+      "addr": "107.161.185.205:18333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 2,
+      "last_seen": 0
+    },
+    {
+      "addr": "65.108.141.219:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 2,
+      "last_seen": 0
+    },
+    {
+      "addr": "134.199.227.217:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 2,
+      "last_seen": 0
+    },
+    {
+      "addr": "71.218.227.18:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 2,
+      "last_seen": 0
+    },
+    {
+      "addr": "188.213.90.149:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 2,
+      "last_seen": 0
+    },
+    {
+      "addr": "3.235.24.238:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 2,
+      "last_seen": 0
+    },
+    {
+      "addr": "103.165.192.211:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 2,
+      "last_seen": 0
+    },
+    {
+      "addr": "198.58.102.18:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 3,
+      "last_seen": 0
+    },
+    {
+      "addr": "54.78.82.55:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 3,
+      "last_seen": 0
+    },
+    {
+      "addr": "103.99.168.202:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 3,
+      "last_seen": 0
+    },
+    {
+      "addr": "3.69.160.185:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 3,
+      "last_seen": 0
+    },
+    {
+      "addr": "205.201.33.246:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 3,
+      "last_seen": 0
+    },
+    {
+      "addr": "100.56.0.96:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 3,
+      "last_seen": 0
+    },
+    {
+      "addr": "168.119.150.247:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 3,
+      "last_seen": 0
+    },
+    {
+      "addr": "34.31.40.200:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 3,
+      "last_seen": 0
+    },
+    {
+      "addr": "169.58.12.176:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 3,
+      "last_seen": 0
+    },
+    {
+      "addr": "71.13.92.62:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 5,
+      "last_seen": 0
+    },
+    {
+      "addr": "45.8.96.66:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 5,
+      "last_seen": 0
+    },
+    {
+      "addr": "89.58.9.219:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 5,
+      "last_seen": 0
+    },
+    {
+      "addr": "103.99.170.205:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 5,
+      "last_seen": 0
+    },
+    {
+      "addr": "100.30.166.14:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 5,
+      "last_seen": 0
+    },
+    {
+      "addr": "13.140.162.77:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 5,
+      "last_seen": 0
+    },
+    {
+      "addr": "13.57.190.12:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 5,
+      "last_seen": 0
+    }
+  ]
+}

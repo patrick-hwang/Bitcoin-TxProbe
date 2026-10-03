@@ -1,0 +1,139 @@
+{
+  "nodes": [
+    "upiuurfhixst6z5gbif6eziw4dush2wtfjy6tcpbkycqkra5trb575id.onion:48333",
+    "pnvbolsqnqmiwbmrrtqoz3cbfwvnrhdesn3wxbvimifvhs2c5r5z5uad.onion:48333",
+    "b6yjsgsx3jbzxosfu3gsnbih4hmt3nspizetslm7ok6wfvsrylv3ysqd.onion:48333",
+    "136.49.112.63:47333",
+    "89.117.50.252:48333",
+    "107.161.185.205:18333",
+    "65.108.141.219:48333",
+    "134.199.227.217:48333",
+    "71.218.227.18:48333",
+    "188.213.90.149:48333",
+    "3.235.24.238:48333",
+    "103.165.192.211:48333",
+    "54.78.82.55:48333",
+    "103.99.168.202:48333",
+    "3.69.160.185:48333",
+    "205.201.33.246:48333",
+    "100.56.0.96:48333",
+    "169.58.12.176:48333",
+    "71.13.92.62:48333",
+    "45.8.96.66:48333",
+    "89.58.9.219:48333",
+    "103.99.170.205:48333",
+    "100.30.166.14:48333",
+    "13.140.162.77:48333",
+    "13.57.190.12:48333"
+  ],
+  "adj_list": {
+    "upiuurfhixst6z5gbif6eziw4dush2wtfjy6tcpbkycqkra5trb575id.onion:48333": [
+      "136.49.112.63:47333",
+      "89.117.50.252:48333",
+      "107.161.185.205:18333",
+      "65.108.141.219:48333",
+      "134.199.227.217:48333",
+      "188.213.90.149:48333",
+      "103.165.192.211:48333"
+    ],
+    "pnvbolsqnqmiwbmrrtqoz3cbfwvnrhdesn3wxbvimifvhs2c5r5z5uad.onion:48333": [
+      "54.78.82.55:48333",
+      "103.99.168.202:48333",
+      "205.201.33.246:48333"
+    ],
+    "b6yjsgsx3jbzxosfu3gsnbih4hmt3nspizetslm7ok6wfvsrylv3ysqd.onion:48333": [
+      "65.108.141.219:48333",
+      "71.13.92.62:48333",
+      "45.8.96.66:48333",
+      "100.30.166.14:48333",
+      "13.140.162.77:48333",
+      "13.57.190.12:48333"
+    ],
+    "136.49.112.63:47333": [
+      "upiuurfhixst6z5gbif6eziw4dush2wtfjy6tcpbkycqkra5trb575id.onion:48333",
+      "205.201.33.246:48333",
+      "13.140.162.77:48333"
+    ],
+    "89.117.50.252:48333": [
+      "upiuurfhixst6z5gbif6eziw4dush2wtfjy6tcpbkycqkra5trb575id.onion:48333",
+      "13.140.162.77:48333",
+      "13.57.190.12:48333"
+    ],
+    "107.161.185.205:18333": [
+      "upiuurfhixst6z5gbif6eziw4dush2wtfjy6tcpbkycqkra5trb575id.onion:48333",
+      "89.58.9.219:48333"
+    ],
+    "65.108.141.219:48333": [
+      "upiuurfhixst6z5gbif6eziw4dush2wtfjy6tcpbkycqkra5trb575id.onion:48333",
+      "b6yjsgsx3jbzxosfu3gsnbih4hmt3nspizetslm7ok6wfvsrylv3ysqd.onion:48333",
+      "134.199.227.217:48333",
+      "13.140.162.77:48333"
+    ],
+    "134.199.227.217:48333": [
+      "upiuurfhixst6z5gbif6eziw4dush2wtfjy6tcpbkycqkra5trb575id.onion:48333",
+      "65.108.141.219:48333",
+      "3.235.24.238:48333"
+    ],
+    "71.218.227.18:48333": [
+      "89.58.9.219:48333"
+    ],
+    "188.213.90.149:48333": [
+      "upiuurfhixst6z5gbif6eziw4dush2wtfjy6tcpbkycqkra5trb575id.onion:48333"
+    ],
+    "3.235.24.238:48333": [
+      "134.199.227.217:48333"
+    ],
+    "103.165.192.211:48333": [
+      "upiuurfhixst6z5gbif6eziw4dush2wtfjy6tcpbkycqkra5trb575id.onion:48333",
+      "89.58.9.219:48333"
+    ],
+    "54.78.82.55:48333": [
+      "pnvbolsqnqmiwbmrrtqoz3cbfwvnrhdesn3wxbvimifvhs2c5r5z5uad.onion:48333",
+      "3.69.160.185:48333"
+    ],
+    "103.99.168.202:48333": [
+      "pnvbolsqnqmiwbmrrtqoz3cbfwvnrhdesn3wxbvimifvhs2c5r5z5uad.onion:48333"
+    ],
+    "3.69.160.185:48333": [
+      "54.78.82.55:48333"
+    ],
+    "205.201.33.246:48333": [
+      "pnvbolsqnqmiwbmrrtqoz3cbfwvnrhdesn3wxbvimifvhs2c5r5z5uad.onion:48333",
+      "136.49.112.63:47333"
+    ],
+    "100.56.0.96:48333": [],
+    "169.58.12.176:48333": [],
+    "71.13.92.62:48333": [
+      "b6yjsgsx3jbzxosfu3gsnbih4hmt3nspizetslm7ok6wfvsrylv3ysqd.onion:48333",
+      "103.99.170.205:48333"
+    ],
+    "45.8.96.66:48333": [
+      "b6yjsgsx3jbzxosfu3gsnbih4hmt3nspizetslm7ok6wfvsrylv3ysqd.onion:48333"
+    ],
+    "89.58.9.219:48333": [
+      "107.161.185.205:18333",
+      "71.218.227.18:48333",
+      "103.165.192.211:48333",
+      "13.57.190.12:48333"
+    ],
+    "103.99.170.205:48333": [
+      "71.13.92.62:48333",
+      "13.140.162.77:48333"
+    ],
+    "100.30.166.14:48333": [
+      "b6yjsgsx3jbzxosfu3gsnbih4hmt3nspizetslm7ok6wfvsrylv3ysqd.onion:48333"
+    ],
+    "13.140.162.77:48333": [
+      "b6yjsgsx3jbzxosfu3gsnbih4hmt3nspizetslm7ok6wfvsrylv3ysqd.onion:48333",
+      "136.49.112.63:47333",
+      "89.117.50.252:48333",
+      "65.108.141.219:48333",
+      "103.99.170.205:48333"
+    ],
+    "13.57.190.12:48333": [
+      "b6yjsgsx3jbzxosfu3gsnbih4hmt3nspizetslm7ok6wfvsrylv3ysqd.onion:48333",
+      "89.117.50.252:48333",
+      "89.58.9.219:48333"
+    ]
+  }
+}
