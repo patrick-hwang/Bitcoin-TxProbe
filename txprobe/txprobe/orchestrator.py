@@ -179,11 +179,16 @@ class MasterPipelineOrchestrator:
             scan_result = ScanResult.load(self.artifacts.discovered_nodes)
 
         self._notify("STEP 1", "Capturing initial groundtruth topology snapshot...")
-        gt_result = await capture_initial_groundtruth(self.config, scan_result)
+        target_nodes = (
+            scan_result.selected_identities()
+            if hasattr(scan_result, "selected_identities")
+            else scan_result
+        )
+        gt_result = await capture_initial_groundtruth(self.config, target_nodes)
         gt_result.save(self.artifacts.initial_groundtruth)
         self._notify(
             "STEP 1",
-            f"Step 1 complete: {gt_result.stats.total_nodes} nodes, {gt_result.stats.total_edges} edges.",
+            f"Step 1 complete: {gt_result.snapshot.num_nodes} nodes, {gt_result.snapshot.num_edges} edges.",
         )
         return gt_result
 
@@ -291,26 +296,20 @@ class MasterPipelineOrchestrator:
 
         self._notify("STEP 4", "Executing multi-round TxProbe topology inference loop...")
         probe_0_cfg = self.config.get_node(0)
-        probe_1_cfg = self.config.get_node(1)
         p0_log = Path(probe_0_cfg.txprobe_log_file or "txprobe_0.log")
 
-        async with AsyncBitcoinRpc.from_node_config(probe_0_cfg) as p0, \
-                   AsyncBitcoinRpc.from_node_config(probe_1_cfg) as p1:
+        async with AsyncBitcoinRpc.from_node_config(probe_0_cfg, use_wallet=False) as p0:
             res = await run_txprobe_execution(
                 crafting_result=crafting_result,
                 probe_0=p0,
-                probe_1=p1,
                 probe_0_log_path=p0_log,
-                invblock_wait_sec=self.config.txprobe_execution.invblock_wait_sec,
-                flood_wait_sec=self.config.txprobe_execution.flood_wait_sec,
-                parent_wait_sec=self.config.txprobe_execution.parent_wait_sec,
-                propagation_wait_sec=self.config.txprobe_execution.marker_propagation_wait_sec,
+                config=self.config.txprobe_execution,
                 checkpoint_path=self.run_dir / "txprobe_checkpoint.json",
             )
             res.save(self.artifacts.txprobe_execution)
             self._notify(
                 "STEP 4",
-                f"Step 4 complete: {res.stats.inferred_edges_count} edges inferred across {res.stats.total_rounds_executed} rounds.",
+                f"Step 4 complete: {res.stats.inferred_edges_count} edges inferred across {res.stats.completed_rounds} rounds.",
             )
             return res
 

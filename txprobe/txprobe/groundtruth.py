@@ -220,6 +220,9 @@ async def capture_initial_groundtruth(
     probe_a, probe_b = probes[0], probes[1]
     t0 = time.monotonic()
 
+    if hasattr(target_nodes, "selected_identities"):
+        target_nodes = target_nodes.selected_identities()
+
     target_list = list(dict.fromkeys(target_nodes))
     target_set = set(target_list)
 
