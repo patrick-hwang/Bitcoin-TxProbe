@@ -329,3 +329,29 @@ async def test_harvest_groundtruth_self_identity():
     assert candidates[0].source_node_id == 2
 
 
+@pytest.mark.asyncio
+async def test_harvest_addrman_recency_filter():
+    """_harvest_addrman_one skips entries older than max_age_days when configured."""
+    import time
+    now = int(time.time())
+    nc = NodeConfig(0, "probe", 48347, "u", "p")
+    seen: set[NodeIdentity] = set()
+    candidates: list[CandidateNode] = []
+
+    with patch("txprobe.discovery.harvester.AsyncBitcoinRpc") as MockRpc:
+        mock_rpc = AsyncMock()
+        mock_rpc.getnodeaddresses = AsyncMock(return_value=[
+            _addrman_entry("1.1.1.1", 48333, network="ipv4", time=now - 3600),          # 1h old -> kept
+            _addrman_entry("2.2.2.2", 48333, network="ipv4", time=now - 5 * 86400),     # 5d old -> skipped
+        ])
+        MockRpc.return_value.__aenter__ = AsyncMock(return_value=mock_rpc)
+        MockRpc.return_value.__aexit__ = AsyncMock(return_value=False)
+
+        added = await _harvest_addrman_one(nc, seen, candidates, max_age_days=3.0)
+
+    assert added == 1
+    assert len(candidates) == 1
+    assert candidates[0].identity.addr == "1.1.1.1:48333"
+
+
+

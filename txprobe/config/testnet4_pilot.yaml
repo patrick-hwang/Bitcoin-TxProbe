@@ -56,11 +56,11 @@ tx_crafting:
   block_propagation_wait_sec: 15.0
 
 txprobe_execution:
-  invblock_wait_sec: 5.0
+  invblock_wait_sec: 10.0
   flood_wait_sec: 1.0
   parent_wait_sec: 5.0
   marker_propagation_wait_sec: 10.0
-  getdata_wait_sec: 5.0
+  getdata_wait_sec: 15.0
   cleanup_wait_sec: 2.0
 
 discovery:
@@ -69,6 +69,7 @@ discovery:
   poll_interval_sec: 5
   clearnet_onetry_concurrency: 32
   tor_onetry_concurrency: 8
+  max_addrman_age_days: 3
 
 reachability:
   tor_proxy_host: "127.0.0.1"

@@ -357,4 +357,82 @@ def test_evaluate_topology_cli_standalone(tmp_path: Path, monkeypatch):
     assert data["validation"]["accuracy"] == 1.0
 
 
+def test_compute_groundtruth_metrics_with_groundtruth_nodes():
+    """Verify that edges between non-GT nodes are not penalized as FP when groundtruth_nodes is set."""
+    nodes = tuple(NodeIdentity(addr=f"10.0.0.{i}:48333") for i in range(5))
+    gt_node = nodes[0]  # Only node 0 is groundtruth
+
+    # Real network: node 0 connected to node 1.
+    gt_adj = {
+        nodes[0]: (nodes[1],),
+        nodes[1]: (nodes[0],),
+        nodes[2]: (),
+        nodes[3]: (),
+        nodes[4]: (),
+    }
+    gt_graph = GraphSnapshot(nodes=nodes, adj_list=gt_adj)
+
+    # Inferred: found edge (0, 1) AND correctly/incorrectly inferred edge (2, 3) between public nodes
+    inf_adj = {
+        nodes[0]: (nodes[1],),
+        nodes[1]: (nodes[0],),
+        nodes[2]: (nodes[3],),
+        nodes[3]: (nodes[2],),
+        nodes[4]: (),
+    }
+    inf_graph = GraphSnapshot(nodes=nodes, adj_list=inf_adj)
+
+    # Case 1: Without groundtruth_nodes filter (Old behavior)
+    metrics_all = compute_groundtruth_metrics(gt_graph, inf_graph)
+    assert metrics_all.confusion_matrix.tp == 1
+    assert metrics_all.confusion_matrix.fp == 1  # (2, 3) was penalized as FP
+    assert metrics_all.precision == 0.5
+
+    # Case 2: With groundtruth_nodes filter (Fixed behavior)
+    metrics_gt = compute_groundtruth_metrics(
+        gt_graph, inf_graph, groundtruth_nodes={gt_node.addr}
+    )
+    assert metrics_gt.confusion_matrix.tp == 1
+    assert metrics_gt.confusion_matrix.fp == 0  # (2, 3) is outside GT scope, not penalized
+    assert metrics_gt.confusion_matrix.fn == 0
+    assert metrics_gt.precision == 1.0
+    assert metrics_gt.recall == 1.0
+    # Candidate pairs incident to node 0: 1 * (5 - 1) + 0 = 4 pairs
+    assert metrics_gt.total_candidate_pairs == 4
+
+
+def test_evaluate_reconciled_results_with_groundtruth_identities():
+    """Verify evaluate_reconciled_results respects groundtruth_identities in payload."""
+    nodes = tuple(NodeIdentity(addr=f"10.0.0.{i}:48333") for i in range(4))
+    gt_adj = {
+        nodes[0]: (nodes[1],),
+        nodes[1]: (nodes[0],),
+        nodes[2]: (),
+        nodes[3]: (),
+    }
+    inf_adj = {
+        nodes[0]: (nodes[1],),
+        nodes[1]: (nodes[0],),
+        nodes[2]: (nodes[3],),
+        nodes[3]: (nodes[2],),
+    }
+    gt_graph = GraphSnapshot(nodes=nodes, adj_list=gt_adj)
+    inf_graph = GraphSnapshot(nodes=nodes, adj_list=inf_adj)
+
+    payload = {
+        "full_inferred_topology": inf_graph.to_dict(),
+        "reconciled_groundtruth": gt_graph.to_dict(),
+        "evaluation_inferred_topology": inf_graph.to_dict(),
+        "groundtruth_identities": [nodes[0].addr],
+        "stats": {},
+    }
+
+    report = evaluate_reconciled_results(payload, compute_paths=False)
+    assert report.validation is not None
+    assert report.validation.confusion_matrix.tp == 1
+    assert report.validation.confusion_matrix.fp == 0
+    assert report.validation.precision == 1.0
+
+
+
 

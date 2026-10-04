@@ -259,6 +259,7 @@ def test_reconcile_topology_end_to_end(tmp_path: Path):
     assert loaded.stats.surviving_full_nodes == res.stats.surviving_full_nodes
     assert loaded.full_inferred_topology.num_edges == res.full_inferred_topology.num_edges
     assert loaded.reconciled_groundtruth.num_edges == res.reconciled_groundtruth.num_edges
+    assert loaded.groundtruth_identities == (gt,)
 
     # Test saving standalone full topology
     full_out = tmp_path / "full_inferred_topology.json"

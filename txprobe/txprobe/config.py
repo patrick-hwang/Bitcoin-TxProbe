@@ -43,11 +43,11 @@ class TxCraftingConfig:
 @dataclass
 class TxProbeExecutionConfig:
     """Configuration for Step 4 TxProbe execution loop."""
-    invblock_wait_sec: float = 5.0
+    invblock_wait_sec: float = 10.0
     flood_wait_sec: float = 1.0
     parent_wait_sec: float = 5.0
     marker_propagation_wait_sec: float = 10.0
-    getdata_wait_sec: float = 5.0
+    getdata_wait_sec: float = 15.0
     cleanup_wait_sec: float = 2.0
 
 
@@ -59,6 +59,7 @@ class DiscoveryConfig:
     poll_interval_sec: float = 5.0
     clearnet_onetry_concurrency: int = 32
     tor_onetry_concurrency: int = 8
+    max_addrman_age_days: float = 0.0
 
 
 @dataclass
@@ -151,6 +152,7 @@ def load_config(path: str | Path) -> Config:
             disc_raw.get("clearnet_onetry_concurrency", 32)
         ),
         tor_onetry_concurrency=int(disc_raw.get("tor_onetry_concurrency", 8)),
+        max_addrman_age_days=float(disc_raw.get("max_addrman_age_days", 0.0)),
     )
 
     reach_raw = raw.get("reachability", {})

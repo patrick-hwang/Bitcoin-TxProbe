@@ -111,7 +111,20 @@ def main() -> None:
                 sys.exit(1)
             logger.info("Loading groundtruth graph from: %s", args.groundtruth_graph)
             gt_graph = GraphSnapshot.load(args.groundtruth_graph)
-            val_metrics = compute_groundtruth_metrics(gt_graph, full_graph)
+            gt_nodes_set = None
+            try:
+                raw_gt_data = json.loads(args.groundtruth_graph.read_text(encoding="utf-8"))
+                if "groundtruth_identities" in raw_gt_data:
+                    raw_ids = raw_gt_data["groundtruth_identities"]
+                    if isinstance(raw_ids, dict):
+                        gt_nodes_set = {str(v) for v in raw_ids.values()}
+                    elif isinstance(raw_ids, list):
+                        gt_nodes_set = {str(v) for v in raw_ids}
+            except Exception:
+                pass
+            val_metrics = compute_groundtruth_metrics(
+                gt_graph, full_graph, groundtruth_nodes=gt_nodes_set
+            )
 
         report = EvaluationReport(
             validation=val_metrics,

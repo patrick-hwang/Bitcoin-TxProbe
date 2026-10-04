@@ -219,6 +219,8 @@ async def harvest_addresses(config: Config) -> HarvestResult:
     log.info("  Found %d unique addrman addresses", addrman_count)
 
     # ── Step 1.5: Batch reachability test ──
+    # Sort candidates by (priority, -last_seen) to test freshest candidates first
+    candidates.sort(key=lambda c: (c.priority, -c.last_seen))
     log.info("Step 1.5: Testing reachability of %d candidates...", len(candidates))
     stats.reachability_tested = len(candidates)
 
@@ -436,7 +438,11 @@ async def _harvest_addrman_parallel(
 ) -> int:
     """Call getnodeaddresses(0) on multiple nodes in parallel."""
     added = 0
-    tasks = [_harvest_addrman_one(nc, seen, candidates) for nc in node_configs]
+    max_age_days = getattr(config.discovery, "max_addrman_age_days", 0.0)
+    tasks = [
+        _harvest_addrman_one(nc, seen, candidates, max_age_days)
+        for nc in node_configs
+    ]
     results = await asyncio.gather(*tasks, return_exceptions=True)
     for nc, result in zip(node_configs, results):
         if isinstance(result, Exception):
@@ -450,8 +456,9 @@ async def _harvest_addrman_one(
     nc: NodeConfig,
     seen: set[NodeIdentity],
     candidates: list[CandidateNode],
+    max_age_days: float = 0.0,
 ) -> int:
-    """getnodeaddresses(0) on one node, append new candidates."""
+    """getnodeaddresses(0) on one node, append new candidates within max_age_days."""
     added = 0
     try:
         async with AsyncBitcoinRpc(nc.rpchost, nc.rpcport, nc.rpcuser, nc.rpcpassword) as rpc:
@@ -460,11 +467,19 @@ async def _harvest_addrman_one(
         log.warning("RPC getnodeaddresses on node %d failed: %s", nc.id, e)
         return 0
 
+    now = int(time.time())
+    max_age_sec = max_age_days * 86400 if max_age_days > 0 else 0
+
     for entry in entries:
         raw_address: str = entry.get("address", "")
         port: int = entry.get("port", 0)
         network: str = entry.get("network", "")
         last_seen: int = entry.get("time", 0)
+
+        # Filter out stale addresses that are older than max_age_days
+        if max_age_sec > 0 and last_seen > 0:
+            if (now - last_seen) > max_age_sec:
+                continue
 
         addr_str = normalize_addr(raw_address, port, network)
         identity = NodeIdentity(addr=addr_str)

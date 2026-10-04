@@ -257,7 +257,9 @@ class EvaluationReport:
 
 
 def _extract_canonical_edges(
-    graph: GraphSnapshot, allowed_nodes: set[str] | None = None
+    graph: GraphSnapshot,
+    allowed_nodes: set[str] | None = None,
+    incident_to_nodes: set[str] | None = None,
 ) -> set[tuple[str, str]]:
     """Extract set of unique canonical (lexicographically ordered) edges from graph."""
     unique_edges: set[tuple[str, str]] = set()
@@ -267,23 +269,44 @@ def _extract_canonical_edges(
         for v in neighbors:
             if allowed_nodes is not None and v.addr not in allowed_nodes:
                 continue
+            if incident_to_nodes is not None:
+                if u.addr not in incident_to_nodes and v.addr not in incident_to_nodes:
+                    continue
             unique_edges.add(canonical_edge(u.addr, v.addr))
     return unique_edges
 
 
 def compute_groundtruth_metrics(
-    gt_graph: GraphSnapshot, inferred_graph: GraphSnapshot
+    gt_graph: GraphSnapshot,
+    inferred_graph: GraphSnapshot,
+    groundtruth_nodes: set[str] | None = None,
 ) -> ValidationMetrics:
     """Compute binary classification validation metrics between groundtruth and inferred graphs."""
     gt_nodes = {n.addr for n in gt_graph.nodes}
     inf_nodes = {n.addr for n in inferred_graph.nodes}
     eval_nodes = gt_nodes.intersection(inf_nodes)
 
-    n = len(eval_nodes)
-    total_pairs = n * (n - 1) // 2
+    gt_nodes_eval: set[str] | None = None
+    if groundtruth_nodes is not None:
+        matched = eval_nodes.intersection(groundtruth_nodes)
+        if matched:
+            gt_nodes_eval = matched
 
-    gt_edges = _extract_canonical_edges(gt_graph, allowed_nodes=eval_nodes)
-    inf_edges = _extract_canonical_edges(inferred_graph, allowed_nodes=eval_nodes)
+    if gt_nodes_eval is not None:
+        g = len(gt_nodes_eval)
+        n = len(eval_nodes)
+        total_pairs = g * (n - g) + g * (g - 1) // 2
+        gt_edges = _extract_canonical_edges(
+            gt_graph, allowed_nodes=eval_nodes, incident_to_nodes=gt_nodes_eval
+        )
+        inf_edges = _extract_canonical_edges(
+            inferred_graph, allowed_nodes=eval_nodes, incident_to_nodes=gt_nodes_eval
+        )
+    else:
+        n = len(eval_nodes)
+        total_pairs = n * (n - 1) // 2
+        gt_edges = _extract_canonical_edges(gt_graph, allowed_nodes=eval_nodes)
+        inf_edges = _extract_canonical_edges(inferred_graph, allowed_nodes=eval_nodes)
 
     tp_edges = gt_edges.intersection(inf_edges)
     fp_edges = inf_edges.difference(gt_edges)
@@ -581,7 +604,13 @@ def evaluate_reconciled_results(
     if gt_dict and eval_dict:
         gt_graph = GraphSnapshot.from_dict(gt_dict)
         eval_graph = GraphSnapshot.from_dict(eval_dict)
-        validation_metrics = compute_groundtruth_metrics(gt_graph, eval_graph)
+        gt_nodes_raw = data.get("groundtruth_identities", [])
+        gt_nodes_set: set[str] | None = None
+        if gt_nodes_raw:
+            gt_nodes_set = {str(a) for a in gt_nodes_raw}
+        validation_metrics = compute_groundtruth_metrics(
+            gt_graph, eval_graph, groundtruth_nodes=gt_nodes_set
+        )
 
     stats_meta = data.get("stats", {})
     return EvaluationReport(

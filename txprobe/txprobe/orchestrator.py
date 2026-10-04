@@ -352,12 +352,24 @@ class MasterPipelineOrchestrator:
         )
         final_gt.save(self.artifacts.final_groundtruth)
 
+        gt_identities = final_gt.groundtruth_identities
+        if not gt_identities and self.artifacts.initial_groundtruth.is_file():
+            try:
+                init_gt_data = json.loads(self.artifacts.initial_groundtruth.read_text(encoding="utf-8"))
+                gt_identities = {
+                    int(k): NodeIdentity(addr=str(v))
+                    for k, v in init_gt_data.get("groundtruth_identities", {}).items()
+                }
+            except Exception:
+                pass
+
         res = reconcile_topology(
             inferred_snapshot=execution_result.inferred_snapshot,
             groundtruth_before=pre_gt,
             groundtruth_after=final_gt.snapshot,
             malfunctioning_nodes=execution_result.malfunctioning_nodes,
             dropped_nodes=execution_result.dropped_nodes,
+            groundtruth_identities=gt_identities,
         )
         res.save(self.artifacts.reconciled_topology)
         res.full_inferred_topology.save(self.artifacts.full_inferred_topology)

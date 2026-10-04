@@ -7,6 +7,7 @@ import hashlib
 import logging
 import random
 import struct
+import sys
 import time
 from dataclasses import dataclass
 
@@ -99,32 +100,80 @@ async def test_reachability(
 async def batch_test_reachability(
     candidates: list[tuple[str, int, str]],
     config: ReachabilityConfig,
+    show_progress: bool = True,
 ) -> list[bool]:
-    """Test reachability of many candidates with concurrency limits.
+    """Test reachability of many candidates with concurrency limits and live progress bar.
 
-    Separates clearnet and Tor candidates and tests them with different
+    Separates clearnet and Tor/IPv6 candidates and tests them with different
     concurrency limits via ``asyncio.Semaphore``.
 
     Args:
         candidates: List of ``(host, port, network)`` tuples.
         config: Reachability configuration (timeouts, concurrency).
+        show_progress: Whether to display a tqdm progress bar (if stdout is a TTY).
 
     Returns:
         List of booleans, same length and order as *candidates*.
     """
+    if not candidates:
+        return []
+
     clearnet_sem = asyncio.Semaphore(config.clearnet_concurrency)
     tor_sem = asyncio.Semaphore(config.tor_concurrency)
 
-    async def _test_one(host: str, port: int, network: str) -> bool:
-        sem = tor_sem if network == "onion" else clearnet_sem
-        async with sem:
-            return await test_reachability(host, port, network, config)
+    passed_count = 0
+    completed_count = 0
+    total = len(candidates)
+    lock = asyncio.Lock()
 
-    tasks = [
-        _test_one(host, port, network)
-        for host, port, network in candidates
-    ]
-    return list(await asyncio.gather(*tasks))
+    pbar = None
+    if show_progress and sys.stdout.isatty():
+        from tqdm import tqdm
+        pbar = tqdm(
+            total=total,
+            desc="Reachability",
+            unit="addr",
+            ncols=80,
+            mininterval=0.4,
+            file=sys.stdout,
+            leave=True,
+        )
+
+    async def _test_one(host: str, port: int, network: str) -> bool:
+        nonlocal passed_count, completed_count
+        sem = tor_sem if (network in ("onion", "ipv6") or ":" in host) else clearnet_sem
+        async with sem:
+            ok = await test_reachability(host, port, network, config)
+
+        async with lock:
+            completed_count += 1
+            if ok:
+                passed_count += 1
+            if pbar is not None:
+                rate = (passed_count / completed_count * 100) if completed_count > 0 else 0.0
+                pbar.set_postfix({"pass": passed_count, "rate": f"{rate:.1f}%"}, refresh=False)
+                pbar.update(1)
+            elif show_progress and (completed_count % 250 == 0 or completed_count == total):
+                rate = (passed_count / completed_count * 100) if completed_count > 0 else 0.0
+                log.info(
+                    "Reachability progress: %d/%d (%.1f%%) | passed: %d (%.1f%%)",
+                    completed_count,
+                    total,
+                    completed_count / total * 100,
+                    passed_count,
+                    rate,
+                )
+        return ok
+
+    try:
+        tasks = [
+            _test_one(host, port, network)
+            for host, port, network in candidates
+        ]
+        return list(await asyncio.gather(*tasks))
+    finally:
+        if pbar is not None:
+            pbar.close()
 
 
 # ── P2P message construction ──
@@ -172,17 +221,22 @@ def _build_version_payload(dest_host: str, dest_port: int) -> bytes:
 def _serialize_net_addr(services: int, ip: str, port: int) -> bytes:
     """Serialize a CAddress in addrv1 format WITHOUT timestamp (for version msg).
 
-    Layout: 8 bytes services + 16 bytes IPv4-mapped-IPv6 + 2 bytes port (big-endian).
+    Layout: 8 bytes services + 16 bytes IPv4-mapped-IPv6 (or native IPv6) + 2 bytes port (big-endian).
     """
+    import socket as _socket
     r = struct.pack("<Q", services)
-    # IPv4-mapped IPv6: 10 bytes 0x00 + 2 bytes 0xff + 4 bytes IPv4
     try:
-        import socket as _socket
         ipv4_bytes = _socket.inet_aton(ip)
+        # IPv4-mapped IPv6: 10 bytes 0x00 + 2 bytes 0xff + 4 bytes IPv4
         r += b"\x00" * 10 + b"\xff\xff" + ipv4_bytes
     except OSError:
-        # Not a valid IPv4 — use all zeros
-        r += b"\x00" * 16
+        try:
+            # Native IPv6: 16 bytes
+            ipv6_bytes = _socket.inet_pton(_socket.AF_INET6, ip)
+            r += ipv6_bytes
+        except (OSError, ValueError):
+            # Not a valid IPv4 or IPv6 (e.g. .onion) — use all zeros
+            r += b"\x00" * 16
     r += struct.pack(">H", port)
     return r
 
@@ -233,13 +287,19 @@ async def _open_connection(
     network: str,
     config: ReachabilityConfig,
 ) -> tuple[asyncio.StreamReader, asyncio.StreamWriter]:
-    """Open a TCP connection — direct for clearnet, SOCKS5 for Tor.
+    """Open a TCP connection — direct for clearnet IPv4, SOCKS5 for Tor and IPv6.
 
-    For .onion addresses, routes through the Tor SOCKS5 proxy.
+    For .onion and IPv6 addresses, routes through the Tor SOCKS5 proxy to
+    bypass host IPv6 connectivity limitations.
     """
-    if network == "onion":
+    if network in ("onion", "ipv6") or ":" in host:
         return await _open_tor_connection(host, port, config)
-    return await asyncio.open_connection(host, port)
+    try:
+        return await asyncio.open_connection(host, port)
+    except OSError as e:
+        if "unreachable" in str(e).lower():
+            return await _open_tor_connection(host, port, config)
+        raise
 
 
 async def _open_tor_connection(

@@ -9,7 +9,9 @@ from txprobe.discovery.reachability import (
     TESTNET4_MAGIC,
     _build_version_message,
     _parse_message_header,
+    _serialize_net_addr,
     _wrap_p2p_message,
+    batch_test_reachability,
 )
 
 
@@ -127,3 +129,60 @@ class TestP2PMessages:
         assert command == "verack"
         assert length == 0
         assert len(msg) == 24  # header only
+
+
+class TestSerializationAndBatchReachability:
+    def test_serialize_net_addr_ipv4(self):
+        import socket
+        raw = _serialize_net_addr(1, "1.2.3.4", 48333)
+        assert len(raw) == 26
+        services, mapped, port = struct.unpack("<Q16sH", raw)
+        assert services == 1
+        assert mapped == b"\x00" * 10 + b"\xff\xff" + socket.inet_aton("1.2.3.4")
+        assert struct.unpack(">H", raw[24:26])[0] == 48333
+
+    def test_serialize_net_addr_ipv6(self):
+        import socket
+        raw = _serialize_net_addr(0, "2001:db8::1", 48333)
+        assert len(raw) == 26
+        services = struct.unpack("<Q", raw[:8])[0]
+        assert services == 0
+        ipv6_bytes = raw[8:24]
+        assert ipv6_bytes == socket.inet_pton(socket.AF_INET6, "2001:db8::1")
+        port = struct.unpack(">H", raw[24:26])[0]
+        assert port == 48333
+
+    def test_serialize_net_addr_onion_fallback(self):
+        raw = _serialize_net_addr(0, "abcdef.onion", 48333)
+        assert len(raw) == 26
+        assert raw[8:24] == b"\x00" * 16
+
+    @pytest.mark.asyncio
+    async def test_batch_reachability_empty(self):
+        from txprobe.config import ReachabilityConfig
+        res = await batch_test_reachability([], ReachabilityConfig())
+        assert res == []
+
+    @pytest.mark.asyncio
+    async def test_batch_reachability_progress(self, monkeypatch):
+        from unittest.mock import AsyncMock, patch
+        from txprobe.config import ReachabilityConfig
+
+        candidates = [
+            ("1.1.1.1", 48333, "ipv4"),
+            ("2.2.2.2", 48333, "ipv4"),
+            ("2001:db8::1", 48333, "ipv6"),
+            ("foo.onion", 48333, "onion"),
+        ]
+
+        async def mock_test(h, p, net, cfg):
+            return net != "onion"
+
+        with patch("txprobe.discovery.reachability.test_reachability", side_effect=mock_test):
+            res = await batch_test_reachability(candidates, ReachabilityConfig(), show_progress=False)
+            assert res == [True, True, True, False]
+
+            # Also test with show_progress=True (TTY mock or fallback)
+            res2 = await batch_test_reachability(candidates, ReachabilityConfig(), show_progress=True)
+            assert res2 == [True, True, True, False]
+

@@ -97,6 +97,7 @@ class ReconciliationResult:
     dropped_nodes_removed: tuple[NodeIdentity, ...]
     transitory_edges_removed: tuple[tuple[str, str], ...]
     stats: ReconciliationStats
+    groundtruth_identities: tuple[NodeIdentity, ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize to a JSON-compatible dictionary."""
@@ -111,6 +112,9 @@ class ReconciliationResult:
             "dropped_nodes_removed": [n.addr for n in self.dropped_nodes_removed],
             "transitory_edges_removed": [
                 list(edge) for edge in self.transitory_edges_removed
+            ],
+            "groundtruth_identities": [
+                n.addr for n in self.groundtruth_identities
             ],
             "full_inferred_topology": self.full_inferred_topology.to_dict(),
             "reconciled_groundtruth": self.reconciled_groundtruth.to_dict(),
@@ -144,6 +148,9 @@ class ReconciliationResult:
         transitory = tuple(
             (str(e[0]), str(e[1])) for e in data.get("transitory_edges_removed", [])
         )
+        gt_identities = tuple(
+            NodeIdentity(addr=a) for a in data.get("groundtruth_identities", [])
+        )
         full_inf = GraphSnapshot.from_dict(data["full_inferred_topology"])
         rec_gt = GraphSnapshot.from_dict(data["reconciled_groundtruth"])
         eval_inf = GraphSnapshot.from_dict(data["evaluation_inferred_topology"])
@@ -157,6 +164,7 @@ class ReconciliationResult:
             dropped_nodes_removed=dropped,
             transitory_edges_removed=transitory,
             stats=stats,
+            groundtruth_identities=gt_identities,
         )
 
     @classmethod
@@ -297,9 +305,14 @@ def reconcile_topology(
     t0 = time.monotonic()
     timestamp = datetime.now(timezone.utc).isoformat()
 
+    gt_ident_tuple: tuple[NodeIdentity, ...] = ()
     gt_addrs = None
     if groundtruth_identities is not None:
-        gt_addrs = {ident.addr for ident in groundtruth_identities.values()}
+        if isinstance(groundtruth_identities, Mapping):
+            gt_ident_tuple = tuple(groundtruth_identities.values())
+        else:
+            gt_ident_tuple = tuple(groundtruth_identities)
+        gt_addrs = {ident.addr for ident in gt_ident_tuple}
 
     # 1. Identify transitory edges incident to groundtruth nodes
     transitory_edges = identify_transitory_edges(
@@ -375,6 +388,7 @@ def reconcile_topology(
         dropped_nodes_removed=tuple(sorted(dropped_set, key=lambda n: n.addr)),
         transitory_edges_removed=transitory_edges,
         stats=stats,
+        groundtruth_identities=gt_ident_tuple,
     )
 
 
@@ -414,15 +428,23 @@ async def capture_final_groundtruth(
     }
 
     # 2. Query peer lists on online groundtruth nodes
+    # Build list of groundtruth node configs that are actually online
     gt_configs_online = [
         config.get_node(node_id) for node_id in sorted(online_gt_identities)
     ]
+    # Fetch peer sets for only the online groundtruth nodes
     gt_peer_sets = await asyncio.gather(
         *[_fetch_probe_peers(nc) for nc in gt_configs_online]
     )
 
+    # Build adjacency using only online groundtruth nodes
+    # Build adjacency using online groundtruth nodes and active nodes
+    # Initialize adjacency dict with all active nodes
     ordered_nodes = list(dict.fromkeys(active_nodes))
     adj_raw: dict[NodeIdentity, set[NodeIdentity]] = {node: set() for node in ordered_nodes}
+    # Ensure groundtruth nodes are present in adj_raw even if not active
+    for gt_ident in online_gt_identities.values():
+        adj_raw.setdefault(gt_ident, set())
     for nc, peer_set in zip(gt_configs_online, gt_peer_sets):
         gt_ident = online_gt_identities[nc.id]
         for peer_ident in peer_set:
