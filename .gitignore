@@ -36,3 +36,6 @@ package.json
 a temporary note.txt
 
 .vscode 
+*.toc
+*.out
+*.aux
