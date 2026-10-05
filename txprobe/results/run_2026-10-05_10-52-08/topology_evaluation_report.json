@@ -1,0 +1,205 @@
+{
+  "timestamp": "2026-10-05T04:23:03.044857+00:00",
+  "metadata": {
+    "step": "step_6_evaluation",
+    "source_nodes_count": 167,
+    "reconciliation_stats": {
+      "initial_full_nodes": 167,
+      "surviving_full_nodes": 167,
+      "full_inferred_edges_count": 1386,
+      "malfunctioning_nodes_count": 4,
+      "dropped_nodes_count": 6,
+      "transitory_edges_count": 0,
+      "groundtruth_eval_nodes_count": 167,
+      "groundtruth_eval_edges_count": 19,
+      "elapsed_sec": 0.0,
+      "timestamp": "2026-10-05T04:23:02.989889+00:00"
+    }
+  },
+  "validation": {
+    "confusion_matrix": {
+      "tp": 15,
+      "fp": 2,
+      "tn": 474,
+      "fn": 4
+    },
+    "precision": 0.882353,
+    "recall": 0.789474,
+    "accuracy": 0.987879,
+    "specificity": 0.995798,
+    "f1_score": 0.833333,
+    "fpr": 0.004202,
+    "fnr": 0.210526,
+    "gt_edges_count": 19,
+    "inferred_edges_count": 17,
+    "total_candidate_pairs": 495,
+    "tp_edges": [
+      [
+        "100.30.166.14:48333",
+        "pnvbolsqnqmiwbmrrtqoz3cbfwvnrhdesn3wxbvimifvhs2c5r5z5uad.onion:48333"
+      ],
+      [
+        "100.56.0.96:48333",
+        "b6yjsgsx3jbzxosfu3gsnbih4hmt3nspizetslm7ok6wfvsrylv3ysqd.onion:48333"
+      ],
+      [
+        "103.99.169.206:48333",
+        "b6yjsgsx3jbzxosfu3gsnbih4hmt3nspizetslm7ok6wfvsrylv3ysqd.onion:48333"
+      ],
+      [
+        "13.140.162.77:48333",
+        "b6yjsgsx3jbzxosfu3gsnbih4hmt3nspizetslm7ok6wfvsrylv3ysqd.onion:48333"
+      ],
+      [
+        "134.199.227.217:48333",
+        "udjnpbppwtmjhmm7ic7je6mr7whnsare2jec5ghdgddw3lmgxqxralad.onion:48333"
+      ],
+      [
+        "216.230.225.61:48333",
+        "pnvbolsqnqmiwbmrrtqoz3cbfwvnrhdesn3wxbvimifvhs2c5r5z5uad.onion:48333"
+      ],
+      [
+        "3.234.184.245:48333",
+        "pnvbolsqnqmiwbmrrtqoz3cbfwvnrhdesn3wxbvimifvhs2c5r5z5uad.onion:48333"
+      ],
+      [
+        "3.69.160.185:48333",
+        "pnvbolsqnqmiwbmrrtqoz3cbfwvnrhdesn3wxbvimifvhs2c5r5z5uad.onion:48333"
+      ],
+      [
+        "44.228.181.244:48333",
+        "udjnpbppwtmjhmm7ic7je6mr7whnsare2jec5ghdgddw3lmgxqxralad.onion:48333"
+      ],
+      [
+        "45.158.57.155:48333",
+        "udjnpbppwtmjhmm7ic7je6mr7whnsare2jec5ghdgddw3lmgxqxralad.onion:48333"
+      ],
+      [
+        "5.182.4.106:48333",
+        "b6yjsgsx3jbzxosfu3gsnbih4hmt3nspizetslm7ok6wfvsrylv3ysqd.onion:48333"
+      ],
+      [
+        "54.78.90.72:48333",
+        "b6yjsgsx3jbzxosfu3gsnbih4hmt3nspizetslm7ok6wfvsrylv3ysqd.onion:48333"
+      ],
+      [
+        "64.180.124.90:48333",
+        "b6yjsgsx3jbzxosfu3gsnbih4hmt3nspizetslm7ok6wfvsrylv3ysqd.onion:48333"
+      ],
+      [
+        "65.108.141.219:48333",
+        "udjnpbppwtmjhmm7ic7je6mr7whnsare2jec5ghdgddw3lmgxqxralad.onion:48333"
+      ],
+      [
+        "pnvbolsqnqmiwbmrrtqoz3cbfwvnrhdesn3wxbvimifvhs2c5r5z5uad.onion:48333",
+        "udjnpbppwtmjhmm7ic7je6mr7whnsare2jec5ghdgddw3lmgxqxralad.onion:48333"
+      ]
+    ],
+    "fp_edges": [
+      [
+        "103.99.169.200:48333",
+        "b6yjsgsx3jbzxosfu3gsnbih4hmt3nspizetslm7ok6wfvsrylv3ysqd.onion:48333"
+      ],
+      [
+        "103.99.171.210:48333",
+        "b6yjsgsx3jbzxosfu3gsnbih4hmt3nspizetslm7ok6wfvsrylv3ysqd.onion:48333"
+      ]
+    ],
+    "fn_edges": [
+      [
+        "103.99.169.212:48333",
+        "pnvbolsqnqmiwbmrrtqoz3cbfwvnrhdesn3wxbvimifvhs2c5r5z5uad.onion:48333"
+      ],
+      [
+        "144.76.2.169:48333",
+        "udjnpbppwtmjhmm7ic7je6mr7whnsare2jec5ghdgddw3lmgxqxralad.onion:48333"
+      ],
+      [
+        "34.228.207.112:48333",
+        "udjnpbppwtmjhmm7ic7je6mr7whnsare2jec5ghdgddw3lmgxqxralad.onion:48333"
+      ],
+      [
+        "92.118.190.35:48333",
+        "b6yjsgsx3jbzxosfu3gsnbih4hmt3nspizetslm7ok6wfvsrylv3ysqd.onion:48333"
+      ]
+    ]
+  },
+  "global_topology": {
+    "num_nodes": 167,
+    "num_edges": 1386,
+    "density": 0.099993,
+    "degree_stats": {
+      "min_degree": 3,
+      "max_degree": 50,
+      "mean_degree": 16.5988,
+      "median_degree": 14,
+      "std_degree": 9.015,
+      "degree_histogram": {
+        "0": 0,
+        "1-2": 0,
+        "3-5": 8,
+        "6-8": 23,
+        "9-12": 36,
+        "13-20": 52,
+        "21-50": 48,
+        "51-100": 0,
+        "101+": 0
+      },
+      "top_hubs": [
+        {
+          "addr": "vizb74h32bx3u6zksgsi6seq6hcqdhok5pd4z2x5yj3ll72tu7pcu7id.onion:48333",
+          "degree": 50
+        },
+        {
+          "addr": "103.99.171.201:48333",
+          "degree": 48
+        },
+        {
+          "addr": "103.99.170.201:48333",
+          "degree": 46
+        },
+        {
+          "addr": "zdh7vrzykdv7474yioe5jiv3kgajky727t5phxsbt47lefjseo3ypaqd.onion:48333",
+          "degree": 40
+        },
+        {
+          "addr": "116.203.184.251:48333",
+          "degree": 38
+        },
+        {
+          "addr": "185.18.221.19:48333",
+          "degree": 37
+        },
+        {
+          "addr": "103.99.171.211:48333",
+          "degree": 36
+        },
+        {
+          "addr": "3.235.188.91:48333",
+          "degree": 36
+        },
+        {
+          "addr": "34.31.40.200:48333",
+          "degree": 36
+        },
+        {
+          "addr": "176.169.208.187:48333",
+          "degree": 34
+        }
+      ]
+    },
+    "average_clustering_coefficient": 0.203938,
+    "er_clustering_comparison": 0.099993,
+    "component_stats": {
+      "num_components": 1,
+      "giant_component_size": 167,
+      "giant_component_fraction": 1.0,
+      "isolated_nodes_count": 0
+    },
+    "path_stats": {
+      "average_path_length": 2.1411,
+      "diameter": 4,
+      "radius": 3
+    }
+  }
+}

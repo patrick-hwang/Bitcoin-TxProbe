@@ -313,3 +313,122 @@ def test_scan_result_save_and_load(tmp_path):
     assert loaded.stats.early_exit is True
     assert loaded.stats.polls_count == 3
     assert loaded.stats.elapsed_sec == 21.5
+
+
+@pytest.mark.asyncio
+async def test_disconnect_excess_peers_preserves_block_relay_only():
+    """_disconnect_excess_peers must NEVER disconnect block-relay-only nodes."""
+    mock_rpc = AsyncMock()
+    mock_rpc.call_batch = AsyncMock(return_value=[None])
+    # 2.2.2.2 is block-relay-only, 3.3.3.3 is regular excess
+    mock_rpc.getpeerinfo = AsyncMock(return_value=[
+        {"addr": "2.2.2.2:48333", "connection_type": "block-relay-only"},
+        {"addr": "3.3.3.3:48333", "connection_type": "inbound"},
+    ])
+
+    selected = {NodeIdentity("1.1.1.1:48333")}
+    current = {
+        NodeIdentity("1.1.1.1:48333"),
+        NodeIdentity("2.2.2.2:48333"),
+        NodeIdentity("3.3.3.3:48333"),
+    }
+
+    disconnected = await _disconnect_excess_peers(
+        mock_rpc, selected, current, chunk_size=10,
+    )
+
+    # Only 3.3.3.3:48333 should be disconnected. 2.2.2.2:48333 must be preserved!
+    assert disconnected == 1
+    assert mock_rpc.call_batch.call_count == 1
+    mock_rpc.call_batch.assert_called_once_with(
+        [("disconnectnode", "3.3.3.3:48333")], raise_on_error=False,
+    )
+
+
+@pytest.mark.asyncio
+async def test_scan_targets_all_candidates_when_target_count_is_zero():
+    """When target_count=0, scan_and_select_peers targets all candidates in harvest."""
+    c1 = _cand("1.0.0.1:48333", CandidatePriority.GROUNDTRUTH_PEER)
+    c2 = _cand("2.0.0.1:48333", CandidatePriority.DNS_SEED)
+    c3 = _cand("3.0.0.1:48333", CandidatePriority.ADDRMAN)
+
+    harvest = HarvestResult(
+        candidates=[c1, c2, c3],
+        already_connected_probes={0: set(), 1: set()},
+    )
+
+    cfg = _make_config(
+        discovery=DiscoveryConfig(
+            target_count=0,  # 0 means connect to all candidates
+            crawling_time_sec=10.0,
+            poll_interval_sec=0.02,
+        )
+    )
+
+    rpc_0 = AsyncMock()
+    rpc_1 = AsyncMock()
+    rpc_0.getpeerinfo = AsyncMock(return_value=[
+        _peer("1.0.0.1:48333"), _peer("2.0.0.1:48333"), _peer("3.0.0.1:48333"),
+    ])
+    rpc_1.getpeerinfo = AsyncMock(return_value=[
+        _peer("1.0.0.1:48333"), _peer("2.0.0.1:48333"), _peer("3.0.0.1:48333"),
+    ])
+
+    def _rpc_factory(host, port, user, password, wallet=""):
+        ctx = AsyncMock()
+        client = rpc_0 if port == 48347 else rpc_1
+        ctx.__aenter__ = AsyncMock(return_value=client)
+        ctx.__aexit__ = AsyncMock(return_value=False)
+        return ctx
+
+    with patch("txprobe.discovery.peer_scanner.AsyncBitcoinRpc", side_effect=_rpc_factory):
+        result = await scan_and_select_peers(cfg, harvest)
+
+    assert result.stats.early_exit is True
+    assert result.stats.mutual_connected == 3
+    assert result.stats.selected_count == 3
+    assert len(result.selected_nodes) == 3
+
+
+@pytest.mark.asyncio
+async def test_scan_retries_unconnected_candidates():
+    """scan_and_select_peers re-dispatches onetry for missing candidates at retry_interval."""
+    c1 = _cand("1.0.0.1:48333", CandidatePriority.GROUNDTRUTH_PEER)
+    c2 = _cand("2.0.0.1:48333", CandidatePriority.DNS_SEED)
+
+    harvest = HarvestResult(
+        candidates=[c1, c2],
+        already_connected_probes={0: set(), 1: set()},
+    )
+
+    cfg = _make_config(
+        discovery=DiscoveryConfig(
+            target_count=0,
+            crawling_time_sec=0.3,
+            poll_interval_sec=0.02,
+            retry_interval_sec=0.04,
+        )
+    )
+
+    rpc_0 = AsyncMock()
+    rpc_1 = AsyncMock()
+    rpc_0.addnode = AsyncMock(return_value=None)
+    rpc_1.addnode = AsyncMock(return_value=None)
+
+    # Initial state: only 1.0.0.1 is connected
+    rpc_0.getpeerinfo = AsyncMock(return_value=[_peer("1.0.0.1:48333")])
+    rpc_1.getpeerinfo = AsyncMock(return_value=[_peer("1.0.0.1:48333")])
+
+    def _rpc_factory(host, port, user, password, wallet=""):
+        ctx = AsyncMock()
+        client = rpc_0 if port == 48347 else rpc_1
+        ctx.__aenter__ = AsyncMock(return_value=client)
+        ctx.__aexit__ = AsyncMock(return_value=False)
+        return ctx
+
+    with patch("txprobe.discovery.peer_scanner.AsyncBitcoinRpc", side_effect=_rpc_factory):
+        result = await scan_and_select_peers(cfg, harvest)
+
+    # Candidate 2.0.0.1 should have received initial onetry + retry onetry
+    addnode_0_calls = [call.args[0] for call in rpc_0.addnode.call_args_list]
+    assert addnode_0_calls.count("2.0.0.1:48333") >= 2

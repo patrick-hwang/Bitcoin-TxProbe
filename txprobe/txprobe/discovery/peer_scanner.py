@@ -178,15 +178,21 @@ async def scan_and_select_peers(
     probe_a, probe_b = probes[0], probes[1]
     t0 = time.monotonic()
 
-    target_count = config.discovery.target_count
-    crawling_time_sec = config.discovery.crawling_time_sec
-    poll_interval_sec = config.discovery.poll_interval_sec
-    clearnet_conc = config.discovery.clearnet_onetry_concurrency
-    tor_conc = config.discovery.tor_onetry_concurrency
-
     # Ensure candidates are sorted by priority (stable sort preserves groundtruth-self first)
     prioritized_candidates = sorted(harvest.candidates, key=lambda c: c.priority)
     candidate_set: set[NodeIdentity] = {c.identity for c in prioritized_candidates}
+
+    raw_target = config.discovery.target_count
+    if raw_target <= 0 or raw_target > len(candidate_set):
+        target_count = len(candidate_set)
+    else:
+        target_count = raw_target
+
+    crawling_time_sec = config.discovery.crawling_time_sec
+    poll_interval_sec = config.discovery.poll_interval_sec
+    retry_interval_sec = getattr(config.discovery, "retry_interval_sec", 45.0)
+    clearnet_conc = config.discovery.clearnet_onetry_concurrency
+    tor_conc = config.discovery.tor_onetry_concurrency
 
     already_a = harvest.already_connected_probes.get(probe_a.id, set())
     already_b = harvest.already_connected_probes.get(probe_b.id, set())
@@ -203,7 +209,7 @@ async def scan_and_select_peers(
 
     log.info(
         "Step 2.1: Starting dual-pool connection scan on Probe %d (%d clearnet, %d tor) "
-        "and Probe %d (%d clearnet, %d tor), target=%d, timeout=%.0fs",
+        "and Probe %d (%d clearnet, %d tor), target=%d / %d candidates, timeout=%.0fs, retry=%.0fs",
         probe_a.id,
         len(clearnet_a),
         len(tor_a),
@@ -211,7 +217,9 @@ async def scan_and_select_peers(
         len(clearnet_b),
         len(tor_b),
         target_count,
+        len(candidate_set),
         crawling_time_sec,
+        retry_interval_sec,
     )
 
     stop_event = asyncio.Event()
@@ -247,7 +255,7 @@ async def scan_and_select_peers(
             ),
         ]
 
-        grace_waited = False
+        last_retry_time = 0.0
         try:
             while True:
                 peers_a, peers_b = await asyncio.gather(
@@ -259,9 +267,10 @@ async def scan_and_select_peers(
 
                 elapsed = time.monotonic() - t0
                 log.info(
-                    "  [Poll #%d | %.1fs] Probe %d: %d peers | Probe %d: %d peers | Mutual candidates: %d / %d",
+                    "  [Poll #%d | %.1fs / %.0fs] Probe %d: %d peers | Probe %d: %d peers | Mutual candidates: %d / %d",
                     stats.polls_count,
                     elapsed,
+                    crawling_time_sec,
                     probe_a.id,
                     len(peers_a),
                     probe_b.id,
@@ -270,12 +279,12 @@ async def scan_and_select_peers(
                     target_count,
                 )
 
-                # Early exit when target_count is reached
+                # Early exit when target_count is reached (e.g. all candidates connected to both probes)
                 if len(mutual) >= target_count:
                     stats.early_exit = True
                     stop_event.set()
                     log.info(
-                        "  Target reached (%d >= %d) after %.1fs! Stopping scan early.",
+                        "  Target reached (%d / %d candidates connected to both probes) after %.1fs! Stopping scan early.",
                         len(mutual),
                         target_count,
                         elapsed,
@@ -286,23 +295,46 @@ async def scan_and_select_peers(
                 if elapsed >= crawling_time_sec:
                     stop_event.set()
                     log.warning(
-                        "  Crawling timeout (%.1fs) reached with %d / %d mutual peers.",
+                        "  Crawling timeout (%.1fs) reached with %d / %d mutual candidate peers.",
                         crawling_time_sec,
                         len(mutual),
                         target_count,
                     )
                     break
 
-                # If all 4 workers have finished sending all onetry calls, wait one
-                # final grace interval for in-flight handshakes, poll once more, and exit.
-                if all(w.done() for w in workers):
-                    if grace_waited:
-                        log.info(
-                            "  All connection attempts completed (%d mutual peers found).",
-                            len(mutual),
-                        )
-                        break
-                    grace_waited = True
+                # Periodic re-dispatch for unconnected candidates
+                if elapsed - last_retry_time >= retry_interval_sec and not stop_event.is_set():
+                    if all(w.done() for w in workers):
+                        missing_a = [c for c in prioritized_candidates if c.identity not in peers_a]
+                        missing_b = [c for c in prioritized_candidates if c.identity not in peers_b]
+                        if missing_a or missing_b:
+                            log.info(
+                                "  [Retry @ %.1fs] Re-dispatching onetry for unconnected candidates: Probe %d missing %d, Probe %d missing %d",
+                                elapsed,
+                                probe_a.id,
+                                len(missing_a),
+                                probe_b.id,
+                                len(missing_b),
+                            )
+                            cl_a, to_a = _split_clearnet_and_tor(missing_a, set())
+                            cl_b, to_b = _split_clearnet_and_tor(missing_b, set())
+                            if cl_a:
+                                workers.append(asyncio.create_task(
+                                    _dispatch_onetry_worker(rpc_a, cl_a, clearnet_conc, stop_event, stats.onetry_sent_probes, probe_a.id)
+                                ))
+                            if to_a:
+                                workers.append(asyncio.create_task(
+                                    _dispatch_onetry_worker(rpc_a, to_a, tor_conc, stop_event, stats.onetry_sent_probes, probe_a.id)
+                                ))
+                            if cl_b:
+                                workers.append(asyncio.create_task(
+                                    _dispatch_onetry_worker(rpc_b, cl_b, clearnet_conc, stop_event, stats.onetry_sent_probes, probe_b.id)
+                                ))
+                            if to_b:
+                                workers.append(asyncio.create_task(
+                                    _dispatch_onetry_worker(rpc_b, to_b, tor_conc, stop_event, stats.onetry_sent_probes, probe_b.id)
+                                ))
+                            last_retry_time = elapsed
 
                 remaining = max(0.0, crawling_time_sec - elapsed)
                 sleep_dur = min(poll_interval_sec, remaining)
@@ -327,7 +359,7 @@ async def scan_and_select_peers(
         stats.selected_count = len(selected_nodes)
 
         log.info(
-            "Step 2.3: Selected %d mutual peers. Disconnecting excess peers on Probe %d and Probe %d...",
+            "Step 2.3: Selected %d mutual peers. Disconnecting excess peers on Probe %d and Probe %d (preserving block-relay-only)...",
             len(selected_nodes),
             probe_a.id,
             probe_b.id,
@@ -462,10 +494,29 @@ async def _disconnect_excess_peers(
     selected_identities: set[NodeIdentity],
     current_peers: set[NodeIdentity],
     chunk_size: int = 50,
+    exclude_addrs: set[str] | None = None,
 ) -> int:
-    """Disconnect peers in *current_peers* that are not in *selected_identities*."""
+    """Disconnect peers in *current_peers* that are not in *selected_identities*.
+
+    CRITICAL: Never disconnect block-relay-only connections!
+    """
+    excluded = set(exclude_addrs or set())
+
+    # Query getpeerinfo to identify all block-relay-only connections currently active on the probe
+    try:
+        peers_raw = await rpc.getpeerinfo()
+        if isinstance(peers_raw, list):
+            for p in peers_raw:
+                if isinstance(p, dict) and p.get("connection_type") == "block-relay-only":
+                    addr = p.get("addr")
+                    if addr:
+                        excluded.add(addr)
+    except Exception as e:
+        log.debug("Could not inspect getpeerinfo in _disconnect_excess_peers: %s", e)
+
     excess_addrs = sorted(
-        p.addr for p in current_peers if p not in selected_identities
+        p.addr for p in current_peers
+        if p not in selected_identities and p.addr not in excluded
     )
     if not excess_addrs:
         return 0

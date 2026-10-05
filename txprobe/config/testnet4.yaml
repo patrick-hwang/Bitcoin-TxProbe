@@ -64,9 +64,10 @@ txprobe_execution:
   cleanup_wait_sec: 2.0
 
 discovery:
-  target_count: 1000
-  crawling_time_sec: 180
+  target_count: 0  # 0 means connect to all collected candidates
+  crawling_time_sec: 600  # 10 minutes connection window
   poll_interval_sec: 5
+  retry_interval_sec: 45  # periodically retry unconnected candidates every 45s
   clearnet_onetry_concurrency: 32
   tor_onetry_concurrency: 8
   max_addrman_age_days: 3

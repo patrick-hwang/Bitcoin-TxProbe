@@ -67,6 +67,7 @@ discovery:
   target_count: 25
   crawling_time_sec: 45
   poll_interval_sec: 5
+  retry_interval_sec: 15
   clearnet_onetry_concurrency: 32
   tor_onetry_concurrency: 8
   max_addrman_age_days: 3

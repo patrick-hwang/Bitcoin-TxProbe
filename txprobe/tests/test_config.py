@@ -104,8 +104,10 @@ def test_testnet4_yaml_probes_are_0_and_1():
     cfg = load_config(yaml_path)
     assert [n.id for n in cfg.probe_nodes] == [0, 1]
     assert [n.id for n in cfg.groundtruth_nodes] == [2, 3, 4, 5, 6]
-    assert cfg.discovery.crawling_time_sec == 180.0
+    assert cfg.discovery.target_count == 0
+    assert cfg.discovery.crawling_time_sec == 600.0
     assert cfg.discovery.poll_interval_sec == 5.0
+    assert cfg.discovery.retry_interval_sec == 45.0
     assert cfg.discovery.clearnet_onetry_concurrency == 32
     assert cfg.discovery.tor_onetry_concurrency == 8
 

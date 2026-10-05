@@ -54,12 +54,13 @@ class TxProbeExecutionConfig:
 @dataclass
 class DiscoveryConfig:
     """Configuration for the node discovery process."""
-    target_count: int = 1000
-    crawling_time_sec: float = 180.0
+    target_count: int = 0  # 0 means connect to all collected candidates
+    crawling_time_sec: float = 600.0
     poll_interval_sec: float = 5.0
     clearnet_onetry_concurrency: int = 32
     tor_onetry_concurrency: int = 8
     max_addrman_age_days: float = 0.0
+    retry_interval_sec: float = 45.0
 
 
 @dataclass
@@ -145,14 +146,15 @@ def load_config(path: str | Path) -> Config:
 
     disc_raw = raw.get("discovery", {})
     discovery = DiscoveryConfig(
-        target_count=disc_raw.get("target_count", 1000),
-        crawling_time_sec=float(disc_raw.get("crawling_time_sec", 180.0)),
+        target_count=int(disc_raw.get("target_count", 0)),
+        crawling_time_sec=float(disc_raw.get("crawling_time_sec", 600.0)),
         poll_interval_sec=float(disc_raw.get("poll_interval_sec", 5.0)),
         clearnet_onetry_concurrency=int(
             disc_raw.get("clearnet_onetry_concurrency", 32)
         ),
         tor_onetry_concurrency=int(disc_raw.get("tor_onetry_concurrency", 8)),
         max_addrman_age_days=float(disc_raw.get("max_addrman_age_days", 0.0)),
+        retry_interval_sec=float(disc_raw.get("retry_interval_sec", 45.0)),
     )
 
     reach_raw = raw.get("reachability", {})
