@@ -172,11 +172,11 @@ def init_network(
             "block_propagation_wait_sec": 3.0,
         },
         "txprobe_execution": {
-            "invblock_wait_sec": 3.0,
+            "invblock_wait_sec": 4.0,
             "flood_wait_sec": 0.5,
             "parent_wait_sec": 2.0,
-            "marker_propagation_wait_sec": 3.0,
-            "getdata_wait_sec": 4.0,
+            "marker_propagation_wait_sec": 7.5,
+            "getdata_wait_sec": 6.0,
             "cleanup_wait_sec": 1.0,
         },
     }
