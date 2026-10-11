@@ -32,38 +32,43 @@ if [ ! -f "$TORRC_PATH" ]; then
     exit 1
 fi
 
-if [ -f "$TOR_LOG" ]; then
-    echo "Remove existed tor log $TOR_LOG"
-    rm -f "$TOR_LOG"
+EXISTING_TOR_PID=$(pgrep -f "tor.*-f ${TORRC_PATH}" || true)
+if [ -n "$EXISTING_TOR_PID" ]; then
+    echo -e "${GREEN}    Tor daemon is already running (PID: ${EXISTING_TOR_PID}). Skipping startup.${NC}"
+else
+    if [ -f "$TOR_LOG" ]; then
+        echo "Remove existed tor log $TOR_LOG"
+        rm -f "$TOR_LOG"
+    fi
+
+    # Chạy Tor ngầm và ghi log để theo dõi tiến trình bootstrap
+    "$TOR_BIN" -f "$TORRC_PATH" --Log "notice file $TOR_LOG" >/dev/null 2>&1 &
+    TOR_PID=$!
+
+    # Đợi Tor bootstrap đạt 100%
+    echo -en "${GRAY}    Waiting for Tor to bootstrap...${NC}"
+
+    while true; do
+        if [ -f "$TOR_LOG" ] && grep -q "Bootstrapped 100%" "$TOR_LOG"; then
+            break
+        fi
+
+        echo -en "${GRAY}.${NC}"
+
+        # Kiểm tra xem tiến trình Tor có còn hoạt động không
+        if ! kill -0 "$TOR_PID" 2>/dev/null; then
+            echo -e "\n${RED}[!] Tor is terminated.${NC}"
+            exit 1
+        fi
+
+        sleep 2
+    done
+    echo ""
+    echo -e " ${GREEN}Ready!${NC}"
 fi
 
-# Chạy Tor ngầm và ghi log để theo dõi tiến trình bootstrap
-"$TOR_BIN" -f "$TORRC_PATH" --Log "notice file $TOR_LOG" >/dev/null 2>&1 &
-TOR_PID=$!
-
-# Đợi Tor bootstrap đạt 100%
-echo -en "${GRAY}    Waiting for Tor to bootstrap...${NC}"
-
-while true; do
-    if [ -f "$TOR_LOG" ] && grep -q "Bootstrapped 100%" "$TOR_LOG"; then
-        break
-    fi
-
-    echo -en "${GRAY}.${NC}"
-
-    # Kiểm tra xem tiến trình Tor có còn hoạt động không
-    if ! kill -0 "$TOR_PID" 2>/dev/null; then
-        echo -e "\n${RED}[!] Tor is terminated.${NC}"
-        exit 1
-    fi
-
-    sleep 2
-done
-echo ""
-echo -e " ${GREEN}Ready!${NC}"
-
 # ==========================================
-# 2. Khởi động 7 Bitcoin Nodes (i từ 0 đến 6)
+# 2. Khởi động 32 Bitcoin Nodes (2 probes: 0,1 + 30 groundtruth: 2-31)
 # ==========================================
 echo -e "${CYAN}[*] Starting Bitcoin Nodes...${NC}"
 
@@ -81,9 +86,12 @@ if [ ! -x "$BITCOIND_OFFICIAL" ]; then
     exit 1
 fi
 
-for i in {0..6}; do
+START_NODE_ID=${1:-0}
+END_NODE_ID=${2:-31}
+
+for ((i=START_NODE_ID; i<=END_NODE_ID; i++)); do
     # Phân loại binary thực thi theo yêu cầu:
-    # Node 0 và 1 dùng TxProbe, từ node 2 đến 6 dùng bản official 31.1
+    # Node 0 và 1 dùng TxProbe, từ node 2 đến 31 dùng bản official 31.1
     if [ "$i" -eq 0 ] || [ "$i" -eq 1 ]; then
         BITCOIND_BIN="$BITCOIND_CUSTOM"
         NOTE="[TxProbe]"
@@ -104,7 +112,7 @@ for i in {0..6}; do
 
     EXTRA_ARGS=""
     if [ "$i" -eq 0 ] || [ "$i" -eq 1 ]; then
-        EXTRA_ARGS="-txprobelogfile=txprobe_${i}.log"
+        EXTRA_ARGS="-txprobelogfile=/mnt/ssd/hdhphat-mindfullab/Bitcoin-TxProbe/txprobe/txprobe_${i}.log"
     fi
 
     # Khởi động bitcoind ở chế độ daemon (tăng rpcthreads và rpcworkqueue để xử lý kết nối song song)
@@ -115,4 +123,4 @@ for i in {0..6}; do
     fi
 done
 
-echo -e "\n${GREEN}[+] All 7 nodes and Tor have been launched!${NC}"
+echo -e "\n${GREEN}[+] All nodes (${START_NODE_ID}..${END_NODE_ID}) and Tor have been launched!${NC}"

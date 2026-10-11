@@ -228,6 +228,7 @@ class TxProbeExecutionResult:
 
 def extract_eligible_peer_maps(
     peer_info: Iterable[Mapping[str, Any]],
+    allow_localhost: bool = False,
 ) -> tuple[dict[str, int], dict[int, str]]:
     """Build addr->peer_id and peer_id->addr maps for eligible full-relay peers."""
     addr_to_id: dict[str, int] = {}
@@ -239,7 +240,7 @@ def extract_eligible_peer_maps(
         if (
             addr
             and pid is not None
-            and not addr.startswith("127.0.0.1")
+            and (allow_localhost or not addr.startswith("127.0.0.1"))
             and conn_type != "block-relay-only"
         ):
             pid_int = int(pid)
@@ -438,7 +439,9 @@ async def execute_single_round(
 
     # Step 2.1: Query Probe 0 active peers at the start of the round
     start_peer_info = await probe_0.getpeerinfo()
-    start_addr_to_id, start_id_to_addr = extract_eligible_peer_maps(start_peer_info)
+    start_addr_to_id, start_id_to_addr = extract_eligible_peer_maps(
+        start_peer_info, allow_localhost=getattr(cfg, "allow_localhost", False)
+    )
 
     active_sources: list[NodeIdentity] = []
     active_parent_txs: list[TxMessage] = []
@@ -540,7 +543,9 @@ async def execute_single_round(
 
     # Step 2.7: Verify end-of-round peer connectivity and parse marker GETDATA responses
     end_peer_info = await probe_0.getpeerinfo()
-    end_addr_to_id, end_id_to_addr = extract_eligible_peer_maps(end_peer_info)
+    end_addr_to_id, end_id_to_addr = extract_eligible_peer_maps(
+        end_peer_info, allow_localhost=getattr(cfg, "allow_localhost", False)
+    )
     combined_id_to_addr = {**start_id_to_addr, **end_id_to_addr}
 
     for node in (*active_sources, *active_sinks):

@@ -171,6 +171,7 @@ async def harvest_addresses(config: Config) -> HarvestResult:
         config.default_port,
         seen,
         gt_self_candidates,
+        allow_localhost=config.allow_localhost,
     )
     stats.groundtruth_self_count = gt_self_count
     log.info("  Found %d groundtruth self-identities", gt_self_count)
@@ -238,7 +239,32 @@ async def harvest_addresses(config: Config) -> HarvestResult:
         reachable = []
 
     # ── Combine: groundtruth self + tested candidates + probe peers ──
-    all_candidates = gt_self_candidates + reachable + probe_peers
+    combined = gt_self_candidates + reachable + probe_peers
+
+    # Exclude probe nodes' own self-identities to prevent self-connection attempts
+    probe_self_addrs: set[str] = set()
+    for p_cfg in config.probe_nodes:
+        try:
+            async with AsyncBitcoinRpc(p_cfg.rpchost, p_cfg.rpcport, p_cfg.rpcuser, p_cfg.rpcpassword) as p_rpc:
+                p_net = await p_rpc.getnetworkinfo()
+                for la in p_net.get("localaddresses", []):
+                    addr_val = la.get("address", "")
+                    port_val = la.get("port", config.default_port)
+                    if addr_val:
+                        probe_self_addrs.add(f"{addr_val}:{port_val}")
+                        if not config.allow_localhost:
+                            probe_self_addrs.add(addr_val)
+        except Exception as e:
+            log.debug("Could not query localaddresses for probe %d: %s", p_cfg.id, e)
+        if config.allow_localhost:
+            p_port = p_cfg.p2pport or config.default_port
+            probe_self_addrs.add(f"{p_cfg.rpchost}:{p_port}")
+
+    all_candidates = [
+        c for c in combined
+        if c.identity.addr not in probe_self_addrs
+        and (config.allow_localhost or c.identity.addr.split(":")[0] not in probe_self_addrs)
+    ]
     all_candidates.sort(key=lambda c: c.priority)
     stats.total_unique = len(all_candidates)
 
@@ -262,11 +288,12 @@ async def _harvest_groundtruth_self_parallel(
     default_port: int,
     seen: set[NodeIdentity],
     candidates: list[CandidateNode],
+    allow_localhost: bool = False,
 ) -> int:
     """Call getnetworkinfo() on groundtruth nodes to harvest their own .onion identities."""
     added = 0
     tasks = [
-        _harvest_groundtruth_self_one(nc, default_port, seen, candidates)
+        _harvest_groundtruth_self_one(nc, default_port, seen, candidates, allow_localhost=allow_localhost)
         for nc in node_configs
     ]
     results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -283,6 +310,7 @@ async def _harvest_groundtruth_self_one(
     default_port: int,
     seen: set[NodeIdentity],
     candidates: list[CandidateNode],
+    allow_localhost: bool = False,
 ) -> int:
     """Extract the .onion (or external) localaddress of a groundtruth node via getnetworkinfo()."""
     try:
@@ -293,23 +321,29 @@ async def _harvest_groundtruth_self_one(
         return 0
 
     local_addrs: list[dict] = info.get("localaddresses", [])
-    if not local_addrs:
-        return 0
 
-    # Prefer .onion entry; fallback to first non-local address
+    # Prefer .onion entry; fallback to first non-local address (or local if allow_localhost)
     chosen = next(
         (item for item in local_addrs if str(item.get("address", "")).endswith(".onion")),
         None,
     )
     if chosen is None:
-        chosen = next(
-            (
-                item
-                for item in local_addrs
-                if item.get("address") and not str(item.get("address")).startswith("127.0.0.1")
-            ),
-            None,
-        )
+        if allow_localhost:
+            chosen = next(
+                (item for item in local_addrs if item.get("address")),
+                None,
+            )
+        else:
+            chosen = next(
+                (
+                    item
+                    for item in local_addrs
+                    if item.get("address") and not str(item.get("address")).startswith("127.0.0.1")
+                ),
+                None,
+            )
+    if chosen is None and allow_localhost and nc.p2pport:
+        chosen = {"address": nc.rpchost, "port": nc.p2pport}
     if chosen is None:
         return 0
 
@@ -399,7 +433,7 @@ async def _harvest_peers_one(
         network: str = peer.get("network", "")
 
         # Skip local connections
-        if addr.startswith("127.0.0.1"):
+        if not config.allow_localhost and addr.startswith("127.0.0.1"):
             continue
 
         # Skip ephemeral connection types

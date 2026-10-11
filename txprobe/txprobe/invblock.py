@@ -196,7 +196,11 @@ async def craft_test_transaction(
             ts_str = f"{int(time.time())}"
             fake_txid = hashlib.sha256((ts_str + (nonce_seed or "")).encode()).hexdigest()
             inputs = [{"txid": fake_txid, "vout": 0}]
-            outputs = [{"tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx": 0.0001}]
+            try:
+                addr = await rpc.getnewaddress("dummy_invblock", "bech32")
+                outputs = [{addr: 0.0001}]
+            except Exception:
+                outputs = [{"tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx": 0.0001}]
             raw_hex = await rpc.createrawtransaction(inputs, outputs)
             decoded = await rpc.decoderawtransaction(raw_hex)
             txid = decoded["txid"]
@@ -305,6 +309,7 @@ async def run_invblock_prefilter(
     test_tx: TxMessage | None = None,
     clear_logs: bool = True,
     progress_callback: Callable[[str, float], None] | None = None,
+    allow_localhost: bool = False,
 ) -> InvblockResult:
     """Execute Step 2 INVBLOCK Pre-filtering across Probe 0 and Probe 1.
 
@@ -318,6 +323,7 @@ async def run_invblock_prefilter(
         test_tx: Optional pre-crafted TxMessage; if None, crafts a fresh one.
         clear_logs: Whether to truncate probe log files before starting test.
         progress_callback: Optional callback(stage_name, progress_ratio).
+        allow_localhost: Whether to accept 127.0.0.1 addresses.
 
     Returns:
         InvblockResult with pruned GraphSnapshot and detailed statistics.
@@ -354,7 +360,12 @@ async def run_invblock_prefilter(
         addr = p.get("addr", "")
         pid = p.get("id")
         conn_type = p.get("connection_type", "")
-        if addr and pid is not None and not addr.startswith("127.0.0.1") and conn_type != "block-relay-only":
+        if (
+            addr
+            and pid is not None
+            and (allow_localhost or not addr.startswith("127.0.0.1"))
+            and conn_type != "block-relay-only"
+        ):
             p0_addr_to_id[addr] = pid
             p0_id_to_addr[pid] = addr
 
@@ -364,7 +375,12 @@ async def run_invblock_prefilter(
         addr = p.get("addr", "")
         pid = p.get("id")
         conn_type = p.get("connection_type", "")
-        if addr and pid is not None and not addr.startswith("127.0.0.1") and conn_type != "block-relay-only":
+        if (
+            addr
+            and pid is not None
+            and (allow_localhost or not addr.startswith("127.0.0.1"))
+            and conn_type != "block-relay-only"
+        ):
             p1_addr_to_id[addr] = pid
             p1_id_to_addr[pid] = addr
 

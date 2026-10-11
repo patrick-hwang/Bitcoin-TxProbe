@@ -19,6 +19,7 @@ class NodeConfig:
     wallet: str = ""
     rpchost: str = "127.0.0.1"
     txprobe_log_file: str = ""
+    p2pport: int = 0
 
 
 @dataclass
@@ -49,6 +50,7 @@ class TxProbeExecutionConfig:
     marker_propagation_wait_sec: float = 10.0
     getdata_wait_sec: float = 15.0
     cleanup_wait_sec: float = 2.0
+    allow_localhost: bool = False
 
 
 @dataclass
@@ -68,10 +70,11 @@ class ReachabilityConfig:
     """Configuration for the active reachability test."""
     tor_proxy_host: str = "127.0.0.1"
     tor_proxy_port: int = 9050
-    clearnet_timeout_sec: float = 5.0
-    tor_timeout_sec: float = 30.0
+    clearnet_timeout_sec: float = 10.0
+    tor_timeout_sec: float = 60.0
     clearnet_concurrency: int = 50
     tor_concurrency: int = 20
+    magic_bytes: bytes = b'\x1c\x16\x3f\x28'
 
 
 @dataclass
@@ -86,6 +89,9 @@ class Config:
     invblock: InvblockConfig = None  # type: ignore[assignment]
     tx_crafting: TxCraftingConfig = None  # type: ignore[assignment]
     txprobe_execution: TxProbeExecutionConfig = None  # type: ignore[assignment]
+    allow_localhost: bool = False
+    magic_bytes: bytes = b'\x1c\x16\x3f\x28'
+    results_dir: str = "results"
 
     def __post_init__(self) -> None:
         if self.invblock is None:
@@ -94,6 +100,25 @@ class Config:
             self.tx_crafting = TxCraftingConfig()
         if self.txprobe_execution is None:
             self.txprobe_execution = TxProbeExecutionConfig()
+
+        magic_map = {
+            "mainnet": b"\xf9\xbe\xb4\xd9",
+            "testnet": b"\x0b\x11\x09\x07",
+            "testnet3": b"\x0b\x11\x09\x07",
+            "testnet4": b"\x1c\x16\x3f\x28",
+            "regtest": b"\xfa\xbf\xb5\xda",
+            "signet": b"\x0a\x03\xcf\x40",
+        }
+        net_lower = self.network.lower()
+        if net_lower == "regtest" and not self.allow_localhost:
+            self.allow_localhost = True
+        if self.magic_bytes == b"\x1c\x16\x3f\x28" and net_lower in magic_map:
+            self.magic_bytes = magic_map[net_lower]
+        if self.results_dir == "results" and net_lower == "regtest":
+            self.results_dir = "results-regtest"
+
+        self.reachability.magic_bytes = self.magic_bytes
+        self.txprobe_execution.allow_localhost = self.allow_localhost
 
     @property
     def probe_nodes(self) -> list[NodeConfig]:
@@ -140,6 +165,7 @@ def load_config(path: str | Path) -> Config:
             wallet=n.get("wallet", ""),
             rpchost=n.get("rpchost", "127.0.0.1"),
             txprobe_log_file=n.get("txprobe_log_file", ""),
+            p2pport=int(n.get("p2pport", 0)),
         )
         for n in raw["nodes"]
     ]
@@ -161,8 +187,8 @@ def load_config(path: str | Path) -> Config:
     reachability = ReachabilityConfig(
         tor_proxy_host=reach_raw.get("tor_proxy_host", "127.0.0.1"),
         tor_proxy_port=int(reach_raw.get("tor_proxy_port", 9050)),
-        clearnet_timeout_sec=float(reach_raw.get("clearnet_timeout_sec", 5.0)),
-        tor_timeout_sec=float(reach_raw.get("tor_timeout_sec", 30.0)),
+        clearnet_timeout_sec=float(reach_raw.get("clearnet_timeout_sec", 10.0)),
+        tor_timeout_sec=float(reach_raw.get("tor_timeout_sec", 60.0)),
         clearnet_concurrency=int(reach_raw.get("clearnet_concurrency", 50)),
         tor_concurrency=int(reach_raw.get("tor_concurrency", 20)),
     )
@@ -200,6 +226,19 @@ def load_config(path: str | Path) -> Config:
         cleanup_wait_sec=float(exec_raw.get("cleanup_wait_sec", 2.0)),
     )
 
+    raw_allow_localhost = raw.get("allow_localhost")
+    allow_localhost = (
+        bool(raw_allow_localhost)
+        if raw_allow_localhost is not None
+        else (raw["network"].lower() == "regtest")
+    )
+
+    raw_results_dir = raw.get("results_dir")
+    if raw_results_dir is not None:
+        results_dir = str(raw_results_dir)
+    else:
+        results_dir = "results-regtest" if raw["network"].lower() == "regtest" else "results"
+
     return Config(
         network=raw["network"],
         default_port=int(raw["default_port"]),
@@ -210,4 +249,6 @@ def load_config(path: str | Path) -> Config:
         invblock=invblock,
         tx_crafting=tx_crafting,
         txprobe_execution=txprobe_execution,
+        allow_localhost=allow_localhost,
+        results_dir=results_dir,
     )

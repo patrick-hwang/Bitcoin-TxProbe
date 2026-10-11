@@ -75,8 +75,8 @@ discovery:
 reachability:
   tor_proxy_host: "127.0.0.1"
   tor_proxy_port: 9050
-  clearnet_timeout_sec: 5.0
-  tor_timeout_sec: 30.0
+  clearnet_timeout_sec: 10.0
+  tor_timeout_sec: 60.0
   clearnet_concurrency: 50
   tor_concurrency: 20
 

@@ -1,7 +1,7 @@
 network: testnet4
 default_port: 48333
 
-# Our 7 nodes: 2 probes (0,1) + 5 groundtruth (2-6)
+# Our 32 nodes: 2 probes (0, 1) + 30 groundtruth (2-31)
 nodes:
   - id: 0
     role: probe
@@ -9,13 +9,13 @@ nodes:
     rpcuser: expuser0
     rpcpassword: strongpassword0
     wallet: mywallet
-    txprobe_log_file: /mnt/ssd/hdhphat-mindfullab/Bitcoin-TxProbe/txprobe_0.log
+    txprobe_log_file: /mnt/ssd/hdhphat-mindfullab/Bitcoin-TxProbe/txprobe/txprobe_0.log
   - id: 1
     role: probe
     rpcport: 48335
     rpcuser: expuser1
     rpcpassword: strongpassword1
-    txprobe_log_file: /mnt/ssd/hdhphat-mindfullab/Bitcoin-TxProbe/txprobe_1.log
+    txprobe_log_file: /mnt/ssd/hdhphat-mindfullab/Bitcoin-TxProbe/txprobe/txprobe_1.log
   - id: 2
     role: groundtruth
     rpcport: 48338
@@ -41,12 +41,137 @@ nodes:
     rpcport: 48350
     rpcuser: expuser5
     rpcpassword: strongpassword5
+  - id: 7
+    role: groundtruth
+    rpcport: 48353
+    rpcuser: expuser7
+    rpcpassword: strongpassword7
+  - id: 8
+    role: groundtruth
+    rpcport: 48356
+    rpcuser: expuser8
+    rpcpassword: strongpassword8
+  - id: 9
+    role: groundtruth
+    rpcport: 48359
+    rpcuser: expuser9
+    rpcpassword: strongpassword9
+  - id: 10
+    role: groundtruth
+    rpcport: 48362
+    rpcuser: expuser10
+    rpcpassword: strongpassword10
+  - id: 11
+    role: groundtruth
+    rpcport: 48365
+    rpcuser: expuser11
+    rpcpassword: strongpassword11
+  - id: 12
+    role: groundtruth
+    rpcport: 48368
+    rpcuser: expuser12
+    rpcpassword: strongpassword12
+  - id: 13
+    role: groundtruth
+    rpcport: 48371
+    rpcuser: expuser13
+    rpcpassword: strongpassword13
+  - id: 14
+    role: groundtruth
+    rpcport: 48374
+    rpcuser: expuser14
+    rpcpassword: strongpassword14
+  - id: 15
+    role: groundtruth
+    rpcport: 48377
+    rpcuser: expuser15
+    rpcpassword: strongpassword15
+  - id: 16
+    role: groundtruth
+    rpcport: 48380
+    rpcuser: expuser16
+    rpcpassword: strongpassword16
+  - id: 17
+    role: groundtruth
+    rpcport: 48383
+    rpcuser: expuser17
+    rpcpassword: strongpassword17
+  - id: 18
+    role: groundtruth
+    rpcport: 48386
+    rpcuser: expuser18
+    rpcpassword: strongpassword18
+  - id: 19
+    role: groundtruth
+    rpcport: 48389
+    rpcuser: expuser19
+    rpcpassword: strongpassword19
+  - id: 20
+    role: groundtruth
+    rpcport: 48392
+    rpcuser: expuser20
+    rpcpassword: strongpassword20
+  - id: 21
+    role: groundtruth
+    rpcport: 48395
+    rpcuser: expuser21
+    rpcpassword: strongpassword21
+  - id: 22
+    role: groundtruth
+    rpcport: 48398
+    rpcuser: expuser22
+    rpcpassword: strongpassword22
+  - id: 23
+    role: groundtruth
+    rpcport: 48401
+    rpcuser: expuser23
+    rpcpassword: strongpassword23
+  - id: 24
+    role: groundtruth
+    rpcport: 48404
+    rpcuser: expuser24
+    rpcpassword: strongpassword24
+  - id: 25
+    role: groundtruth
+    rpcport: 48407
+    rpcuser: expuser25
+    rpcpassword: strongpassword25
+  - id: 26
+    role: groundtruth
+    rpcport: 48410
+    rpcuser: expuser26
+    rpcpassword: strongpassword26
+  - id: 27
+    role: groundtruth
+    rpcport: 48413
+    rpcuser: expuser27
+    rpcpassword: strongpassword27
+  - id: 28
+    role: groundtruth
+    rpcport: 48416
+    rpcuser: expuser28
+    rpcpassword: strongpassword28
+  - id: 29
+    role: groundtruth
+    rpcport: 48419
+    rpcuser: expuser29
+    rpcpassword: strongpassword29
+  - id: 30
+    role: groundtruth
+    rpcport: 48422
+    rpcuser: expuser30
+    rpcpassword: strongpassword30
+  - id: 31
+    role: groundtruth
+    rpcport: 48425
+    rpcuser: expuser31
+    rpcpassword: strongpassword31
 
 invblock:
-  wait_time_sec: 5.0
+  wait_time_sec: 8.0
 
 tx_crafting:
-  utxo_target_sats: 2000
+  utxo_target_sats: 1500
   parent_fee_sats: 500
   marker_fee_sats: 500
   split_fee_rate_sat_vb: 2
@@ -69,14 +194,14 @@ discovery:
   poll_interval_sec: 5
   retry_interval_sec: 45  # periodically retry unconnected candidates every 45s
   clearnet_onetry_concurrency: 32
-  tor_onetry_concurrency: 8
+  tor_onetry_concurrency: 16
   max_addrman_age_days: 3
 
 reachability:
   tor_proxy_host: "127.0.0.1"
   tor_proxy_port: 9050
-  clearnet_timeout_sec: 5.0
-  tor_timeout_sec: 30.0
+  clearnet_timeout_sec: 10.0
+  tor_timeout_sec: 60.0
   clearnet_concurrency: 50
   tor_concurrency: 20
 

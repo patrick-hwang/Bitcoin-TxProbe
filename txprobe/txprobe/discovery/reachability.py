@@ -57,8 +57,9 @@ async def test_reachability(
         return False
 
     try:
+        expected_magic = getattr(config, "magic_bytes", TESTNET4_MAGIC)
         # Send version message
-        version_msg = _build_version_message(host, port)
+        version_msg = _build_version_message(host, port, magic=expected_magic)
         writer.write(version_msg)
         await writer.drain()
 
@@ -69,7 +70,7 @@ async def test_reachability(
         )
         magic, command, payload_len, _checksum = _parse_message_header(header)
 
-        if magic != TESTNET4_MAGIC:
+        if magic != expected_magic:
             log.debug("Wrong magic from %s:%d: %s", host, port, magic.hex())
             return False
 
@@ -179,14 +180,16 @@ async def batch_test_reachability(
 # ── P2P message construction ──
 
 
-def _build_version_message(dest_host: str, dest_port: int) -> bytes:
+def _build_version_message(
+    dest_host: str, dest_port: int, magic: bytes = TESTNET4_MAGIC
+) -> bytes:
     """Build a complete Bitcoin P2P version message (header + payload).
 
     The version message is the first message in the Bitcoin P2P handshake.
     We construct a minimal but valid one.
     """
     payload = _build_version_payload(dest_host, dest_port)
-    return _wrap_p2p_message(b"version", payload)
+    return _wrap_p2p_message(b"version", payload, magic=magic)
 
 
 def _build_version_payload(dest_host: str, dest_port: int) -> bytes:
@@ -241,7 +244,9 @@ def _serialize_net_addr(services: int, ip: str, port: int) -> bytes:
     return r
 
 
-def _wrap_p2p_message(command: bytes, payload: bytes) -> bytes:
+def _wrap_p2p_message(
+    command: bytes, payload: bytes, magic: bytes = TESTNET4_MAGIC
+) -> bytes:
     """Wrap a payload into a Bitcoin P2P message with header.
 
     Header layout:
@@ -252,7 +257,7 @@ def _wrap_p2p_message(command: bytes, payload: bytes) -> bytes:
     """
     cmd_padded = command.ljust(12, b"\x00")
     checksum = hashlib.sha256(hashlib.sha256(payload).digest()).digest()[:4]
-    header = TESTNET4_MAGIC + cmd_padded + struct.pack("<I", len(payload)) + checksum
+    header = magic + cmd_padded + struct.pack("<I", len(payload)) + checksum
     return header + payload
 
 
@@ -316,7 +321,5 @@ async def _open_tor_connection(
     proxy = Proxy.from_url(
         f"socks5://{config.tor_proxy_host}:{config.tor_proxy_port}"
     )
-    sock = await proxy.connect(dest_host=host, dest_port=port)
-    # Wrap the raw socket into asyncio streams
-    reader, writer = await asyncio.open_connection(sock=sock)
-    return reader, writer
+    stream = await proxy.connect(dest_host=host, dest_port=port)
+    return stream.reader, stream.writer

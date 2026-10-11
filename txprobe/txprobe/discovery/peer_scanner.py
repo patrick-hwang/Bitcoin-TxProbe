@@ -259,8 +259,8 @@ async def scan_and_select_peers(
         try:
             while True:
                 peers_a, peers_b = await asyncio.gather(
-                    _fetch_valid_probe_peers(rpc_a, probe_a.id),
-                    _fetch_valid_probe_peers(rpc_b, probe_b.id),
+                    _fetch_valid_probe_peers(rpc_a, probe_a.id, allow_localhost=config.allow_localhost),
+                    _fetch_valid_probe_peers(rpc_b, probe_b.id, allow_localhost=config.allow_localhost),
                 )
                 mutual = peers_a & peers_b & candidate_set
                 stats.polls_count += 1
@@ -411,11 +411,13 @@ def _split_clearnet_and_tor(
     return clearnet_addrs, tor_addrs
 
 
-def _extract_valid_probe_peers(peers_raw: list[dict]) -> set[NodeIdentity]:
+def _extract_valid_probe_peers(
+    peers_raw: list[dict], allow_localhost: bool = False
+) -> set[NodeIdentity]:
     """Extract valid full-relay connected peers from getpeerinfo() output.
 
     Excludes:
-        - Localhost connections (127.0.0.1*)
+        - Localhost connections (127.0.0.1*) unless allow_localhost is True
         - Ephemeral connections (feeler, addr-fetch)
         - Block-relay-only connections (do not relay transactions)
         - Connections that have not completed the P2P version handshake (version <= 0)
@@ -423,7 +425,7 @@ def _extract_valid_probe_peers(peers_raw: list[dict]) -> set[NodeIdentity]:
     valid: set[NodeIdentity] = set()
     for peer in peers_raw:
         addr: str = peer.get("addr", "")
-        if not addr or addr.startswith("127.0.0.1"):
+        if not addr or (not allow_localhost and addr.startswith("127.0.0.1")):
             continue
 
         conn_type: str = peer.get("connection_type", "")
@@ -439,12 +441,12 @@ def _extract_valid_probe_peers(peers_raw: list[dict]) -> set[NodeIdentity]:
 
 
 async def _fetch_valid_probe_peers(
-    rpc: AsyncBitcoinRpc, probe_id: int
+    rpc: AsyncBitcoinRpc, probe_id: int, allow_localhost: bool = False
 ) -> set[NodeIdentity]:
     """Call getpeerinfo() on a probe node and return valid peer identities."""
     try:
         peers_raw = await rpc.getpeerinfo()
-        return _extract_valid_probe_peers(peers_raw)
+        return _extract_valid_probe_peers(peers_raw, allow_localhost=allow_localhost)
     except Exception as e:
         log.warning("getpeerinfo failed on probe %d: %s", probe_id, e)
         return set()

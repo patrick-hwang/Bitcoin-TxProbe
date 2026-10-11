@@ -93,7 +93,8 @@ class MasterPipelineOrchestrator:
         self.config = config
         if run_dir is None:
             ts = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            self.run_dir = Path("results") / f"run_{ts}"
+            base_dir = Path(getattr(self.config, "results_dir", "results"))
+            self.run_dir = base_dir / f"run_{ts}"
         else:
             self.run_dir = Path(run_dir)
 
@@ -227,6 +228,7 @@ class MasterPipelineOrchestrator:
                 probe_1_log_path=p1_log,
                 wait_time_sec=self.config.invblock.wait_time_sec,
                 clear_logs=True,
+                allow_localhost=self.config.allow_localhost,
             )
             res.save(self.artifacts.filtered_groundtruth)
             self._notify(
@@ -395,10 +397,12 @@ class MasterPipelineOrchestrator:
             raise FileNotFoundError(f"Missing Step 5 artifact: {self.artifacts.reconciled_topology}")
 
         self._notify("STEP 6", "Computing network topology metrics and groundtruth validation scores...")
-        report = evaluate_reconciled_results(reconciled_dict, compute_paths=True)
+        report = evaluate_reconciled_results(
+            reconciled_dict, compute_paths=True, network=self.config.network
+        )
         report.save_json(self.artifacts.evaluation_report_json)
 
-        md_text = generate_markdown_report(report)
+        md_text = generate_markdown_report(report, network=self.config.network)
         self.artifacts.evaluation_report_md.write_text(md_text, encoding="utf-8")
 
         self._notify(

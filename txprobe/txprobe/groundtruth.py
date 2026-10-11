@@ -109,13 +109,14 @@ class GroundtruthResult:
 
 
 async def get_node_onion_identity(
-    nc: NodeConfig, default_port: int = 48333
+    nc: NodeConfig, default_port: int = 48333, allow_localhost: bool = False
 ) -> NodeIdentity | None:
     """Query getnetworkinfo() on *nc* and extract its .onion (or external) NodeIdentity.
 
     Args:
         nc: Node configuration.
         default_port: Default network port if missing in localaddresses.
+        allow_localhost: Whether to accept 127.0.0.1 addresses.
 
     Returns:
         NodeIdentity if available, or None if the node is offline or has no localaddresses.
@@ -128,25 +129,31 @@ async def get_node_onion_identity(
         return None
 
     local_addrs: list[dict] = info.get("localaddresses", [])
-    if not local_addrs:
-        log.warning("Node %d has no localaddresses in getnetworkinfo", nc.id)
-        return None
 
     chosen = next(
         (item for item in local_addrs if str(item.get("address", "")).endswith(".onion")),
         None,
     )
     if chosen is None:
-        chosen = next(
-            (
-                item
-                for item in local_addrs
-                if item.get("address") and not str(item.get("address")).startswith("127.0.0.1")
-            ),
-            None,
-        )
+        if allow_localhost:
+            chosen = next(
+                (item for item in local_addrs if item.get("address")),
+                None,
+            )
+        else:
+            chosen = next(
+                (
+                    item
+                    for item in local_addrs
+                    if item.get("address") and not str(item.get("address")).startswith("127.0.0.1")
+                ),
+                None,
+            )
+    if chosen is None and allow_localhost and nc.p2pport:
+        chosen = {"address": nc.rpchost, "port": nc.p2pport}
+
     if chosen is None:
-        log.warning("Node %d has no non-local address in localaddresses", nc.id)
+        log.warning("Node %d has no suitable address in localaddresses", nc.id)
         return None
 
     raw_addr = str(chosen["address"])
@@ -166,7 +173,8 @@ async def fetch_groundtruth_identities(config: Config) -> dict[int, NodeIdentity
     """
     gt_configs = config.groundtruth_nodes
     tasks = [
-        get_node_onion_identity(nc, config.default_port) for nc in gt_configs
+        get_node_onion_identity(nc, config.default_port, allow_localhost=config.allow_localhost)
+        for nc in gt_configs
     ]
     results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -235,8 +243,8 @@ async def capture_initial_groundtruth(
     log.info("Step 1.1: Fetching groundtruth identities and probe peer lists...")
     gt_identities, peers_a, peers_b = await asyncio.gather(
         fetch_groundtruth_identities(config),
-        _fetch_probe_peers(probe_a),
-        _fetch_probe_peers(probe_b),
+        _fetch_probe_peers(probe_a, allow_localhost=config.allow_localhost),
+        _fetch_probe_peers(probe_b, allow_localhost=config.allow_localhost),
     )
 
     mutual_probe_peers = peers_a & peers_b
@@ -286,7 +294,7 @@ async def capture_initial_groundtruth(
         config.get_node(node_id) for node_id in sorted(online_gt_identities)
     ]
     gt_peer_sets = await asyncio.gather(
-        *[_fetch_probe_peers(nc) for nc in gt_configs_online]
+        *[_fetch_probe_peers(nc, allow_localhost=config.allow_localhost) for nc in gt_configs_online]
     )
 
     adj_raw: dict[NodeIdentity, set[NodeIdentity]] = defaultdict(set)
@@ -325,12 +333,14 @@ async def capture_initial_groundtruth(
     )
 
 
-async def _fetch_probe_peers(nc: NodeConfig) -> set[NodeIdentity]:
+async def _fetch_probe_peers(
+    nc: NodeConfig, allow_localhost: bool = False
+) -> set[NodeIdentity]:
     """Call getpeerinfo() on a node and return valid full-relay peer identities."""
     try:
         async with AsyncBitcoinRpc(nc.rpchost, nc.rpcport, nc.rpcuser, nc.rpcpassword) as rpc:
             peers_raw = await rpc.getpeerinfo()
-        return _extract_valid_probe_peers(peers_raw)
+        return _extract_valid_probe_peers(peers_raw, allow_localhost=allow_localhost)
     except Exception as e:
         log.warning("getpeerinfo failed on node %d: %s", nc.id, e)
         return set()

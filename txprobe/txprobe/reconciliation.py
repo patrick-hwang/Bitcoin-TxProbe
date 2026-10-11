@@ -416,8 +416,8 @@ async def capture_final_groundtruth(
     # 1. Fetch groundtruth identities and probe peer sets in parallel
     gt_identities, peers_a, peers_b = await asyncio.gather(
         fetch_groundtruth_identities(config),
-        _fetch_probe_peers(probe_a),
-        _fetch_probe_peers(probe_b),
+        _fetch_probe_peers(probe_a, allow_localhost=config.allow_localhost),
+        _fetch_probe_peers(probe_b, allow_localhost=config.allow_localhost),
     )
 
     mutual_probe_peers = peers_a & peers_b
@@ -434,7 +434,7 @@ async def capture_final_groundtruth(
     ]
     # Fetch peer sets for only the online groundtruth nodes
     gt_peer_sets = await asyncio.gather(
-        *[_fetch_probe_peers(nc) for nc in gt_configs_online]
+        *[_fetch_probe_peers(nc, allow_localhost=config.allow_localhost) for nc in gt_configs_online]
     )
 
     # Build adjacency using only online groundtruth nodes

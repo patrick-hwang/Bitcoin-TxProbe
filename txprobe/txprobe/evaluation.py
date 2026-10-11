@@ -585,7 +585,7 @@ def compute_global_topology_metrics(
 
 
 def evaluate_reconciled_results(
-    data: dict, compute_paths: bool = True
+    data: dict, compute_paths: bool = True, network: str | None = None
 ) -> EvaluationReport:
     """Generate complete EvaluationReport from Step 5 reconciled_topology.json or result dict."""
     full_inferred_dict = data.get("full_inferred_topology")
@@ -619,19 +619,28 @@ def evaluate_reconciled_results(
         timestamp=datetime.now(timezone.utc).isoformat(),
         metadata={
             "step": "step_6_evaluation",
+            "network": network or data.get("network", "Bitcoin Testnet4"),
             "source_nodes_count": len(full_graph.nodes),
             "reconciliation_stats": stats_meta,
         },
     )
 
 
-def generate_markdown_report(report: EvaluationReport) -> str:
+def generate_markdown_report(report: EvaluationReport, network: str | None = None) -> str:
     """Render comprehensive executive Markdown report of evaluation results."""
+    raw_net = network or report.metadata.get("network", "Bitcoin Testnet4")
+    if raw_net.lower() in ("regtest", "bitcoin regtest"):
+        target_network_display = "Bitcoin RegTest"
+    elif raw_net.lower() in ("testnet4", "bitcoin testnet4"):
+        target_network_display = "Bitcoin Testnet4"
+    else:
+        target_network_display = f"Bitcoin {raw_net.capitalize()}"
+
     lines: list[str] = [
         "# TxProbe Network Topology Evaluation Report",
         "",
         f"**Generated**: {report.timestamp}  ",
-        "**Target Network**: Bitcoin Testnet4  ",
+        f"**Target Network**: {target_network_display}  ",
         "",
         "---",
         "",

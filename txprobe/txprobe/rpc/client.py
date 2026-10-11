@@ -40,6 +40,7 @@ class AsyncBitcoinRpc:
         user: str,
         password: str,
         wallet: str = "",
+        timeout_sec: float = 120.0,
     ):
         self._url = f"http://{host}:{port}"
         if wallet:
@@ -49,6 +50,7 @@ class AsyncBitcoinRpc:
         self._wallet = wallet
         self._user = user
         self._password = password
+        self._timeout_sec = timeout_sec
         self._auth_header = aiohttp.encode_basic_auth(user, password)
         self._session: aiohttp.ClientSession | None = None
         self._id_counter = 0
@@ -76,7 +78,7 @@ class AsyncBitcoinRpc:
                 "Content-Type": "application/json",
                 "Authorization": self._auth_header,
             },
-            timeout=aiohttp.ClientTimeout(total=120),
+            timeout=aiohttp.ClientTimeout(total=self._timeout_sec),
         )
 
     async def close(self) -> None:
@@ -356,5 +358,21 @@ class AsyncBitcoinRpc:
             maxburnamount,
             peer_ids if peer_ids is not None else [],
         )
+
+    async def getblockcount(self) -> int:
+        """Return the height of the most-work fully-validated chain."""
+        return await self.call("getblockcount")
+
+    async def createwallet(self, wallet_name: str, disable_private_keys: bool = False, blank: bool = False) -> dict:
+        """Create and load a new wallet."""
+        return await self.call("createwallet", wallet_name, disable_private_keys, blank)
+
+    async def generatetoaddress(self, nblocks: int, address: str, maxtries: int = 1000000) -> list[str]:
+        """Mine blocks immediately to a specified address."""
+        return await self.call("generatetoaddress", nblocks, address, maxtries)
+
+    async def getbalance(self, minconf: int = 0) -> float:
+        """Return the total available balance in BTC."""
+        return await self.call("getbalance", "*", minconf)
 
 

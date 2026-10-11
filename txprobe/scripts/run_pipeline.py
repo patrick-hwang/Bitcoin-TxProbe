@@ -48,7 +48,7 @@ def parse_args() -> argparse.Namespace:
         "-o",
         type=Path,
         default=None,
-        help="Directory to store all run artifacts (default: results/run_YYYY-MM-DD_HH-MM-SS)",
+        help="Directory to store all run artifacts (default: <results_dir>/run_YYYY-MM-DD_HH-MM-SS)",
     )
     parser.add_argument(
         "--from-step",

@@ -103,13 +103,13 @@ def test_testnet4_yaml_probes_are_0_and_1():
     yaml_path = Path(__file__).resolve().parent.parent / "config" / "testnet4.yaml"
     cfg = load_config(yaml_path)
     assert [n.id for n in cfg.probe_nodes] == [0, 1]
-    assert [n.id for n in cfg.groundtruth_nodes] == [2, 3, 4, 5, 6]
+    assert [n.id for n in cfg.groundtruth_nodes] == list(range(2, 32))
     assert cfg.discovery.target_count == 0
     assert cfg.discovery.crawling_time_sec == 600.0
     assert cfg.discovery.poll_interval_sec == 5.0
     assert cfg.discovery.retry_interval_sec == 45.0
     assert cfg.discovery.clearnet_onetry_concurrency == 32
-    assert cfg.discovery.tor_onetry_concurrency == 8
+    assert cfg.discovery.tor_onetry_concurrency == 16
 
 
 def test_reachability_config():
@@ -121,7 +121,8 @@ def test_reachability_config():
     assert cfg.reachability.tor_proxy_port == 9050
     assert cfg.reachability.clearnet_concurrency == 25
     # Defaults
-    assert cfg.reachability.tor_timeout_sec == 30.0
+    assert cfg.reachability.tor_timeout_sec == 60.0
+    assert cfg.reachability.clearnet_timeout_sec == 10.0
 
 
 def test_load_missing_file():
@@ -164,5 +165,60 @@ txprobe_execution:
     assert cfg_custom.txprobe_execution.marker_propagation_wait_sec == 8.0
     assert cfg_custom.txprobe_execution.getdata_wait_sec == 6.0
     assert cfg_custom.txprobe_execution.cleanup_wait_sec == 1.5
+
+
+def test_regtest_config_auto_enables_localhost_and_magic():
+    regtest_yaml = """\
+network: regtest
+default_port: 18444
+
+nodes:
+  - id: 0
+    role: probe
+    rpcport: 19444
+    rpcuser: user0
+    rpcpassword: pass0
+    p2pport: 18444
+  - id: 1
+    role: groundtruth
+    rpcport: 19445
+    rpcuser: user1
+    rpcpassword: pass1
+    p2pport: 18445
+"""
+    with tempfile.NamedTemporaryFile("w", suffix=".yaml", delete=False) as f:
+        f.write(regtest_yaml)
+        f.flush()
+        cfg = load_config(f.name)
+
+    assert cfg.network == "regtest"
+    assert cfg.allow_localhost is True
+    assert cfg.magic_bytes == b"\xfa\xbf\xb5\xda"
+    assert cfg.reachability.magic_bytes == b"\xfa\xbf\xb5\xda"
+    assert cfg.txprobe_execution.allow_localhost is True
+    assert cfg.results_dir == "results-regtest"
+    assert cfg.nodes[0].p2pport == 18444
+    assert cfg.nodes[1].p2pport == 18445
+
+
+def test_custom_results_dir_in_config():
+    custom_yaml = """\
+network: testnet4
+default_port: 48333
+results_dir: my-custom-results
+nodes:
+  - id: 0
+    role: probe
+    rpcport: 48332
+    rpcuser: u
+    rpcpassword: p
+"""
+    with tempfile.NamedTemporaryFile("w", suffix=".yaml", delete=False) as f:
+        f.write(custom_yaml)
+        f.flush()
+        cfg = load_config(f.name)
+
+    assert cfg.results_dir == "my-custom-results"
+
 
 
