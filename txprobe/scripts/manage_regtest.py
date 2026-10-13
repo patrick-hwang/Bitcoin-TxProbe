@@ -33,6 +33,7 @@ import logging
 import os
 from pathlib import Path
 import random
+import resource
 import shutil
 import signal
 import subprocess
@@ -41,6 +42,12 @@ import time
 from typing import Any
 
 import yaml
+
+# Raise file descriptor limit for 1000+ nodes
+try:
+    resource.setrlimit(resource.RLIMIT_NOFILE, (65536, 65536))
+except Exception:
+    pass
 
 # Allow running directly from scripts/
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -58,8 +65,8 @@ DEFAULT_CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "regte
 BITCOIND_CUSTOM = Path("/mnt/ssd/hdhphat-mindfullab/Bitcoin-TxProbe/build/bin/bitcoind")
 BITCOIND_OFFICIAL = Path("/mnt/ssd/hdhphat-mindfullab/bitcoin-31.1/bin/bitcoind")
 
-BASE_P2P_PORT = 18444
-BASE_RPC_PORT = 19444
+BASE_P2P_PORT = 10000
+BASE_RPC_PORT = 20000
 
 
 def get_ports(node_id: int, base_p2p: int = BASE_P2P_PORT, base_rpc: int = BASE_RPC_PORT) -> tuple[int, int]:
@@ -107,7 +114,7 @@ def init_network(
             "rpcallowip=127.0.0.1",
             "fallbackfee=0.0001",
             "txindex=1",
-            f"maxconnections={1250 if i < 2 else 250}",
+            f"maxconnections={1300 if i < 2 else 250}",
         ]
 
         if i < 2:
@@ -217,10 +224,10 @@ def start_nodes(base_dir: Path = DEFAULT_BASE_DIR, start_id: int = 0, end_id: in
             f"-datadir={node_dir}",
             f"-conf={conf_file}",
             "-daemon",
-            "-rpcthreads=16",
-            "-rpcworkqueue=64",
-            "-dbcache=20",
-            "-maxmempool=20",
+            "-rpcthreads=4",
+            "-rpcworkqueue=32",
+            "-dbcache=10",
+            "-maxmempool=10",
             *extra_args,
         ]
         subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL)
@@ -229,7 +236,7 @@ def start_nodes(base_dir: Path = DEFAULT_BASE_DIR, start_id: int = 0, end_id: in
     asyncio.run(wait_for_rpc_ready(target_dirs))
 
 
-async def wait_for_rpc_ready(target_dirs: list[Path], timeout_sec: float = 60.0) -> None:
+async def wait_for_rpc_ready(target_dirs: list[Path], timeout_sec: float = 180.0) -> None:
     """Wait until all started nodes respond to RPC."""
     t0 = time.monotonic()
     pending = list(target_dirs)
@@ -352,9 +359,10 @@ def build_topology(
             tasks.append(_connect_one_node(u, rpc_u, user_u, pass_u, neighbors))
         await asyncio.gather(*tasks)
 
-        # 4. Connect Probe 0 and Probe 1 to ALL target nodes
+        # 4. Connect Probe 0 and Probe 1 to ALL target nodes in parallel
         log.info("Connecting Probe 0 and Probe 1 to all %d target nodes...", len(target_ids))
-        for probe_id in (0, 1):
+
+        async def _connect_probe(probe_id: int) -> None:
             _, rpc_p = get_ports(probe_id)
             user_p = f"regtestuser{probe_id}"
             pass_p = f"regtestpassword{probe_id}"
@@ -366,9 +374,30 @@ def build_topology(
                     except Exception as e:
                         log.warning("Probe %d addnode to %d failed: %s", probe_id, target_id, e)
 
+        await asyncio.gather(_connect_probe(0), _connect_probe(1))
+
     asyncio.run(_connect_graph())
-    log.info("Topology construction completed successfully! Waiting 5s for P2P connections to establish...")
-    time.sleep(5)
+    log.info("Topology RPC commands dispatched! Polling until Probes connect to all %d targets...", total_targets)
+
+    async def _poll_probes() -> None:
+        for poll_idx in range(350):
+            try:
+                _, rpc_0 = get_ports(0)
+                _, rpc_1 = get_ports(1)
+                async with AsyncBitcoinRpc("127.0.0.1", rpc_0, "regtestuser0", "regtestpassword0") as p0_rpc, \
+                           AsyncBitcoinRpc("127.0.0.1", rpc_1, "regtestuser1", "regtestpassword1") as p1_rpc:
+                    p0_peers, p1_peers = await asyncio.gather(p0_rpc.getpeerinfo(), p1_rpc.getpeerinfo())
+                    if len(p0_peers) >= total_targets and len(p1_peers) >= total_targets:
+                        log.info("Both probes fully connected: Probe 0 (%d peers), Probe 1 (%d peers)!", len(p0_peers), len(p1_peers))
+                        return
+                    if poll_idx % 5 == 0:
+                        log.info("Establishing connections... Probe 0: %d/%d, Probe 1: %d/%d", len(p0_peers), total_targets, len(p1_peers), total_targets)
+            except Exception:
+                pass
+            await asyncio.sleep(2)
+        log.warning("Timeout waiting for full probe connections.")
+
+    asyncio.run(_poll_probes())
 
 
 def fund_probes(num_blocks: int = 250) -> None:

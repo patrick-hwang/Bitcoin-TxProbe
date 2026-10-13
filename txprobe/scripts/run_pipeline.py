@@ -18,7 +18,14 @@ import argparse
 import asyncio
 import logging
 from pathlib import Path
+import resource
 import sys
+
+# Raise file descriptor limit for 1000+ nodes
+try:
+    resource.setrlimit(resource.RLIMIT_NOFILE, (65536, 65536))
+except Exception:
+    pass
 
 # Allow running directly as a script
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
