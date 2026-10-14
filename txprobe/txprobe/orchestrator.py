@@ -396,9 +396,23 @@ class MasterPipelineOrchestrator:
         else:
             raise FileNotFoundError(f"Missing Step 5 artifact: {self.artifacts.reconciled_topology}")
 
+        # Fetch Probe 0 active peers to verify groundtruth connectivity
+        probe_0_cfg = self.config.get_node(0)
+        p0_peers: set[str] | None = None
+        try:
+            async with AsyncBitcoinRpc.from_node_config(probe_0_cfg, use_wallet=False) as p0:
+                peer_info = await p0.getpeerinfo()
+                p0_peers = {
+                    p["addr"]
+                    for p in peer_info
+                    if "addr" in p and (self.config.allow_localhost or not p["addr"].startswith("127.0.0.1"))
+                }
+        except Exception as e:
+            self._notify("STEP 6", f"Warning: Could not fetch Probe 0 active peers: {e}")
+
         self._notify("STEP 6", "Computing network topology metrics and groundtruth validation scores...")
         report = evaluate_reconciled_results(
-            reconciled_dict, compute_paths=True, network=self.config.network
+            reconciled_dict, compute_paths=True, network=self.config.network, probe_0_peers=p0_peers
         )
         report.save_json(self.artifacts.evaluation_report_json)
 

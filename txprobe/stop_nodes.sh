@@ -134,21 +134,23 @@ else
     echo -e "\n${GREEN}[+] No active bitcoind processes found in specified range.${NC}"
 fi
 
-# 3. Dừng Tor Daemon liên quan đến dự án (Chỉ dừng khi dừng toàn bộ cụm nodes 0..31)
+# 3. Dừng tất cả Tor Daemons liên quan đến dự án (Chỉ dừng khi dừng toàn bộ cụm nodes 0..31)
 if [ "$START_ID" -eq 0 ] && [ "$END_ID" -ge 31 ]; then
-    echo -e "\n${CYAN}[*] Checking project Tor daemon...${NC}"
-    TOR_PID=$(pgrep -f "tor.*-f ${TORRC_PATH}" || true)
+    echo -e "\n${CYAN}[*] Checking project Tor daemons (Multi-Instance)...${NC}"
+    TOR_PIDS=$(pgrep -f "tor.*instances/tor_|tor.*-f ${TORRC_PATH}" || true)
 
-    if [ -n "$TOR_PID" ]; then
-        echo -en "${YELLOW}[*] Stopping project Tor daemon (PID: ${TOR_PID})...${NC} "
-        kill -TERM "$TOR_PID" 2>/dev/null || true
+    if [ -n "$TOR_PIDS" ]; then
+        echo -en "${YELLOW}[*] Stopping project Tor daemons (PIDs: ${TOR_PIDS//$'\n'/ })...${NC} "
+        echo "$TOR_PIDS" | xargs kill -TERM 2>/dev/null || true
         sleep 1
-        if kill -0 "$TOR_PID" 2>/dev/null; then
-            kill -9 "$TOR_PID" 2>/dev/null || true
-        fi
+        for pid in $TOR_PIDS; do
+            if kill -0 "$pid" 2>/dev/null; then
+                kill -9 "$pid" 2>/dev/null || true
+            fi
+        done
         echo -e "${GREEN}Done.${NC}"
     else
-        echo -e "${GRAY}[*] Project Tor daemon is not running.${NC}"
+        echo -e "${GRAY}[*] No project Tor daemons are running.${NC}"
     fi
 else
     echo -e "\n${GRAY}[*] Skipping Tor daemon shutdown because only a subset of nodes was stopped.${NC}"

@@ -1,0 +1,19 @@
+# Tor Configuration for Groundtruth Group 3 (Nodes 14-19)
+DataDirectory /mnt/ssd/hdhphat-mindfullab/Bitcoin-TxProbe/tor/instances/tor_gt3/data
+
+SOCKSPort 127.0.0.1:19140
+SOCKSPort 127.0.0.1:19150
+SOCKSPort 127.0.0.1:19160
+SOCKSPort 127.0.0.1:19170
+SOCKSPort 127.0.0.1:19180
+SOCKSPort 127.0.0.1:19190
+
+ControlPort 127.0.0.1:19141
+ControlPort 127.0.0.1:19151
+ControlPort 127.0.0.1:19161
+ControlPort 127.0.0.1:19171
+ControlPort 127.0.0.1:19181
+ControlPort 127.0.0.1:19191
+
+HashedControlPassword 16:334410870313A2C5605275B27E8C111376F43E534FAC0EE96A0EFDDF17
+CookieAuthentication 1

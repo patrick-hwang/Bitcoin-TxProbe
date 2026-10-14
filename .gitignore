@@ -35,7 +35,9 @@ package.json
 *.log
 a temporary note.txt
 
-.vscode 
+.vscode
 *.toc
 *.out
 *.aux
+tor/instances/*/data/
+tor/instances/*/data

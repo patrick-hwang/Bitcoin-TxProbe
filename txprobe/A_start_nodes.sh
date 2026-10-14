@@ -11,61 +11,56 @@ GRAY='\033[0;90m'
 NC='\033[0m' # No Color
 
 # ==========================================
-# 1. Khởi động Tor
+# 1. Khởi động các Tor Instances (1 cho 2 Probes + 5 cho 30 Groundtruth)
 # ==========================================
-echo -e "${CYAN}    Starting Tor daemon...${NC}"
+echo -e "${CYAN}    Starting Tor daemons (Multi-Instance)...${NC}"
 
-# Đường dẫn tor trên Linux (mặc định tìm theo PATH hoặc /usr/bin/tor)
 TOR_BIN=$(command -v tor || echo "/usr/bin/tor")
-
-# Đường dẫn file cấu hình torrc (thay đổi nếu bạn đặt ở đường dẫn khác)
-TORRC_PATH="/mnt/ssd/hdhphat-mindfullab/Bitcoin-TxProbe/torrc"
-TOR_LOG="/tmp/tor_bootstrap.log"
+TOR_BASE_DIR="/mnt/ssd/hdhphat-mindfullab/Bitcoin-TxProbe/tor/instances"
 
 if [ ! -x "$TOR_BIN" ]; then
     echo -e "${RED}[!] tor not found at $TOR_BIN. Vui lòng cài đặt: sudo apt install tor${NC}"
     exit 1
 fi
 
-if [ ! -f "$TORRC_PATH" ]; then
-    echo -e "${RED}[!] torrc not found at $TORRC_PATH${NC}"
-    exit 1
-fi
+TOR_INSTANCES=("tor_probe" "tor_gt1" "tor_gt2" "tor_gt3" "tor_gt4" "tor_gt5")
 
-EXISTING_TOR_PID=$(pgrep -f "tor.*-f ${TORRC_PATH}" || true)
-if [ -n "$EXISTING_TOR_PID" ]; then
-    echo -e "${GREEN}    Tor daemon is already running (PID: ${EXISTING_TOR_PID}). Skipping startup.${NC}"
-else
-    if [ -f "$TOR_LOG" ]; then
-        echo "Remove existed tor log $TOR_LOG"
-        rm -f "$TOR_LOG"
+for inst in "${TOR_INSTANCES[@]}"; do
+    INST_DIR="${TOR_BASE_DIR}/${inst}"
+    INST_CONF="${INST_DIR}/torrc"
+    INST_LOG="/tmp/${inst}_bootstrap.log"
+
+    if [ ! -f "$INST_CONF" ]; then
+        echo -e "${RED}[!] Configuration not found: $INST_CONF${NC}"
+        exit 1
     fi
 
-    # Chạy Tor ngầm và ghi log để theo dõi tiến trình bootstrap
-    "$TOR_BIN" -f "$TORRC_PATH" --Log "notice file $TOR_LOG" >/dev/null 2>&1 &
-    TOR_PID=$!
+    EXISTING_PID=$(pgrep -f "tor.*-f ${INST_CONF}" || true)
+    if [ -n "$EXISTING_PID" ]; then
+        echo -e "${GREEN}    Tor instance [${inst}] already running (PID: ${EXISTING_PID}). Skipping.${NC}"
+        continue
+    fi
 
-    # Đợi Tor bootstrap đạt 100%
-    echo -en "${GRAY}    Waiting for Tor to bootstrap...${NC}"
+    rm -f "$INST_LOG"
+    "$TOR_BIN" -f "$INST_CONF" --Log "notice file $INST_LOG" >/dev/null 2>&1 &
+    INST_PID=$!
 
+    echo -en "${GRAY}    Waiting for [${inst}] (PID ${INST_PID}) to bootstrap...${NC}"
     while true; do
-        if [ -f "$TOR_LOG" ] && grep -q "Bootstrapped 100%" "$TOR_LOG"; then
+        if [ -f "$INST_LOG" ] && grep -q "Bootstrapped 100%" "$INST_LOG"; then
+            echo -e " ${GREEN}Ready!${NC}"
             break
         fi
 
         echo -en "${GRAY}.${NC}"
 
-        # Kiểm tra xem tiến trình Tor có còn hoạt động không
-        if ! kill -0 "$TOR_PID" 2>/dev/null; then
-            echo -e "\n${RED}[!] Tor is terminated.${NC}"
+        if ! kill -0 "$INST_PID" 2>/dev/null; then
+            echo -e "\n${RED}[!] Tor instance [${inst}] terminated unexpectedly! Check ${INST_LOG}${NC}"
             exit 1
         fi
-
-        sleep 2
+        sleep 1
     done
-    echo ""
-    echo -e " ${GREEN}Ready!${NC}"
-fi
+done
 
 # ==========================================
 # 2. Khởi động 32 Bitcoin Nodes (2 probes: 0,1 + 30 groundtruth: 2-31)

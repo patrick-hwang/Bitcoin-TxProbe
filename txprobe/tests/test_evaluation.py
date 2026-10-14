@@ -123,7 +123,7 @@ def test_validation_metrics_zero_and_edge_cases():
     assert m_no_gt.confusion_matrix.tn == 0
     assert m_no_gt.confusion_matrix.fn == 0
     assert m_no_gt.precision == 0.0
-    assert m_no_gt.recall == 1.0  # No GT edges to recall
+    assert m_no_gt.recall is None  # No GT edges to recall, denominator = 0 -> NULL
 
 
 def test_degree_stats_and_hubs():
@@ -397,8 +397,8 @@ def test_compute_groundtruth_metrics_with_groundtruth_nodes():
     assert metrics_gt.confusion_matrix.fn == 0
     assert metrics_gt.precision == 1.0
     assert metrics_gt.recall == 1.0
-    # Candidate pairs incident to node 0: 1 * (5 - 1) + 0 = 4 pairs
-    assert metrics_gt.total_candidate_pairs == 4
+    # Non-GT nodes not connected to GT (nodes 2, 3, 4) are excluded. Only (node 0, node 1) remains.
+    assert metrics_gt.total_candidate_pairs == 1
 
 
 def test_evaluate_reconciled_results_with_groundtruth_identities():

@@ -39,11 +39,11 @@ class ValidationMetrics:
     """Binary classification metrics evaluated against groundtruth."""
 
     confusion_matrix: ConfusionMatrix
-    precision: float
-    recall: float
+    precision: float | None
+    recall: float | None
     accuracy: float
     specificity: float
-    f1_score: float
+    f1_score: float | None
     fpr: float
     fnr: float
     gt_edges_count: int
@@ -56,11 +56,11 @@ class ValidationMetrics:
     def to_dict(self) -> dict:
         return {
             "confusion_matrix": self.confusion_matrix.to_dict(),
-            "precision": round(self.precision, 6),
-            "recall": round(self.recall, 6),
+            "precision": round(self.precision, 6) if self.precision is not None else None,
+            "recall": round(self.recall, 6) if self.recall is not None else None,
             "accuracy": round(self.accuracy, 6),
             "specificity": round(self.specificity, 6),
-            "f1_score": round(self.f1_score, 6),
+            "f1_score": round(self.f1_score, 6) if self.f1_score is not None else None,
             "fpr": round(self.fpr, 6),
             "fnr": round(self.fnr, 6),
             "gt_edges_count": self.gt_edges_count,
@@ -189,11 +189,11 @@ class EvaluationReport:
             cm = ConfusionMatrix(**val_data["confusion_matrix"])
             validation = ValidationMetrics(
                 confusion_matrix=cm,
-                precision=float(val_data["precision"]),
-                recall=float(val_data["recall"]),
+                precision=float(val_data["precision"]) if val_data.get("precision") is not None else None,
+                recall=float(val_data["recall"]) if val_data.get("recall") is not None else None,
                 accuracy=float(val_data["accuracy"]),
                 specificity=float(val_data["specificity"]),
-                f1_score=float(val_data["f1_score"]),
+                f1_score=float(val_data["f1_score"]) if val_data.get("f1_score") is not None else None,
                 fpr=float(val_data["fpr"]),
                 fnr=float(val_data["fnr"]),
                 gt_edges_count=int(val_data["gt_edges_count"]),
@@ -280,8 +280,16 @@ def compute_groundtruth_metrics(
     gt_graph: GraphSnapshot,
     inferred_graph: GraphSnapshot,
     groundtruth_nodes: set[str] | None = None,
+    probe_0_peers: set[str] | None = None,
 ) -> ValidationMetrics:
-    """Compute binary classification validation metrics between groundtruth and inferred graphs."""
+    """Compute binary classification validation metrics between groundtruth and inferred graphs.
+
+    Conditions:
+    1. If groundtruth_nodes is provided, there must be at least one groundtruth node
+       connected to probe 0 (or online). If none, raise RuntimeError.
+    2. For any node that is not a groundtruth node, it only exists in the evaluation
+       set if it is connected to at least one groundtruth node (that is connected to probe 0).
+    """
     gt_nodes = {n.addr for n in gt_graph.nodes}
     inf_nodes = {n.addr for n in inferred_graph.nodes}
     eval_nodes = gt_nodes.intersection(inf_nodes)
@@ -289,8 +297,30 @@ def compute_groundtruth_metrics(
     gt_nodes_eval: set[str] | None = None
     if groundtruth_nodes is not None:
         matched = eval_nodes.intersection(groundtruth_nodes)
-        if matched:
-            gt_nodes_eval = matched
+        if probe_0_peers is not None:
+            # Only consider groundtruth nodes that are connected to Probe 0
+            matched = matched.intersection(probe_0_peers)
+
+        if not matched:
+            raise RuntimeError(
+                "Evaluation Error: Không có groundtruth node nào đang kết nối tới probe node 0 trong phiên chụp này!"
+            )
+        gt_nodes_eval = matched
+
+        # Find non-GT nodes in gt_graph that connect to at least one matched GT node
+        connected_to_gt: set[str] = set()
+        for u, neighbors in gt_graph.adj_list.items():
+            if u.addr in gt_nodes_eval:
+                for v in neighbors:
+                    if v.addr not in groundtruth_nodes:
+                        connected_to_gt.add(v.addr)
+            elif u.addr not in groundtruth_nodes:
+                for v in neighbors:
+                    if v.addr in gt_nodes_eval:
+                        connected_to_gt.add(u.addr)
+
+        # Condition: a non-GT node only exists in evaluation if it connects to at least 1 GT node connected to probe 0
+        eval_nodes = gt_nodes_eval | (eval_nodes & connected_to_gt)
 
     if gt_nodes_eval is not None:
         g = len(gt_nodes_eval)
@@ -317,14 +347,14 @@ def compute_groundtruth_metrics(
     fn = len(fn_edges)
     tn = max(0, total_pairs - (tp + fp + fn))
 
-    precision = (tp / (tp + fp)) if (tp + fp) > 0 else (1.0 if len(gt_edges) == 0 else 0.0)
-    recall = (tp / (tp + fn)) if (tp + fn) > 0 else 1.0
+    precision = (tp / (tp + fp)) if (tp + fp) > 0 else None
+    recall = (tp / (tp + fn)) if (tp + fn) > 0 else None
     accuracy = ((tp + tn) / total_pairs) if total_pairs > 0 else 1.0
     specificity = (tn / (tn + fp)) if (tn + fp) > 0 else 1.0
     f1_score = (
         (2.0 * precision * recall / (precision + recall))
-        if (precision + recall) > 0.0
-        else 0.0
+        if (precision is not None and recall is not None and (precision + recall) > 0.0)
+        else None
     )
     fpr = (fp / (fp + tn)) if (fp + tn) > 0 else 0.0
     fnr = (fn / (tp + fn)) if (tp + fn) > 0 else 0.0
@@ -585,7 +615,10 @@ def compute_global_topology_metrics(
 
 
 def evaluate_reconciled_results(
-    data: dict, compute_paths: bool = True, network: str | None = None
+    data: dict,
+    compute_paths: bool = True,
+    network: str | None = None,
+    probe_0_peers: set[str] | None = None,
 ) -> EvaluationReport:
     """Generate complete EvaluationReport from Step 5 reconciled_topology.json or result dict."""
     full_inferred_dict = data.get("full_inferred_topology")
@@ -608,8 +641,9 @@ def evaluate_reconciled_results(
         gt_nodes_set: set[str] | None = None
         if gt_nodes_raw:
             gt_nodes_set = {str(a) for a in gt_nodes_raw}
+        p0_peers = probe_0_peers or (set(data.get("probe_0_peers", [])) if "probe_0_peers" in data else None)
         validation_metrics = compute_groundtruth_metrics(
-            gt_graph, eval_graph, groundtruth_nodes=gt_nodes_set
+            gt_graph, eval_graph, groundtruth_nodes=gt_nodes_set, probe_0_peers=p0_peers
         )
 
     stats_meta = data.get("stats", {})
@@ -658,14 +692,17 @@ def generate_markdown_report(report: EvaluationReport, network: str | None = Non
         )
 
     if report.validation:
+        p_str = f"{report.validation.precision * 100:.2f}%" if report.validation.precision is not None else "NULL"
+        r_str = f"{report.validation.recall * 100:.2f}%" if report.validation.recall is not None else "NULL"
+        f1_str = f"{report.validation.f1_score:.4f}" if report.validation.f1_score is not None else "NULL"
         lines.extend([
             "",
             "### Groundtruth Validation Summary",
             "",
-            f"- **Precision**: **{report.validation.precision * 100:.2f}%**",
-            f"- **Recall (Sensitivity)**: **{report.validation.recall * 100:.2f}%**",
+            f"- **Precision**: **{p_str}**",
+            f"- **Recall (Sensitivity)**: **{r_str}**",
             f"- **Accuracy**: **{report.validation.accuracy * 100:.2f}%**",
-            f"- **F1-Score**: **{report.validation.f1_score:.4f}**",
+            f"- **F1-Score**: **{f1_str}**",
             f"- **Specificity**: **{report.validation.specificity * 100:.2f}%**",
         ])
 
@@ -679,6 +716,9 @@ def generate_markdown_report(report: EvaluationReport, network: str | None = Non
 
     if report.validation:
         cm = report.validation.confusion_matrix
+        p_val_str = f"**{report.validation.precision:.4f}** ({report.validation.precision * 100:.2f}%)" if report.validation.precision is not None else "**NULL**"
+        r_val_str = f"**{report.validation.recall:.4f}** ({report.validation.recall * 100:.2f}%)" if report.validation.recall is not None else "**NULL**"
+        f1_val_str = f"**{report.validation.f1_score:.4f}**" if report.validation.f1_score is not None else "**NULL**"
         lines.extend([
             "### 2.1 Confusion Matrix",
             "",
@@ -694,11 +734,11 @@ def generate_markdown_report(report: EvaluationReport, network: str | None = Non
             "",
             "| Metric | Formula | Value |",
             "|---|---|---|",
-            f"| **Precision** | `TP / (TP + FP)` | **{report.validation.precision:.4f}** ({report.validation.precision * 100:.2f}%) |",
-            f"| **Recall (Sensitivity)** | `TP / (TP + FN)` | **{report.validation.recall:.4f}** ({report.validation.recall * 100:.2f}%) |",
+            f"| **Precision** | `TP / (TP + FP)` | {p_val_str} |",
+            f"| **Recall (Sensitivity)** | `TP / (TP + FN)` | {r_val_str} |",
             f"| **Accuracy** | `(TP + TN) / Total` | **{report.validation.accuracy:.4f}** ({report.validation.accuracy * 100:.2f}%) |",
             f"| **Specificity** | `TN / (TN + FP)` | **{report.validation.specificity:.4f}** ({report.validation.specificity * 100:.2f}%) |",
-            f"| **F1-Score** | `2 * (P * R) / (P + R)` | **{report.validation.f1_score:.4f}** |",
+            f"| **F1-Score** | `2 * (P * R) / (P + R)` | {f1_val_str} |",
             f"| **False Positive Rate (FPR)** | `FP / (FP + TN)` | **{report.validation.fpr:.4f}** |",
             f"| **False Negative Rate (FNR)** | `FN / (TP + FN)` | **{report.validation.fnr:.4f}** |",
         ])

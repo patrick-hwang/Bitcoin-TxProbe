@@ -1,0 +1,11 @@
+# Tor Configuration for Probe Nodes (Nodes 0 and 1)
+DataDirectory /mnt/ssd/hdhphat-mindfullab/Bitcoin-TxProbe/tor/instances/tor_probe/data
+
+SOCKSPort 127.0.0.1:19000
+SOCKSPort 127.0.0.1:19010
+
+ControlPort 127.0.0.1:19001
+ControlPort 127.0.0.1:19011
+
+HashedControlPassword 16:334410870313A2C5605275B27E8C111376F43E534FAC0EE96A0EFDDF17
+CookieAuthentication 1

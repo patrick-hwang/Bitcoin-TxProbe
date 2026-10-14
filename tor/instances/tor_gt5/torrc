@@ -1,0 +1,19 @@
+# Tor Configuration for Groundtruth Group 5 (Nodes 26-31)
+DataDirectory /mnt/ssd/hdhphat-mindfullab/Bitcoin-TxProbe/tor/instances/tor_gt5/data
+
+SOCKSPort 127.0.0.1:19260
+SOCKSPort 127.0.0.1:19270
+SOCKSPort 127.0.0.1:19280
+SOCKSPort 127.0.0.1:19290
+SOCKSPort 127.0.0.1:19300
+SOCKSPort 127.0.0.1:19310
+
+ControlPort 127.0.0.1:19261
+ControlPort 127.0.0.1:19271
+ControlPort 127.0.0.1:19281
+ControlPort 127.0.0.1:19291
+ControlPort 127.0.0.1:19301
+ControlPort 127.0.0.1:19311
+
+HashedControlPassword 16:334410870313A2C5605275B27E8C111376F43E534FAC0EE96A0EFDDF17
+CookieAuthentication 1
