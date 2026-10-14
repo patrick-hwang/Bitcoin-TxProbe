@@ -1,0 +1,345 @@
+{
+  "timestamp": "2026-10-13T16:19:56.435535+00:00",
+  "metadata": {
+    "step": "step_6_evaluation",
+    "network": "testnet4",
+    "source_nodes_count": 197,
+    "reconciliation_stats": {
+      "initial_full_nodes": 197,
+      "surviving_full_nodes": 197,
+      "full_inferred_edges_count": 2084,
+      "malfunctioning_nodes_count": 4,
+      "dropped_nodes_count": 12,
+      "transitory_edges_count": 3,
+      "groundtruth_eval_nodes_count": 197,
+      "groundtruth_eval_edges_count": 55,
+      "elapsed_sec": 0.01,
+      "timestamp": "2026-10-13T16:19:56.324089+00:00"
+    }
+  },
+  "validation": {
+    "confusion_matrix": {
+      "tp": 55,
+      "fp": 1,
+      "tn": 367,
+      "fn": 0
+    },
+    "precision": 0.982143,
+    "recall": 1.0,
+    "accuracy": 0.997636,
+    "specificity": 0.997283,
+    "f1_score": 0.990991,
+    "fpr": 0.002717,
+    "fnr": 0.0,
+    "gt_edges_count": 55,
+    "inferred_edges_count": 56,
+    "total_candidate_pairs": 423,
+    "tp_edges": [
+      [
+        "100.30.166.14:48333",
+        "pnvbolsqnqmiwbmrrtqoz3cbfwvnrhdesn3wxbvimifvhs2c5r5z5uad.onion:48333"
+      ],
+      [
+        "100.56.0.96:48333",
+        "ds4d5qywbsensd6et7zpfinrdekxdvbe6iumovcj3425dcifti62vead.onion:48333"
+      ],
+      [
+        "103.165.192.207:48333",
+        "wwvt43fqok7w7qk2o2fi3np47sew6avph6c5tznqzu7zg4adm3kce2id.onion:48333"
+      ],
+      [
+        "103.99.168.209:48333",
+        "isua6jwxkot5436zmxya5f3l6q7prcw36axj5mr7w4lp3wdfkeuhemid.onion:48333"
+      ],
+      [
+        "103.99.170.203:48333",
+        "ygjkuedksptegb7vlks26eplsgl7ugehskbqk3ukn7lom5luyrrjszyd.onion:48333"
+      ],
+      [
+        "104.248.248.117:48333",
+        "h43luvnqdxgw4q3iq5rksagfk2oiyeivwdnjgyvzgt4a2omc6rwzwcid.onion:48333"
+      ],
+      [
+        "109.236.57.34:48333",
+        "ds4d5qywbsensd6et7zpfinrdekxdvbe6iumovcj3425dcifti62vead.onion:48333"
+      ],
+      [
+        "134.199.227.217:48333",
+        "35yi5ariwa4iy2xwpbjtqrn34i6zl5unvx2xhygziu6p2pczu4yeaoad.onion:48333"
+      ],
+      [
+        "134.199.227.217:48333",
+        "ds4d5qywbsensd6et7zpfinrdekxdvbe6iumovcj3425dcifti62vead.onion:48333"
+      ],
+      [
+        "134.199.227.217:48333",
+        "isua6jwxkot5436zmxya5f3l6q7prcw36axj5mr7w4lp3wdfkeuhemid.onion:48333"
+      ],
+      [
+        "134.199.227.217:48333",
+        "lqt47nl2hcr5x3ft5c3j3ciytcrsqcaidgow6cpg4nrvhboz3wdaszqd.onion:48333"
+      ],
+      [
+        "136.49.112.63:47333",
+        "upiuurfhixst6z5gbif6eziw4dush2wtfjy6tcpbkycqkra5trb575id.onion:48333"
+      ],
+      [
+        "164.92.233.218:48333",
+        "isua6jwxkot5436zmxya5f3l6q7prcw36axj5mr7w4lp3wdfkeuhemid.onion:48333"
+      ],
+      [
+        "169.58.12.176:48333",
+        "pnvbolsqnqmiwbmrrtqoz3cbfwvnrhdesn3wxbvimifvhs2c5r5z5uad.onion:48333"
+      ],
+      [
+        "18.204.178.177:48333",
+        "upiuurfhixst6z5gbif6eziw4dush2wtfjy6tcpbkycqkra5trb575id.onion:48333"
+      ],
+      [
+        "188.213.90.149:48333",
+        "pnvbolsqnqmiwbmrrtqoz3cbfwvnrhdesn3wxbvimifvhs2c5r5z5uad.onion:48333"
+      ],
+      [
+        "188.213.90.149:48333",
+        "ygjkuedksptegb7vlks26eplsgl7ugehskbqk3ukn7lom5luyrrjszyd.onion:48333"
+      ],
+      [
+        "216.230.225.61:48333",
+        "pnvbolsqnqmiwbmrrtqoz3cbfwvnrhdesn3wxbvimifvhs2c5r5z5uad.onion:48333"
+      ],
+      [
+        "3.135.25.32:48333",
+        "upiuurfhixst6z5gbif6eziw4dush2wtfjy6tcpbkycqkra5trb575id.onion:48333"
+      ],
+      [
+        "3.135.25.32:48333",
+        "wwvt43fqok7w7qk2o2fi3np47sew6avph6c5tznqzu7zg4adm3kce2id.onion:48333"
+      ],
+      [
+        "3.212.232.10:18333",
+        "lqt47nl2hcr5x3ft5c3j3ciytcrsqcaidgow6cpg4nrvhboz3wdaszqd.onion:48333"
+      ],
+      [
+        "32.196.76.227:48333",
+        "35yi5ariwa4iy2xwpbjtqrn34i6zl5unvx2xhygziu6p2pczu4yeaoad.onion:48333"
+      ],
+      [
+        "34.228.207.112:48333",
+        "ds4d5qywbsensd6et7zpfinrdekxdvbe6iumovcj3425dcifti62vead.onion:48333"
+      ],
+      [
+        "35yi5ariwa4iy2xwpbjtqrn34i6zl5unvx2xhygziu6p2pczu4yeaoad.onion:48333",
+        "54.78.90.72:48333"
+      ],
+      [
+        "35yi5ariwa4iy2xwpbjtqrn34i6zl5unvx2xhygziu6p2pczu4yeaoad.onion:48333",
+        "67.81.240.18:48333"
+      ],
+      [
+        "35yi5ariwa4iy2xwpbjtqrn34i6zl5unvx2xhygziu6p2pczu4yeaoad.onion:48333",
+        "72.61.172.129:48333"
+      ],
+      [
+        "43.199.104.192:48333",
+        "ds4d5qywbsensd6et7zpfinrdekxdvbe6iumovcj3425dcifti62vead.onion:48333"
+      ],
+      [
+        "44.228.181.244:48333",
+        "h43luvnqdxgw4q3iq5rksagfk2oiyeivwdnjgyvzgt4a2omc6rwzwcid.onion:48333"
+      ],
+      [
+        "44.228.181.244:48333",
+        "lqt47nl2hcr5x3ft5c3j3ciytcrsqcaidgow6cpg4nrvhboz3wdaszqd.onion:48333"
+      ],
+      [
+        "44.228.181.244:48333",
+        "wwvt43fqok7w7qk2o2fi3np47sew6avph6c5tznqzu7zg4adm3kce2id.onion:48333"
+      ],
+      [
+        "45.94.168.5:48333",
+        "upiuurfhixst6z5gbif6eziw4dush2wtfjy6tcpbkycqkra5trb575id.onion:48333"
+      ],
+      [
+        "5.9.86.53:48333",
+        "wwvt43fqok7w7qk2o2fi3np47sew6avph6c5tznqzu7zg4adm3kce2id.onion:48333"
+      ],
+      [
+        "52.1.114.214:48333",
+        "isua6jwxkot5436zmxya5f3l6q7prcw36axj5mr7w4lp3wdfkeuhemid.onion:48333"
+      ],
+      [
+        "52.1.114.214:48333",
+        "lqt47nl2hcr5x3ft5c3j3ciytcrsqcaidgow6cpg4nrvhboz3wdaszqd.onion:48333"
+      ],
+      [
+        "54.165.187.132:48333",
+        "ygjkuedksptegb7vlks26eplsgl7ugehskbqk3ukn7lom5luyrrjszyd.onion:48333"
+      ],
+      [
+        "54.78.90.72:48333",
+        "h43luvnqdxgw4q3iq5rksagfk2oiyeivwdnjgyvzgt4a2omc6rwzwcid.onion:48333"
+      ],
+      [
+        "63.182.223.208:48333",
+        "ds4d5qywbsensd6et7zpfinrdekxdvbe6iumovcj3425dcifti62vead.onion:48333"
+      ],
+      [
+        "64.180.124.90:48333",
+        "upiuurfhixst6z5gbif6eziw4dush2wtfjy6tcpbkycqkra5trb575id.onion:48333"
+      ],
+      [
+        "64.180.124.90:48333",
+        "wwvt43fqok7w7qk2o2fi3np47sew6avph6c5tznqzu7zg4adm3kce2id.onion:48333"
+      ],
+      [
+        "69.162.121.117:8333",
+        "pnvbolsqnqmiwbmrrtqoz3cbfwvnrhdesn3wxbvimifvhs2c5r5z5uad.onion:48333"
+      ],
+      [
+        "6g7bwjfesj2nkvja7osweocoo7wvxghrr33dtzy72wyhapgvvdqiebad.onion:48333",
+        "pnvbolsqnqmiwbmrrtqoz3cbfwvnrhdesn3wxbvimifvhs2c5r5z5uad.onion:48333"
+      ],
+      [
+        "71.13.92.62:48333",
+        "h43luvnqdxgw4q3iq5rksagfk2oiyeivwdnjgyvzgt4a2omc6rwzwcid.onion:48333"
+      ],
+      [
+        "72.179.148.45:48334",
+        "lqt47nl2hcr5x3ft5c3j3ciytcrsqcaidgow6cpg4nrvhboz3wdaszqd.onion:48333"
+      ],
+      [
+        "77.42.3.118:48333",
+        "h43luvnqdxgw4q3iq5rksagfk2oiyeivwdnjgyvzgt4a2omc6rwzwcid.onion:48333"
+      ],
+      [
+        "77.90.35.156:48333",
+        "isua6jwxkot5436zmxya5f3l6q7prcw36axj5mr7w4lp3wdfkeuhemid.onion:48333"
+      ],
+      [
+        "80.253.94.252:48333",
+        "pnvbolsqnqmiwbmrrtqoz3cbfwvnrhdesn3wxbvimifvhs2c5r5z5uad.onion:48333"
+      ],
+      [
+        "89.117.50.252:48333",
+        "ygjkuedksptegb7vlks26eplsgl7ugehskbqk3ukn7lom5luyrrjszyd.onion:48333"
+      ],
+      [
+        "89.167.62.33:48333",
+        "upiuurfhixst6z5gbif6eziw4dush2wtfjy6tcpbkycqkra5trb575id.onion:48333"
+      ],
+      [
+        "89.233.240.44:48333",
+        "ygjkuedksptegb7vlks26eplsgl7ugehskbqk3ukn7lom5luyrrjszyd.onion:48333"
+      ],
+      [
+        "89.58.9.219:48333",
+        "ygjkuedksptegb7vlks26eplsgl7ugehskbqk3ukn7lom5luyrrjszyd.onion:48333"
+      ],
+      [
+        "92.118.190.35:48333",
+        "h43luvnqdxgw4q3iq5rksagfk2oiyeivwdnjgyvzgt4a2omc6rwzwcid.onion:48333"
+      ],
+      [
+        "ds4d5qywbsensd6et7zpfinrdekxdvbe6iumovcj3425dcifti62vead.onion:48333",
+        "isua6jwxkot5436zmxya5f3l6q7prcw36axj5mr7w4lp3wdfkeuhemid.onion:48333"
+      ],
+      [
+        "ds4d5qywbsensd6et7zpfinrdekxdvbe6iumovcj3425dcifti62vead.onion:48333",
+        "ygjkuedksptegb7vlks26eplsgl7ugehskbqk3ukn7lom5luyrrjszyd.onion:48333"
+      ],
+      [
+        "igtvjsuusfvkkfspdfmasea3nfavj647zvammklrtr7zt5dmryho33ad.onion:8333",
+        "wwvt43fqok7w7qk2o2fi3np47sew6avph6c5tznqzu7zg4adm3kce2id.onion:48333"
+      ],
+      [
+        "lqt47nl2hcr5x3ft5c3j3ciytcrsqcaidgow6cpg4nrvhboz3wdaszqd.onion:48333",
+        "rca6vnhzercuygie4qnclnglqry6to5njscoqxbevpo6f4lo2dpyuqyd.onion:8333"
+      ]
+    ],
+    "fp_edges": [
+      [
+        "64.180.124.90:48333",
+        "isua6jwxkot5436zmxya5f3l6q7prcw36axj5mr7w4lp3wdfkeuhemid.onion:48333"
+      ]
+    ],
+    "fn_edges": []
+  },
+  "global_topology": {
+    "num_nodes": 197,
+    "num_edges": 2084,
+    "density": 0.107946,
+    "degree_stats": {
+      "min_degree": 3,
+      "max_degree": 70,
+      "mean_degree": 21.1574,
+      "median_degree": 17,
+      "std_degree": 15.2466,
+      "degree_histogram": {
+        "0": 0,
+        "1-2": 0,
+        "3-5": 4,
+        "6-8": 38,
+        "9-12": 31,
+        "13-20": 51,
+        "21-50": 59,
+        "51-100": 14,
+        "101+": 0
+      },
+      "top_hubs": [
+        {
+          "addr": "5rh3ln6ypycmn57qlmke3dliffg2id3ziz4dhsujng4tk34oklnbqtyd.onion:48333",
+          "degree": 70
+        },
+        {
+          "addr": "zdh7vrzykdv7474yioe5jiv3kgajky727t5phxsbt47lefjseo3ypaqd.onion:48333",
+          "degree": 63
+        },
+        {
+          "addr": "103.99.171.202:48333",
+          "degree": 61
+        },
+        {
+          "addr": "jspxdo33gyrh3tewi55mn2fo5spczzgipq6ao7fa5qu6fj2ezr7bizid.onion:48333",
+          "degree": 60
+        },
+        {
+          "addr": "3.235.188.91:48333",
+          "degree": 59
+        },
+        {
+          "addr": "yiolb6ahgjry66g3vt4dtlnybhdgy4udakakbjxuekj33ligd57mdlqd.onion:48333",
+          "degree": 57
+        },
+        {
+          "addr": "193.30.123.70:48333",
+          "degree": 56
+        },
+        {
+          "addr": "zjttaesjhj7ail437ag4emdufr775h5rtgoohlbca5rwc4re6dr5k7ad.onion:48333",
+          "degree": 54
+        },
+        {
+          "addr": "159.195.65.171:48333",
+          "degree": 53
+        },
+        {
+          "addr": "3.212.232.10:18333",
+          "degree": 52
+        }
+      ]
+    },
+    "average_clustering_coefficient": 0.234067,
+    "er_clustering_comparison": 0.107946,
+    "component_stats": {
+      "num_components": 1,
+      "giant_component_size": 197,
+      "giant_component_fraction": 1.0,
+      "isolated_nodes_count": 0
+    },
+    "path_stats": {
+      "average_path_length": 2.1198,
+      "diameter": 4,
+      "radius": 3
+    }
+  }
+}

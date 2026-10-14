@@ -1,0 +1,510 @@
+{
+  "timestamp": "2026-10-14T06:21:26.963305+00:00",
+  "metadata": {
+    "step": "step_6_evaluation",
+    "network": "testnet4",
+    "source_nodes_count": 206,
+    "reconciliation_stats": {
+      "initial_full_nodes": 206,
+      "surviving_full_nodes": 206,
+      "full_inferred_edges_count": 1686,
+      "malfunctioning_nodes_count": 23,
+      "dropped_nodes_count": 23,
+      "transitory_edges_count": 15,
+      "groundtruth_eval_nodes_count": 206,
+      "groundtruth_eval_edges_count": 92,
+      "elapsed_sec": 0.01,
+      "timestamp": "2026-10-14T06:21:26.858658+00:00"
+    }
+  },
+  "validation": {
+    "confusion_matrix": {
+      "tp": 91,
+      "fp": 5,
+      "tn": 998,
+      "fn": 1
+    },
+    "precision": 0.947917,
+    "recall": 0.98913,
+    "accuracy": 0.994521,
+    "specificity": 0.995015,
+    "f1_score": 0.968085,
+    "fpr": 0.004985,
+    "fnr": 0.01087,
+    "gt_edges_count": 92,
+    "inferred_edges_count": 96,
+    "total_candidate_pairs": 1095,
+    "tp_edges": [
+      [
+        "100.56.0.96:48333",
+        "b6yjsgsx3jbzxosfu3gsnbih4hmt3nspizetslm7ok6wfvsrylv3ysqd.onion:48333"
+      ],
+      [
+        "100.56.0.96:48333",
+        "u3fdfpuungm7hr3jyguvlm6hz6htq4kw232nz3fcaeroy2cvx7nhqxyd.onion:48333"
+      ],
+      [
+        "100.56.0.96:48333",
+        "ul62z7wdbp4ywn2itvpqox3q5a5ctsrplbko5jtfsjygnbpgft4sv3qd.onion:48333"
+      ],
+      [
+        "103.165.192.209:48333",
+        "ul62z7wdbp4ywn2itvpqox3q5a5ctsrplbko5jtfsjygnbpgft4sv3qd.onion:48333"
+      ],
+      [
+        "104.248.248.117:48333",
+        "u3fdfpuungm7hr3jyguvlm6hz6htq4kw232nz3fcaeroy2cvx7nhqxyd.onion:48333"
+      ],
+      [
+        "107.161.185.205:18333",
+        "u3fdfpuungm7hr3jyguvlm6hz6htq4kw232nz3fcaeroy2cvx7nhqxyd.onion:48333"
+      ],
+      [
+        "13.213.16.163:48333",
+        "qm5px7lfqbrin6vpa7vzywtmkv7svesss6wjiqfwqrvg2caiv45mtpyd.onion:48333"
+      ],
+      [
+        "134.199.227.217:48333",
+        "hf5qsfpqsxe3i6feo4ftrmnq7sfypnrfw34hde7dua7o2rflyblfheyd.onion:48333"
+      ],
+      [
+        "134.199.227.217:48333",
+        "pnvbolsqnqmiwbmrrtqoz3cbfwvnrhdesn3wxbvimifvhs2c5r5z5uad.onion:48333"
+      ],
+      [
+        "157.180.32.177:48333",
+        "udjnpbppwtmjhmm7ic7je6mr7whnsare2jec5ghdgddw3lmgxqxralad.onion:48333"
+      ],
+      [
+        "159.195.65.171:48333",
+        "pnvbolsqnqmiwbmrrtqoz3cbfwvnrhdesn3wxbvimifvhs2c5r5z5uad.onion:48333"
+      ],
+      [
+        "164.92.233.218:48333",
+        "cfmk7uostvqz77ynolwuytxpdsjngldqbwlp3drjaaca4qtsajpb4aqd.onion:48333"
+      ],
+      [
+        "164.92.233.218:48333",
+        "ffl3tzrxwknsyqpswklisyt2xgsobpfuxq6725yem6e3tjkgisulwvid.onion:48333"
+      ],
+      [
+        "167.172.77.184:48333",
+        "b6yjsgsx3jbzxosfu3gsnbih4hmt3nspizetslm7ok6wfvsrylv3ysqd.onion:48333"
+      ],
+      [
+        "167.86.82.90:48333",
+        "udjnpbppwtmjhmm7ic7je6mr7whnsare2jec5ghdgddw3lmgxqxralad.onion:48333"
+      ],
+      [
+        "168.119.11.220:48333",
+        "yqzgbslvopnpeaoggmxstbpfr5zdzbp4p5dhntrm2udcwanesvivtlqd.onion:48333"
+      ],
+      [
+        "169.58.12.176:48333",
+        "cfmk7uostvqz77ynolwuytxpdsjngldqbwlp3drjaaca4qtsajpb4aqd.onion:48333"
+      ],
+      [
+        "169.58.12.176:48333",
+        "yqzgbslvopnpeaoggmxstbpfr5zdzbp4p5dhntrm2udcwanesvivtlqd.onion:48333"
+      ],
+      [
+        "172.93.167.89:48333",
+        "7opmdoefrqaxrimpofrqs33p3t6wbtarhheshhylw5juegoevc5eryqd.onion:48333"
+      ],
+      [
+        "178.63.196.55:48333",
+        "7opmdoefrqaxrimpofrqs33p3t6wbtarhheshhylw5juegoevc5eryqd.onion:48333"
+      ],
+      [
+        "178.63.87.163:48333",
+        "pnzk5orw3a5qf6uxd65oyewjkjfur5gn7szktyzzxkuqdonuak3j44id.onion:48333"
+      ],
+      [
+        "185.18.221.19:48333",
+        "pnzk5orw3a5qf6uxd65oyewjkjfur5gn7szktyzzxkuqdonuak3j44id.onion:48333"
+      ],
+      [
+        "188.132.178.33:48333",
+        "b6yjsgsx3jbzxosfu3gsnbih4hmt3nspizetslm7ok6wfvsrylv3ysqd.onion:48333"
+      ],
+      [
+        "193.168.140.155:48333",
+        "2jcyz5jnggdlfs3nwfwhk3fpt4uxm43rjx7gg55wy7uccvy5z337vnid.onion:48333"
+      ],
+      [
+        "193.168.140.155:48333",
+        "qm5px7lfqbrin6vpa7vzywtmkv7svesss6wjiqfwqrvg2caiv45mtpyd.onion:48333"
+      ],
+      [
+        "193.30.123.70:48333",
+        "srxom6pig266vcipjxezal6eeiqj5c3kjvv3w4jacopg6p4esjivhkad.onion:48333"
+      ],
+      [
+        "193.30.123.70:48333",
+        "u3fdfpuungm7hr3jyguvlm6hz6htq4kw232nz3fcaeroy2cvx7nhqxyd.onion:48333"
+      ],
+      [
+        "205.201.33.246:48333",
+        "pnvbolsqnqmiwbmrrtqoz3cbfwvnrhdesn3wxbvimifvhs2c5r5z5uad.onion:48333"
+      ],
+      [
+        "216.230.225.43:48333",
+        "udjnpbppwtmjhmm7ic7je6mr7whnsare2jec5ghdgddw3lmgxqxralad.onion:48333"
+      ],
+      [
+        "216.230.225.61:48333",
+        "pnvbolsqnqmiwbmrrtqoz3cbfwvnrhdesn3wxbvimifvhs2c5r5z5uad.onion:48333"
+      ],
+      [
+        "2jcyz5jnggdlfs3nwfwhk3fpt4uxm43rjx7gg55wy7uccvy5z337vnid.onion:48333",
+        "5.182.4.106:48333"
+      ],
+      [
+        "2jcyz5jnggdlfs3nwfwhk3fpt4uxm43rjx7gg55wy7uccvy5z337vnid.onion:48333",
+        "5.9.86.53:48333"
+      ],
+      [
+        "2jcyz5jnggdlfs3nwfwhk3fpt4uxm43rjx7gg55wy7uccvy5z337vnid.onion:48333",
+        "50.116.43.120:48333"
+      ],
+      [
+        "2jcyz5jnggdlfs3nwfwhk3fpt4uxm43rjx7gg55wy7uccvy5z337vnid.onion:48333",
+        "5wpcussznj2dg5222zrtfdsx5ttco6xlv7447azzaaywu2t5xukqcaqd.onion:48333"
+      ],
+      [
+        "2jcyz5jnggdlfs3nwfwhk3fpt4uxm43rjx7gg55wy7uccvy5z337vnid.onion:48333",
+        "64.177.116.99:48333"
+      ],
+      [
+        "2jcyz5jnggdlfs3nwfwhk3fpt4uxm43rjx7gg55wy7uccvy5z337vnid.onion:48333",
+        "95.141.35.117:48333"
+      ],
+      [
+        "2jcyz5jnggdlfs3nwfwhk3fpt4uxm43rjx7gg55wy7uccvy5z337vnid.onion:48333",
+        "tntxk2oda33ov6ufvtsc6xfn2iqgcamiooyxbjggs3474c3pqcdzxbid.onion:48333"
+      ],
+      [
+        "2nf3pwqszryes35e77nzso7syqrg3bwtk37uksa5wy7ttlv4gjadn6ad.onion:48333",
+        "ffl3tzrxwknsyqpswklisyt2xgsobpfuxq6725yem6e3tjkgisulwvid.onion:48333"
+      ],
+      [
+        "3.12.68.236:48333",
+        "qm5px7lfqbrin6vpa7vzywtmkv7svesss6wjiqfwqrvg2caiv45mtpyd.onion:48333"
+      ],
+      [
+        "3.135.25.32:48333",
+        "7opmdoefrqaxrimpofrqs33p3t6wbtarhheshhylw5juegoevc5eryqd.onion:48333"
+      ],
+      [
+        "3.135.25.32:48333",
+        "hf5qsfpqsxe3i6feo4ftrmnq7sfypnrfw34hde7dua7o2rflyblfheyd.onion:48333"
+      ],
+      [
+        "3.69.160.185:48333",
+        "srxom6pig266vcipjxezal6eeiqj5c3kjvv3w4jacopg6p4esjivhkad.onion:48333"
+      ],
+      [
+        "3.69.160.185:48333",
+        "yqzgbslvopnpeaoggmxstbpfr5zdzbp4p5dhntrm2udcwanesvivtlqd.onion:48333"
+      ],
+      [
+        "32.196.76.227:48333",
+        "7opmdoefrqaxrimpofrqs33p3t6wbtarhheshhylw5juegoevc5eryqd.onion:48333"
+      ],
+      [
+        "32.196.76.227:48333",
+        "hf5qsfpqsxe3i6feo4ftrmnq7sfypnrfw34hde7dua7o2rflyblfheyd.onion:48333"
+      ],
+      [
+        "34.228.207.112:48333",
+        "ffl3tzrxwknsyqpswklisyt2xgsobpfuxq6725yem6e3tjkgisulwvid.onion:48333"
+      ],
+      [
+        "34.228.207.112:48333",
+        "yqzgbslvopnpeaoggmxstbpfr5zdzbp4p5dhntrm2udcwanesvivtlqd.onion:48333"
+      ],
+      [
+        "34.31.40.200:48333",
+        "pnvbolsqnqmiwbmrrtqoz3cbfwvnrhdesn3wxbvimifvhs2c5r5z5uad.onion:48333"
+      ],
+      [
+        "43.199.104.192:48333",
+        "ffl3tzrxwknsyqpswklisyt2xgsobpfuxq6725yem6e3tjkgisulwvid.onion:48333"
+      ],
+      [
+        "45.8.96.66:48333",
+        "pnzk5orw3a5qf6uxd65oyewjkjfur5gn7szktyzzxkuqdonuak3j44id.onion:48333"
+      ],
+      [
+        "52.1.114.214:48333",
+        "hf5qsfpqsxe3i6feo4ftrmnq7sfypnrfw34hde7dua7o2rflyblfheyd.onion:48333"
+      ],
+      [
+        "52.1.114.214:48333",
+        "ul62z7wdbp4ywn2itvpqox3q5a5ctsrplbko5jtfsjygnbpgft4sv3qd.onion:48333"
+      ],
+      [
+        "54.180.113.82:8333",
+        "pnvbolsqnqmiwbmrrtqoz3cbfwvnrhdesn3wxbvimifvhs2c5r5z5uad.onion:48333"
+      ],
+      [
+        "54.180.113.82:8333",
+        "udjnpbppwtmjhmm7ic7je6mr7whnsare2jec5ghdgddw3lmgxqxralad.onion:48333"
+      ],
+      [
+        "65.108.141.219:48333",
+        "ul62z7wdbp4ywn2itvpqox3q5a5ctsrplbko5jtfsjygnbpgft4sv3qd.onion:48333"
+      ],
+      [
+        "65.109.115.236:48333",
+        "ffl3tzrxwknsyqpswklisyt2xgsobpfuxq6725yem6e3tjkgisulwvid.onion:48333"
+      ],
+      [
+        "65.109.115.236:48333",
+        "yqzgbslvopnpeaoggmxstbpfr5zdzbp4p5dhntrm2udcwanesvivtlqd.onion:48333"
+      ],
+      [
+        "67.81.240.18:48333",
+        "qm5px7lfqbrin6vpa7vzywtmkv7svesss6wjiqfwqrvg2caiv45mtpyd.onion:48333"
+      ],
+      [
+        "67.81.240.18:48333",
+        "upiuurfhixst6z5gbif6eziw4dush2wtfjy6tcpbkycqkra5trb575id.onion:48333"
+      ],
+      [
+        "70.93.233.255:48333",
+        "pnzk5orw3a5qf6uxd65oyewjkjfur5gn7szktyzzxkuqdonuak3j44id.onion:48333"
+      ],
+      [
+        "70.93.233.255:48333",
+        "qm5px7lfqbrin6vpa7vzywtmkv7svesss6wjiqfwqrvg2caiv45mtpyd.onion:48333"
+      ],
+      [
+        "70.93.233.255:48333",
+        "upiuurfhixst6z5gbif6eziw4dush2wtfjy6tcpbkycqkra5trb575id.onion:48333"
+      ],
+      [
+        "71.13.92.62:48333",
+        "ul62z7wdbp4ywn2itvpqox3q5a5ctsrplbko5jtfsjygnbpgft4sv3qd.onion:48333"
+      ],
+      [
+        "71.205.50.186:48333",
+        "cfmk7uostvqz77ynolwuytxpdsjngldqbwlp3drjaaca4qtsajpb4aqd.onion:48333"
+      ],
+      [
+        "72.179.148.45:48333",
+        "7opmdoefrqaxrimpofrqs33p3t6wbtarhheshhylw5juegoevc5eryqd.onion:48333"
+      ],
+      [
+        "72.179.148.45:48333",
+        "udjnpbppwtmjhmm7ic7je6mr7whnsare2jec5ghdgddw3lmgxqxralad.onion:48333"
+      ],
+      [
+        "72.179.148.45:48335",
+        "cfmk7uostvqz77ynolwuytxpdsjngldqbwlp3drjaaca4qtsajpb4aqd.onion:48333"
+      ],
+      [
+        "77.42.3.118:48333",
+        "hf5qsfpqsxe3i6feo4ftrmnq7sfypnrfw34hde7dua7o2rflyblfheyd.onion:48333"
+      ],
+      [
+        "77.90.35.156:48333",
+        "ffl3tzrxwknsyqpswklisyt2xgsobpfuxq6725yem6e3tjkgisulwvid.onion:48333"
+      ],
+      [
+        "77.90.35.156:48333",
+        "hf5qsfpqsxe3i6feo4ftrmnq7sfypnrfw34hde7dua7o2rflyblfheyd.onion:48333"
+      ],
+      [
+        "7opmdoefrqaxrimpofrqs33p3t6wbtarhheshhylw5juegoevc5eryqd.onion:48333",
+        "qmw73e4zh2i6pvmlgx5642vwtynibghgvjdoox574hjxxv7fvd2oxyid.onion:48333"
+      ],
+      [
+        "80.253.94.252:48333",
+        "upiuurfhixst6z5gbif6eziw4dush2wtfjy6tcpbkycqkra5trb575id.onion:48333"
+      ],
+      [
+        "85.203.53.149:18333",
+        "b6yjsgsx3jbzxosfu3gsnbih4hmt3nspizetslm7ok6wfvsrylv3ysqd.onion:48333"
+      ],
+      [
+        "89.117.50.252:48333",
+        "srxom6pig266vcipjxezal6eeiqj5c3kjvv3w4jacopg6p4esjivhkad.onion:48333"
+      ],
+      [
+        "92.118.190.25:48333",
+        "cfmk7uostvqz77ynolwuytxpdsjngldqbwlp3drjaaca4qtsajpb4aqd.onion:48333"
+      ],
+      [
+        "92.118.190.25:48333",
+        "upiuurfhixst6z5gbif6eziw4dush2wtfjy6tcpbkycqkra5trb575id.onion:48333"
+      ],
+      [
+        "92.118.190.35:48333",
+        "b6yjsgsx3jbzxosfu3gsnbih4hmt3nspizetslm7ok6wfvsrylv3ysqd.onion:48333"
+      ],
+      [
+        "92.118.190.35:48333",
+        "qm5px7lfqbrin6vpa7vzywtmkv7svesss6wjiqfwqrvg2caiv45mtpyd.onion:48333"
+      ],
+      [
+        "95.141.35.117:48333",
+        "pnzk5orw3a5qf6uxd65oyewjkjfur5gn7szktyzzxkuqdonuak3j44id.onion:48333"
+      ],
+      [
+        "95.216.161.39:18333",
+        "upiuurfhixst6z5gbif6eziw4dush2wtfjy6tcpbkycqkra5trb575id.onion:48333"
+      ],
+      [
+        "b6yjsgsx3jbzxosfu3gsnbih4hmt3nspizetslm7ok6wfvsrylv3ysqd.onion:48333",
+        "tntxk2oda33ov6ufvtsc6xfn2iqgcamiooyxbjggs3474c3pqcdzxbid.onion:48333"
+      ],
+      [
+        "ebhtfcmjhilcqtuls437pxu65dznqkpt5qv3yeq6zipnqd7ichz5htyd.onion:48333",
+        "srxom6pig266vcipjxezal6eeiqj5c3kjvv3w4jacopg6p4esjivhkad.onion:48333"
+      ],
+      [
+        "ffl3tzrxwknsyqpswklisyt2xgsobpfuxq6725yem6e3tjkgisulwvid.onion:48333",
+        "qhzfac4qvomln4ikp6xgfwgb2koxdgjsbeut3iplvsu5o33yf4ewf2ad.onion:48333"
+      ],
+      [
+        "fsijrllgzgeg4pa5ebq4qy3swmplxkzvuvji5swt36quy42dznq3t3ad.onion:48333",
+        "hf5qsfpqsxe3i6feo4ftrmnq7sfypnrfw34hde7dua7o2rflyblfheyd.onion:48333"
+      ],
+      [
+        "fsijrllgzgeg4pa5ebq4qy3swmplxkzvuvji5swt36quy42dznq3t3ad.onion:48333",
+        "qm5px7lfqbrin6vpa7vzywtmkv7svesss6wjiqfwqrvg2caiv45mtpyd.onion:48333"
+      ],
+      [
+        "i22efh4itlcfthvaavcz2rvigu4x6jqvlwuksz44bukslhg76bsgrxqd.onion:48333",
+        "udjnpbppwtmjhmm7ic7je6mr7whnsare2jec5ghdgddw3lmgxqxralad.onion:48333"
+      ],
+      [
+        "kf6q2wza2ebo7cxln5ejcjjwvrew4vb2hf4vd5wo4nyzbnjv3yccduqd.onion:48333",
+        "upiuurfhixst6z5gbif6eziw4dush2wtfjy6tcpbkycqkra5trb575id.onion:48333"
+      ],
+      [
+        "lte5c3bmdxzffvpdvcxxb6hjl7wqhx3byybpiklagnwie2loinxsoyqd.onion:48333",
+        "srxom6pig266vcipjxezal6eeiqj5c3kjvv3w4jacopg6p4esjivhkad.onion:48333"
+      ],
+      [
+        "pnvbolsqnqmiwbmrrtqoz3cbfwvnrhdesn3wxbvimifvhs2c5r5z5uad.onion:48333",
+        "srxom6pig266vcipjxezal6eeiqj5c3kjvv3w4jacopg6p4esjivhkad.onion:48333"
+      ],
+      [
+        "pnzk5orw3a5qf6uxd65oyewjkjfur5gn7szktyzzxkuqdonuak3j44id.onion:48333",
+        "rca6vnhzercuygie4qnclnglqry6to5njscoqxbevpo6f4lo2dpyuqyd.onion:8333"
+      ],
+      [
+        "qmw73e4zh2i6pvmlgx5642vwtynibghgvjdoox574hjxxv7fvd2oxyid.onion:48333",
+        "u3fdfpuungm7hr3jyguvlm6hz6htq4kw232nz3fcaeroy2cvx7nhqxyd.onion:48333"
+      ]
+    ],
+    "fp_edges": [
+      [
+        "193.30.123.70:48333",
+        "pnvbolsqnqmiwbmrrtqoz3cbfwvnrhdesn3wxbvimifvhs2c5r5z5uad.onion:48333"
+      ],
+      [
+        "193.30.123.70:48333",
+        "upiuurfhixst6z5gbif6eziw4dush2wtfjy6tcpbkycqkra5trb575id.onion:48333"
+      ],
+      [
+        "5wpcussznj2dg5222zrtfdsx5ttco6xlv7447azzaaywu2t5xukqcaqd.onion:48333",
+        "b6yjsgsx3jbzxosfu3gsnbih4hmt3nspizetslm7ok6wfvsrylv3ysqd.onion:48333"
+      ],
+      [
+        "cfmk7uostvqz77ynolwuytxpdsjngldqbwlp3drjaaca4qtsajpb4aqd.onion:48333",
+        "ebhtfcmjhilcqtuls437pxu65dznqkpt5qv3yeq6zipnqd7ichz5htyd.onion:48333"
+      ],
+      [
+        "ebhtfcmjhilcqtuls437pxu65dznqkpt5qv3yeq6zipnqd7ichz5htyd.onion:48333",
+        "qm5px7lfqbrin6vpa7vzywtmkv7svesss6wjiqfwqrvg2caiv45mtpyd.onion:48333"
+      ]
+    ],
+    "fn_edges": [
+      [
+        "7opmdoefrqaxrimpofrqs33p3t6wbtarhheshhylw5juegoevc5eryqd.onion:48333",
+        "oozhagb3ajatw5ppdow2rsy3dzmaczfolvwrdybwam5vvmt3qo7hpcid.onion:48333"
+      ]
+    ]
+  },
+  "global_topology": {
+    "num_nodes": 206,
+    "num_edges": 1686,
+    "density": 0.079848,
+    "degree_stats": {
+      "min_degree": 1,
+      "max_degree": 53,
+      "mean_degree": 16.3689,
+      "median_degree": 14.0,
+      "std_degree": 9.8355,
+      "degree_histogram": {
+        "0": 0,
+        "1-2": 1,
+        "3-5": 4,
+        "6-8": 53,
+        "9-12": 36,
+        "13-20": 48,
+        "21-50": 63,
+        "51-100": 1,
+        "101+": 0
+      },
+      "top_hubs": [
+        {
+          "addr": "[2001:df6:7280::92:204]:48333",
+          "degree": 53
+        },
+        {
+          "addr": "193.30.123.70:48333",
+          "degree": 50
+        },
+        {
+          "addr": "32.196.76.227:48333",
+          "degree": 44
+        },
+        {
+          "addr": "[2001:df6:7280::92:206]:48333",
+          "degree": 43
+        },
+        {
+          "addr": "zjttaesjhj7ail437ag4emdufr775h5rtgoohlbca5rwc4re6dr5k7ad.onion:48333",
+          "degree": 43
+        },
+        {
+          "addr": "5rh3ln6ypycmn57qlmke3dliffg2id3ziz4dhsujng4tk34oklnbqtyd.onion:48333",
+          "degree": 42
+        },
+        {
+          "addr": "116.203.184.251:48333",
+          "degree": 40
+        },
+        {
+          "addr": "65.108.141.219:48333",
+          "degree": 39
+        },
+        {
+          "addr": "vizb74h32bx3u6zksgsi6seq6hcqdhok5pd4z2x5yj3ll72tu7pcu7id.onion:48333",
+          "degree": 39
+        },
+        {
+          "addr": "3.235.188.91:48333",
+          "degree": 38
+        }
+      ]
+    },
+    "average_clustering_coefficient": 0.157737,
+    "er_clustering_comparison": 0.079848,
+    "component_stats": {
+      "num_components": 1,
+      "giant_component_size": 206,
+      "giant_component_fraction": 1.0,
+      "isolated_nodes_count": 0
+    },
+    "path_stats": {
+      "average_path_length": 2.235,
+      "diameter": 4,
+      "radius": 3
+    }
+  }
+}
