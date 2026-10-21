@@ -327,11 +327,30 @@ def test_evaluate_snapshot_data_real_sample() -> None:
     assert m2["precision"] == 1.0  # Zero false positives in early propagation
     assert m2["recall"] > 0.0
 
-    # Test all steps
-    res_all = evaluate_snapshot_data(data, adjacency, target_block="B1", step_index=None, use_timings_groundtruth=True)
-    assert res_all["total_steps_evaluated"] == len(data["snapshots"]) - 1
-    mean_m = res_all["mean_metrics"]
-    assert 0.0 <= mean_m["accuracy"] <= 1.0
-    assert 0.0 <= mean_m["precision"] <= 1.0
-    assert 0.0 <= mean_m["recall"] <= 1.0
-    assert 0.0 <= mean_m["f1_score"] <= 1.0
+    # Test all steps for B1
+    res_all_b1 = evaluate_snapshot_data(data, adjacency, target_block="B1", step_index=None, use_timings_groundtruth=True)
+    assert res_all_b1["total_steps_evaluated"] == len(data["snapshots"]) - 1
+    mean_m1 = res_all_b1["mean_metrics"]
+    assert 0.0 <= mean_m1["accuracy"] <= 1.0
+    assert 0.0 <= mean_m1["precision"] <= 1.0
+    assert 0.0 <= mean_m1["recall"] <= 1.0
+    assert 0.0 <= mean_m1["f1_score"] <= 1.0
+
+    # Test all steps for B2 (isolated fork block)
+    res_all_b2 = evaluate_snapshot_data(data, adjacency, target_block="B2", step_index=None, use_timings_groundtruth=True)
+    assert res_all_b2["total_steps_evaluated"] == len(data["snapshots"]) - 1
+    mean_m2 = res_all_b2["mean_metrics"]
+    assert mean_m2["accuracy"] > 0.99
+    assert mean_m2["precision"] == 0.4000
+    assert mean_m2["recall"] == 0.4000
+    assert mean_m2["f1_score"] == 0.4000
+
+    # Test all steps for B3 (winning fork block)
+    res_all_b3 = evaluate_snapshot_data(data, adjacency, target_block="B3", step_index=None, use_timings_groundtruth=True)
+    assert res_all_b3["total_steps_evaluated"] == len(data["snapshots"]) - 1
+    mean_m3 = res_all_b3["mean_metrics"]
+    assert mean_m3["accuracy"] > 0.95
+    assert mean_m3["precision"] > 0.95
+    assert mean_m3["recall"] > 0.95
+    assert mean_m3["f1_score"] > 0.95
+
