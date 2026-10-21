@@ -117,6 +117,26 @@ class InferenceMetrics:
             "inferred_known_count": self.inferred_known_count,
         }
 
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> InferenceMetrics:
+        return cls(
+            snapshot_index=int(data["snapshot_index"]),
+            source_snapshot_index=int(data["source_snapshot_index"]),
+            timestamp=float(data["timestamp"]),
+            rel_time_ms=float(data["rel_time_ms"]),
+            tp=int(data["tp"]),
+            fp=int(data["fp"]),
+            tn=int(data["tn"]),
+            fn=int(data["fn"]),
+            accuracy=float(data["accuracy"]),
+            precision=float(data["precision"]),
+            recall=float(data["recall"]),
+            f1_score=float(data["f1_score"]),
+            total_nodes=int(data.get("total_nodes", data["tp"] + data["fp"] + data["tn"] + data["fn"])),
+            real_known_count=int(data.get("real_known_count", data["tp"] + data["fn"])),
+            inferred_known_count=int(data.get("inferred_known_count", data["tp"] + data["fp"])),
+        )
+
 
 def get_propagation_snapshot_at(
     node_timings: dict[str | int, Any],
@@ -216,13 +236,15 @@ def extract_known_nodes(
     consensus reorg artifacts from masquerading as unknown nodes.
     """
     if isinstance(snapshot, BlockPropagationSnapshot):
-        return set(snapshot.known_nodes)
+        if snapshot.target_block_hash == target_block_hash:
+            return set(snapshot.known_nodes)
+        return set()
 
     snap_dict = snapshot if isinstance(snapshot, dict) else (snapshot.to_dict() if hasattr(snapshot, "to_dict") else {})
 
     # If snapshot directly has known_nodes
     if "known_nodes" in snap_dict and snap_dict.get("target_block_hash") == target_block_hash:
-        return set(snap_dict["known_nodes"])
+        return {int(n) for n in snap_dict["known_nodes"]}
 
     # If node_timings is available and snapshot provides timestamp, extract ground truth from timings
     if node_timings is not None and "timestamp" in snap_dict:
@@ -234,14 +256,14 @@ def extract_known_nodes(
             if info is not None:
                 rec_map = getattr(info, "block_received_at", None) or (info.get("block_received_at") if isinstance(info, dict) else None)
                 if rec_map and target_block_hash in rec_map:
-                    if rec_map[target_block_hash] <= t:
+                    if rec_map[target_block_hash] <= t + 1e-6:
                         known.add(int(nid))
         return known
 
     # Fallback to subgraphs partition if present
     subgraphs = getattr(snapshot, "subgraphs", None) or snap_dict.get("subgraphs", {})
     if target_block_hash in subgraphs:
-        return set(subgraphs[target_block_hash])
+        return {int(n) for n in subgraphs[target_block_hash]}
 
     return set()
 
@@ -266,17 +288,22 @@ def infer_past_propagation(
         tuple[set[int], set[int]]: (inferred_known_nodes, inferred_unknown_nodes)
     """
     if all_nodes is None:
-        nodes_universe: set[int] = set(adjacency.keys()) | set(current_known_nodes)
+        nodes_universe: set[int] = {int(k) for k in adjacency.keys()} | {int(x) for x in current_known_nodes}
     else:
-        nodes_universe = set(all_nodes)
+        nodes_universe = {int(x) for x in all_nodes}
 
-    known_t = set(current_known_nodes) & nodes_universe
+    known_t = {int(x) for x in current_known_nodes} & nodes_universe
     unknown_t = nodes_universe - known_t
+
+    # Standardize adjacency to integer keys and values
+    adj_clean: dict[int, list[int]] = {}
+    for k, vs in adjacency.items():
+        adj_clean[int(k)] = [int(v) for v in vs]
 
     # Propagate unknown backwards: all unknown nodes and their connected neighbors are unknown
     inferred_unknown: set[int] = set(unknown_t)
     for u in unknown_t:
-        for v in adjacency.get(u, []):
+        for v in adj_clean.get(u, []):
             if v in nodes_universe:
                 inferred_unknown.add(v)
 
@@ -331,9 +358,9 @@ def infer_past_block_propagation_snapshot(
 
 
 def compute_metrics(
-    y_true_known: set[int],
-    y_pred_known: set[int],
-    all_nodes: set[int],
+    y_true_known: Sequence[int] | set[int],
+    y_pred_known: Sequence[int] | set[int],
+    all_nodes: Sequence[int] | set[int],
 ) -> tuple[int, int, int, int, float, float, float, float]:
     """Compute binary classification metrics for block propagation state.
 
@@ -344,12 +371,13 @@ def compute_metrics(
         tuple[int, int, int, int, float, float, float, float]:
         (tp, fp, tn, fn, accuracy, precision, recall, f1_score)
     """
-    total = len(all_nodes)
+    nodes_universe = {int(x) for x in all_nodes}
+    total = len(nodes_universe)
     if total == 0:
         return 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0
 
-    y_true = y_true_known & all_nodes
-    y_pred = y_pred_known & all_nodes
+    y_true = {int(x) for x in y_true_known} & nodes_universe
+    y_pred = {int(x) for x in y_pred_known} & nodes_universe
 
     tp = len(y_pred & y_true)
     fp = len(y_pred - y_true)
@@ -423,19 +451,91 @@ def evaluate_inference(
     )
 
 
+def resolve_target_block(data: dict[str, Any], block_spec: str) -> tuple[str, str]:
+    """Resolve block label (e.g. 'B1', 'B2', 'B3') or partial/full hex to (canonical_label, block_hash)."""
+    fork_blocks: dict[str, str] = data.get("fork_blocks", {})
+    spec_clean = block_spec.strip()
+    spec_lower = spec_clean.lower()
+
+    # 1. Exact label match (e.g. "B1")
+    if spec_clean in fork_blocks:
+        return spec_clean, fork_blocks[spec_clean]
+
+    # 2. Case-insensitive label match (e.g. "b1" -> "B1")
+    for label, h in fork_blocks.items():
+        if spec_lower == label.lower():
+            return label, h
+
+    # 3. Exact full 64-char hex match
+    for label, h in fork_blocks.items():
+        if spec_lower == h.lower():
+            return label, h
+
+    # 4. Partial hex prefix match (min 4 hex chars)
+    if len(spec_clean) >= 4:
+        matches = [
+            (label, h) for label, h in fork_blocks.items()
+            if h.lower().startswith(spec_lower) or spec_lower in h.lower()
+        ]
+        if len(matches) == 1:
+            return matches[0]
+        elif len(matches) > 1:
+            raise ValueError(f"Ambiguous block hex prefix '{block_spec}' matches multiple blocks: {[m[0] for m in matches]}")
+
+    # 5. If block_spec is a 64-char hex not present in fork_blocks
+    if len(spec_clean) == 64:
+        return "CUSTOM", spec_clean
+
+    raise ValueError(f"Could not resolve target block specifier: {block_spec}. Available blocks: {list(fork_blocks.keys())}")
+
+
 def resolve_target_block_hash(data: dict[str, Any], block_spec: str) -> str:
     """Resolve block label (e.g. 'B1', 'B2', 'B3') or partial/full hex to block hash."""
-    fork_blocks = data.get("fork_blocks", {})
-    if block_spec in fork_blocks:
-        return fork_blocks[block_spec]
-    for label, h in fork_blocks.items():
-        if block_spec.lower() in (h.lower(), label.lower()):
-            return h
-    if len(block_spec) == 64:
-        return block_spec
-    if "B1" in fork_blocks:
-        return fork_blocks["B1"]
-    raise ValueError(f"Could not resolve target block specifier: {block_spec}")
+    _, block_hash = resolve_target_block(data, block_spec)
+    return block_hash
+
+
+def infer_multistep_past_propagation(
+    initial_snapshot: Any,
+    adjacency: dict[int, list[int]],
+    target_block_hash: str,
+    num_steps: int = 1,
+    delta_ms: float = 10.0,
+    all_nodes: Sequence[int] | set[int] | None = None,
+    node_timings: dict[str | int, Any] | None = None,
+) -> list[BlockPropagationSnapshot]:
+    """Recursively infer block propagation state backwards across multiple time steps without intermediate ground truth.
+
+    Chains inferences:
+    Step 1: t -> (t - delta) from initial snapshot.
+    Step 2..m: (t - (k-1)*delta) -> (t - k*delta) taking the prior inferred snapshot as input.
+
+    Returns:
+        list[BlockPropagationSnapshot]: Inferred snapshots from step 1 to num_steps backwards.
+    """
+    if num_steps < 1:
+        raise ValueError(f"num_steps must be >= 1, got {num_steps}")
+
+    all_nodes_set = set(all_nodes) if all_nodes is not None else {int(k) for k in adjacency.keys()}
+    results: list[BlockPropagationSnapshot] = []
+
+    current_snap = initial_snapshot
+    for step_i in range(1, num_steps + 1):
+        # Only use node_timings for the very first step if initial_snapshot is not already inferred
+        use_timings = node_timings if (step_i == 1 and not getattr(current_snap, "is_inferred", False)) else None
+
+        inferred = infer_past_block_propagation_snapshot(
+            current_snapshot=current_snap,
+            adjacency=adjacency,
+            target_block_hash=target_block_hash,
+            delta_ms=delta_ms,
+            all_nodes=all_nodes_set,
+            node_timings=use_timings,
+        )
+        results.append(inferred)
+        current_snap = inferred
+
+    return results
 
 
 def evaluate_snapshot_data(
@@ -446,11 +546,11 @@ def evaluate_snapshot_data(
     use_timings_groundtruth: bool = True,
 ) -> dict[str, Any]:
     """Execute backward propagation inference across snapshots and compute evaluation metrics."""
-    target_block_hash = resolve_target_block_hash(data, target_block)
+    canonical_label, target_block_hash = resolve_target_block(data, target_block)
     delta_ms = float(data.get("snapshot_interval_ms", 10.0))
     snapshots = data.get("snapshots", [])
     node_timings = data.get("node_timings") if use_timings_groundtruth else None
-    all_nodes = sorted(adjacency.keys())
+    all_nodes = sorted(int(k) for k in adjacency.keys())
 
     evaluations: list[InferenceMetrics] = []
     inferred_snapshots: list[BlockPropagationSnapshot] = []
@@ -495,7 +595,7 @@ def evaluate_snapshot_data(
     mean_f1 = sum(m.f1_score for m in evaluations) / n if n else 0.0
 
     return {
-        "target_block_label": target_block,
+        "target_block_label": canonical_label,
         "target_block_hash": target_block_hash,
         "delta_ms": delta_ms,
         "total_nodes": len(all_nodes),
@@ -534,7 +634,7 @@ def main() -> None:
         "--block",
         type=str,
         default="B1",
-        help="Target block label (e.g. B1, B2, B3) or 64-char hex hash",
+        help="Target block label (e.g. B1, B2, B3, 'all', or comma-separated list 'B1,B2,B3')",
     )
     parser.add_argument(
         "-s",
@@ -548,7 +648,7 @@ def main() -> None:
         "--output",
         type=Path,
         default=None,
-        help="Optional output path to write evaluation results JSON",
+        help="Optional output path or directory to write evaluation results JSON",
     )
     parser.add_argument(
         "-v",
@@ -571,35 +671,55 @@ def main() -> None:
         data = json.load(f)
 
     adjacency = load_topology(args.topology)
-    results = evaluate_snapshot_data(data, adjacency, target_block=args.block, step_index=args.step)
 
-    print("\n" + "=" * 60)
-    print("PAST BLOCK PROPAGATION INFERENCE EVALUATION")
-    print("=" * 60)
-    print(f"Target Block: {results['target_block_label']} ({results['target_block_hash'][:16]}...)")
-    print(f"Total Nodes: {results['total_nodes']} | Steps Evaluated: {results['total_steps_evaluated']}")
-    print("-" * 60)
-    print("Mean Metrics across evaluated steps:")
-    for k, v in results["mean_metrics"].items():
-        print(f"  {k.capitalize():12s}: {v:.4f}")
-    print("=" * 60)
+    # Determine which blocks to evaluate
+    fork_blocks = data.get("fork_blocks", {})
+    if args.block.strip().lower() == "all":
+        target_blocks = list(fork_blocks.keys()) if fork_blocks else ["B1", "B2", "B3"]
+    elif "," in args.block:
+        target_blocks = [b.strip() for b in args.block.split(",") if b.strip()]
+    else:
+        target_blocks = [args.block.strip()]
 
-    if args.verbose or args.step is not None:
-        print("\nStep-by-step breakdown:")
-        print(f"{'Step':>5} | {'RelTime(ms)':>11} | {'RealKnown':>9} | {'InfKnown':>8} | {'TP':>5} | {'FP':>5} | {'TN':>5} | {'FN':>5} | {'Acc':>6} | {'Prec':>6} | {'Rec':>6} | {'F1':>6}")
-        print("-" * 105)
-        for m in results["step_metrics"]:
-            print(
-                f"{m['snapshot_index']:5d} | {m['rel_time_ms']:11.1f} | {m['real_known_count']:9d} | "
-                f"{m['inferred_known_count']:8d} | {m['tp']:5d} | {m['fp']:5d} | {m['tn']:5d} | {m['fn']:5d} | "
-                f"{m['accuracy']:6.4f} | {m['precision']:6.4f} | {m['recall']:6.4f} | {m['f1_score']:6.4f}"
-            )
+    all_results: dict[str, dict[str, Any]] = {}
+    for blk in target_blocks:
+        results = evaluate_snapshot_data(data, adjacency, target_block=blk, step_index=args.step)
+        label = results["target_block_label"]
+        all_results[label] = results
 
-    if args.output:
-        args.output.parent.mkdir(parents=True, exist_ok=True)
-        with open(args.output, "w", encoding="utf-8") as f:
-            json.dump(results, f, indent=2)
-        print(f"\nSaved evaluation results to: {args.output}")
+        print("\n" + "=" * 60)
+        print("PAST BLOCK PROPAGATION INFERENCE EVALUATION")
+        print("=" * 60)
+        print(f"Target Block: {results['target_block_label']} ({results['target_block_hash'][:16]}...)")
+        print(f"Total Nodes: {results['total_nodes']} | Steps Evaluated: {results['total_steps_evaluated']}")
+        print("-" * 60)
+        print("Mean Metrics across evaluated steps:")
+        for k, v in results["mean_metrics"].items():
+            print(f"  {k.capitalize():12s}: {v:.4f}")
+        print("=" * 60)
+
+        if args.verbose or args.step is not None:
+            print("\nStep-by-step breakdown:")
+            print(f"{'Step':>5} | {'RelTime(ms)':>11} | {'RealKnown':>9} | {'InfKnown':>8} | {'TP':>5} | {'FP':>5} | {'TN':>5} | {'FN':>5} | {'Acc':>6} | {'Prec':>6} | {'Rec':>6} | {'F1':>6}")
+            print("-" * 105)
+            for m in results["step_metrics"]:
+                print(
+                    f"{m['snapshot_index']:5d} | {m['rel_time_ms']:11.1f} | {m['real_known_count']:9d} | "
+                    f"{m['inferred_known_count']:8d} | {m['tp']:5d} | {m['fp']:5d} | {m['tn']:5d} | {m['fn']:5d} | "
+                    f"{m['accuracy']:6.4f} | {m['precision']:6.4f} | {m['recall']:6.4f} | {m['f1_score']:6.4f}"
+                )
+
+        if args.output:
+            if len(target_blocks) == 1 and not (args.output.is_dir() or args.output.suffix == ""):
+                save_path = args.output
+            else:
+                out_dir = args.output if (args.output.is_dir() or args.output.suffix == "") else args.output.parent
+                save_path = out_dir / f"eval_inference_{label}.json"
+
+            save_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(save_path, "w", encoding="utf-8") as f:
+                json.dump(results, f, indent=2)
+            print(f"\nSaved evaluation results for {label} to: {save_path}")
 
 
 if __name__ == "__main__":
