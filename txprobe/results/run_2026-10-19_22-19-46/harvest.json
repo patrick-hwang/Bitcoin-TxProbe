@@ -1,0 +1,2736 @@
+{
+  "timestamp": "2026-10-19T15:24:41.055898+00:00",
+  "elapsed_sec": 294.3,
+  "stats": {
+    "groundtruth_self_count": 30,
+    "groundtruth_peer_count": 157,
+    "probe_peer_count": 0,
+    "dns_seed_count": 25,
+    "addrman_count": 1676,
+    "reachability_tested": 1858,
+    "reachability_passed": 360,
+    "total_unique": 388
+  },
+  "already_connected_probes": {
+    "0": [],
+    "1": []
+  },
+  "candidates": [
+    {
+      "addr": "pnvbolsqnqmiwbmrrtqoz3cbfwvnrhdesn3wxbvimifvhs2c5r5z5uad.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 3,
+      "last_seen": 0
+    },
+    {
+      "addr": "upiuurfhixst6z5gbif6eziw4dush2wtfjy6tcpbkycqkra5trb575id.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 2,
+      "last_seen": 0
+    },
+    {
+      "addr": "udjnpbppwtmjhmm7ic7je6mr7whnsare2jec5ghdgddw3lmgxqxralad.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 4,
+      "last_seen": 0
+    },
+    {
+      "addr": "2jcyz5jnggdlfs3nwfwhk3fpt4uxm43rjx7gg55wy7uccvy5z337vnid.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 6,
+      "last_seen": 0
+    },
+    {
+      "addr": "b6yjsgsx3jbzxosfu3gsnbih4hmt3nspizetslm7ok6wfvsrylv3ysqd.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 5,
+      "last_seen": 0
+    },
+    {
+      "addr": "srxom6pig266vcipjxezal6eeiqj5c3kjvv3w4jacopg6p4esjivhkad.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 7,
+      "last_seen": 0
+    },
+    {
+      "addr": "cfmk7uostvqz77ynolwuytxpdsjngldqbwlp3drjaaca4qtsajpb4aqd.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 9,
+      "last_seen": 0
+    },
+    {
+      "addr": "ffl3tzrxwknsyqpswklisyt2xgsobpfuxq6725yem6e3tjkgisulwvid.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 10,
+      "last_seen": 0
+    },
+    {
+      "addr": "ul62z7wdbp4ywn2itvpqox3q5a5ctsrplbko5jtfsjygnbpgft4sv3qd.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 11,
+      "last_seen": 0
+    },
+    {
+      "addr": "7opmdoefrqaxrimpofrqs33p3t6wbtarhheshhylw5juegoevc5eryqd.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 13,
+      "last_seen": 0
+    },
+    {
+      "addr": "pnzk5orw3a5qf6uxd65oyewjkjfur5gn7szktyzzxkuqdonuak3j44id.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 12,
+      "last_seen": 0
+    },
+    {
+      "addr": "qm5px7lfqbrin6vpa7vzywtmkv7svesss6wjiqfwqrvg2caiv45mtpyd.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 17,
+      "last_seen": 0
+    },
+    {
+      "addr": "pzixrzvokpmca3533eri6cfgfrvnmdrar2hbcrjjk75zbgairkx5hiqd.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 18,
+      "last_seen": 0
+    },
+    {
+      "addr": "h43luvnqdxgw4q3iq5rksagfk2oiyeivwdnjgyvzgt4a2omc6rwzwcid.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 20,
+      "last_seen": 0
+    },
+    {
+      "addr": "u3fdfpuungm7hr3jyguvlm6hz6htq4kw232nz3fcaeroy2cvx7nhqxyd.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 8,
+      "last_seen": 0
+    },
+    {
+      "addr": "rbwrfkzyci7iivdn7i36a6n6r3xtgnzm5axewtkccnhdc3jsanmn5ryd.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 21,
+      "last_seen": 0
+    },
+    {
+      "addr": "fzmmmtc4tu2tqop3buvsabcajgbzqm65t7ggev5nzf3srcz3x6s6bvqd.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 19,
+      "last_seen": 0
+    },
+    {
+      "addr": "jgfdihfuqmvp27bqev5mcp75lzcdbp4osnr4fnppapgih7zcusr23nad.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 14,
+      "last_seen": 0
+    },
+    {
+      "addr": "hf5qsfpqsxe3i6feo4ftrmnq7sfypnrfw34hde7dua7o2rflyblfheyd.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 16,
+      "last_seen": 0
+    },
+    {
+      "addr": "yqzgbslvopnpeaoggmxstbpfr5zdzbp4p5dhntrm2udcwanesvivtlqd.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 15,
+      "last_seen": 0
+    },
+    {
+      "addr": "lqt47nl2hcr5x3ft5c3j3ciytcrsqcaidgow6cpg4nrvhboz3wdaszqd.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 22,
+      "last_seen": 0
+    },
+    {
+      "addr": "ds4d5qywbsensd6et7zpfinrdekxdvbe6iumovcj3425dcifti62vead.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 24,
+      "last_seen": 0
+    },
+    {
+      "addr": "j2n2utzoifz7rvxlg42zkgjcrgh5okjagk6mhgishdzrcfiatmpc2wad.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 25,
+      "last_seen": 0
+    },
+    {
+      "addr": "isua6jwxkot5436zmxya5f3l6q7prcw36axj5mr7w4lp3wdfkeuhemid.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 26,
+      "last_seen": 0
+    },
+    {
+      "addr": "wwvt43fqok7w7qk2o2fi3np47sew6avph6c5tznqzu7zg4adm3kce2id.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 27,
+      "last_seen": 0
+    },
+    {
+      "addr": "mdpfttaucexqqzaol5cg6eor2mqtvzsjtkpfc5lhox7ll4idg3ggtlyd.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 28,
+      "last_seen": 0
+    },
+    {
+      "addr": "35yi5ariwa4iy2xwpbjtqrn34i6zl5unvx2xhygziu6p2pczu4yeaoad.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 23,
+      "last_seen": 0
+    },
+    {
+      "addr": "vynn44logycz2ropbed5eyrpnfttygvvxkfnmf5i3izs3cm3ivmeqzid.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 29,
+      "last_seen": 0
+    },
+    {
+      "addr": "ygjkuedksptegb7vlks26eplsgl7ugehskbqk3ukn7lom5luyrrjszyd.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 31,
+      "last_seen": 0
+    },
+    {
+      "addr": "dzmjefcojqjqbmh6tnaeju2zrwgicqcewymdoh7l5ke7vqeaeeysitad.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 30,
+      "last_seen": 0
+    },
+    {
+      "addr": "64.180.124.90:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 2,
+      "last_seen": 0
+    },
+    {
+      "addr": "72.61.172.129:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 2,
+      "last_seen": 0
+    },
+    {
+      "addr": "142.160.218.208:48336",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 2,
+      "last_seen": 0
+    },
+    {
+      "addr": "80.253.94.252:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 2,
+      "last_seen": 0
+    },
+    {
+      "addr": "65.109.112.186:48444",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 2,
+      "last_seen": 0
+    },
+    {
+      "addr": "77.42.3.118:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 2,
+      "last_seen": 0
+    },
+    {
+      "addr": "71.218.227.18:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 2,
+      "last_seen": 0
+    },
+    {
+      "addr": "77ytnkjshffslr43doa7dsdnp7ozsvugx5rhm43pgdrqrojue2qxfiad.onion:8333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 2,
+      "last_seen": 0
+    },
+    {
+      "addr": "185.18.221.19:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 2,
+      "last_seen": 0
+    },
+    {
+      "addr": "103.165.192.209:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 2,
+      "last_seen": 0
+    },
+    {
+      "addr": "89.167.62.33:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 3,
+      "last_seen": 0
+    },
+    {
+      "addr": "51.158.61.33:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 3,
+      "last_seen": 0
+    },
+    {
+      "addr": "kolvizpy2tctu7tyq5qlquodwcsljtfbmowcxqsihfrlvwlihpsijwad.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 3,
+      "last_seen": 0
+    },
+    {
+      "addr": "142.132.147.162:28333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 3,
+      "last_seen": 0
+    },
+    {
+      "addr": "livxdbwpl4o2tiw3w73qoloqnqnfetpu3h374ez4rik3uyx4ygzzhcid.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 3,
+      "last_seen": 0
+    },
+    {
+      "addr": "54.180.113.82:8333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 3,
+      "last_seen": 0
+    },
+    {
+      "addr": "5.253.84.166:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 3,
+      "last_seen": 0
+    },
+    {
+      "addr": "159.195.65.171:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 3,
+      "last_seen": 0
+    },
+    {
+      "addr": "ko55e2ityiaqeckthmnnbcv6bbwll7rtdiv527muoqdpg4hye2it2pyd.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 3,
+      "last_seen": 0
+    },
+    {
+      "addr": "18.204.178.177:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 5,
+      "last_seen": 0
+    },
+    {
+      "addr": "we5rsalvz6fhp3345jydracg6wytxw5smsxzgusljvgcojadyfv2bzyd.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 5,
+      "last_seen": 0
+    },
+    {
+      "addr": "109.236.57.34:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 5,
+      "last_seen": 0
+    },
+    {
+      "addr": "95.141.35.117:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 5,
+      "last_seen": 0
+    },
+    {
+      "addr": "82.67.102.15:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 5,
+      "last_seen": 0
+    },
+    {
+      "addr": "164.92.233.218:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 5,
+      "last_seen": 0
+    },
+    {
+      "addr": "92.118.190.35:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 5,
+      "last_seen": 0
+    },
+    {
+      "addr": "66.24.77.71:18333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 5,
+      "last_seen": 0
+    },
+    {
+      "addr": "70.93.233.255:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 6,
+      "last_seen": 0
+    },
+    {
+      "addr": "64.227.179.245:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 6,
+      "last_seen": 0
+    },
+    {
+      "addr": "71.205.50.186:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 6,
+      "last_seen": 0
+    },
+    {
+      "addr": "54.78.82.55:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 6,
+      "last_seen": 0
+    },
+    {
+      "addr": "89.58.19.72:18333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 6,
+      "last_seen": 0
+    },
+    {
+      "addr": "103.99.170.201:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 6,
+      "last_seen": 0
+    },
+    {
+      "addr": "65.109.115.236:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 6,
+      "last_seen": 0
+    },
+    {
+      "addr": "50.116.43.120:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 6,
+      "last_seen": 0
+    },
+    {
+      "addr": "unzfamtidb33gxnpdkq7ojrbqtuysoqs5kf5ej3cqa5c5bddyyiwxkyd.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 6,
+      "last_seen": 0
+    },
+    {
+      "addr": "34.31.40.200:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 6,
+      "last_seen": 0
+    },
+    {
+      "addr": "13.140.162.77:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 13,
+      "last_seen": 0
+    },
+    {
+      "addr": "205.201.33.246:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 13,
+      "last_seen": 0
+    },
+    {
+      "addr": "2z57dvvbbhf6ratvxohwg5rmlohk2d6kke5fxlilglgjfp7gj25hlbad.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 13,
+      "last_seen": 0
+    },
+    {
+      "addr": "3.135.25.32:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 13,
+      "last_seen": 0
+    },
+    {
+      "addr": "44.228.181.244:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 13,
+      "last_seen": 0
+    },
+    {
+      "addr": "46.4.53.240:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 13,
+      "last_seen": 0
+    },
+    {
+      "addr": "bv2uuihcluruxlt4zwedditinsjberjtaj7yciwd25nrhy3ufh7jjvqd.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 13,
+      "last_seen": 0
+    },
+    {
+      "addr": "54.78.90.72:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 13,
+      "last_seen": 0
+    },
+    {
+      "addr": "riyvgzynuzj2vx2az6a7kvca5bythmj6rgb4asrecdw6vfmvt33uxqid.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 13,
+      "last_seen": 0
+    },
+    {
+      "addr": "fsijrllgzgeg4pa5ebq4qy3swmplxkzvuvji5swt36quy42dznq3t3ad.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 4,
+      "last_seen": 0
+    },
+    {
+      "addr": "167.86.82.90:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 4,
+      "last_seen": 0
+    },
+    {
+      "addr": "188.132.178.33:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 4,
+      "last_seen": 0
+    },
+    {
+      "addr": "134.199.227.217:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 4,
+      "last_seen": 0
+    },
+    {
+      "addr": "3.69.160.185:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 4,
+      "last_seen": 0
+    },
+    {
+      "addr": "203.132.94.196:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 4,
+      "last_seen": 0
+    },
+    {
+      "addr": "103.99.169.214:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 16,
+      "last_seen": 0
+    },
+    {
+      "addr": "144.76.2.169:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 16,
+      "last_seen": 0
+    },
+    {
+      "addr": "54.46.36.253:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 16,
+      "last_seen": 0
+    },
+    {
+      "addr": "jbuwz2bpitpeyb33phcisuxgphrzcx3epzybbyinn25krzyy54vn4pad.onion:8333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 16,
+      "last_seen": 0
+    },
+    {
+      "addr": "rngt5txqovouco2oyuz47tyiwg5o6znyq666pspqwxsf57cvfreseyid.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 16,
+      "last_seen": 0
+    },
+    {
+      "addr": "62.164.218.78:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 16,
+      "last_seen": 0
+    },
+    {
+      "addr": "du53dky4c55px3ogxw6xmkjwuebxwr6vt2kwchfhyeqmfb77lb5ho3qd.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 16,
+      "last_seen": 0
+    },
+    {
+      "addr": "64.177.116.99:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 16,
+      "last_seen": 0
+    },
+    {
+      "addr": "168.119.11.220:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 16,
+      "last_seen": 0
+    },
+    {
+      "addr": "52.1.114.214:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 22,
+      "last_seen": 0
+    },
+    {
+      "addr": "62.84.190.200:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 22,
+      "last_seen": 0
+    },
+    {
+      "addr": "103.99.168.203:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 22,
+      "last_seen": 0
+    },
+    {
+      "addr": "45.94.168.5:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 22,
+      "last_seen": 0
+    },
+    {
+      "addr": "rca6vnhzercuygie4qnclnglqry6to5njscoqxbevpo6f4lo2dpyuqyd.onion:8333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 22,
+      "last_seen": 0
+    },
+    {
+      "addr": "34.228.207.112:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 23,
+      "last_seen": 0
+    },
+    {
+      "addr": "qmw73e4zh2i6pvmlgx5642vwtynibghgvjdoox574hjxxv7fvd2oxyid.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 23,
+      "last_seen": 0
+    },
+    {
+      "addr": "176.169.208.187:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 23,
+      "last_seen": 0
+    },
+    {
+      "addr": "103.99.170.206:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 23,
+      "last_seen": 0
+    },
+    {
+      "addr": "cz3mmv4xdls7ha45hcb4ibtlgm746awd4x6luvlo4ws6rpvbegehvcyd.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 23,
+      "last_seen": 0
+    },
+    {
+      "addr": "52.201.87.12:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 23,
+      "last_seen": 0
+    },
+    {
+      "addr": "65.108.212.201:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 15,
+      "last_seen": 0
+    },
+    {
+      "addr": "3.235.188.91:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 15,
+      "last_seen": 0
+    },
+    {
+      "addr": "13.213.16.163:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 15,
+      "last_seen": 0
+    },
+    {
+      "addr": "185.232.70.226:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 15,
+      "last_seen": 0
+    },
+    {
+      "addr": "216.230.225.61:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 20,
+      "last_seen": 0
+    },
+    {
+      "addr": "103.99.168.213:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 20,
+      "last_seen": 0
+    },
+    {
+      "addr": "66.165.255.34:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 20,
+      "last_seen": 0
+    },
+    {
+      "addr": "104.248.248.117:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 20,
+      "last_seen": 0
+    },
+    {
+      "addr": "51.222.248.18:64333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 20,
+      "last_seen": 0
+    },
+    {
+      "addr": "2sltzrq7ts5t4il5nimp75og2jksbwdjmgbdykz5ljeoqrxemzlakeyd.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 26,
+      "last_seen": 0
+    },
+    {
+      "addr": "72.179.148.45:48334",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 26,
+      "last_seen": 0
+    },
+    {
+      "addr": "ns2pwu3ygftbznizpe5f5cffsaglyz5f3akrad6tfls26d3yogf4amqd.onion:8333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 26,
+      "last_seen": 0
+    },
+    {
+      "addr": "89.233.240.44:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 19,
+      "last_seen": 0
+    },
+    {
+      "addr": "zeew2bhbyougtklfxqfxfdn6ldonjwgmjclgapsk55ikiyojen5ls7ad.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 19,
+      "last_seen": 0
+    },
+    {
+      "addr": "32.196.76.227:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 19,
+      "last_seen": 0
+    },
+    {
+      "addr": "103.99.168.202:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 19,
+      "last_seen": 0
+    },
+    {
+      "addr": "178.63.87.163:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 19,
+      "last_seen": 0
+    },
+    {
+      "addr": "209.146.50.203:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 19,
+      "last_seen": 0
+    },
+    {
+      "addr": "ap5g3f4muw3gtdfzmrctvd3eyh3yw2z4lv2n7362blbvof5a7urfcmid.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 19,
+      "last_seen": 0
+    },
+    {
+      "addr": "209.146.50.201:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 18,
+      "last_seen": 0
+    },
+    {
+      "addr": "5p6eqvrins6vj7q3tpdljhtomu6nqameilbuz5sjnu2i333ve2zpnhqd.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 18,
+      "last_seen": 0
+    },
+    {
+      "addr": "103.165.192.214:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 18,
+      "last_seen": 0
+    },
+    {
+      "addr": "3.234.184.245:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 18,
+      "last_seen": 0
+    },
+    {
+      "addr": "3.12.68.236:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 18,
+      "last_seen": 0
+    },
+    {
+      "addr": "ekwxajjykxkjaasooo2nnp4gnoedhwksg4kykny3ierwfabrwwyweaid.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 21,
+      "last_seen": 0
+    },
+    {
+      "addr": "5.182.4.106:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 21,
+      "last_seen": 0
+    },
+    {
+      "addr": "jspxdo33gyrh3tewi55mn2fo5spczzgipq6ao7fa5qu6fj2ezr7bizid.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 21,
+      "last_seen": 0
+    },
+    {
+      "addr": "13.57.190.12:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 21,
+      "last_seen": 0
+    },
+    {
+      "addr": "5f2qaud736uqiqqnjesbfvdkalllrdnkrkyinfx4bl4e7ybxd3h6hsad.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 21,
+      "last_seen": 0
+    },
+    {
+      "addr": "107.161.185.205:18333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 8,
+      "last_seen": 0
+    },
+    {
+      "addr": "azccjliswzu5aycse7g7zu2bw3mqicd2mhszczitp332scjgltehrjqd.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 8,
+      "last_seen": 0
+    },
+    {
+      "addr": "158.220.90.103:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 8,
+      "last_seen": 0
+    },
+    {
+      "addr": "157.180.32.177:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 8,
+      "last_seen": 0
+    },
+    {
+      "addr": "100.56.0.96:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 8,
+      "last_seen": 0
+    },
+    {
+      "addr": "63.254.176.33:8333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 0
+    },
+    {
+      "addr": "69.162.121.25:8333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 0
+    },
+    {
+      "addr": "136.49.112.63:47333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 0
+    },
+    {
+      "addr": "172.93.167.89:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 0
+    },
+    {
+      "addr": "103.99.170.205:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 0
+    },
+    {
+      "addr": "103.232.248.31:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 27,
+      "last_seen": 0
+    },
+    {
+      "addr": "89.117.50.252:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 27,
+      "last_seen": 0
+    },
+    {
+      "addr": "169.58.182.249:8353",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 27,
+      "last_seen": 0
+    },
+    {
+      "addr": "147.135.70.51:21333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 31,
+      "last_seen": 0
+    },
+    {
+      "addr": "89.58.9.219:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 31,
+      "last_seen": 0
+    },
+    {
+      "addr": "188.213.90.149:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 31,
+      "last_seen": 0
+    },
+    {
+      "addr": "178.63.196.55:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 31,
+      "last_seen": 0
+    },
+    {
+      "addr": "169.58.12.176:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 17,
+      "last_seen": 0
+    },
+    {
+      "addr": "63.254.177.13:8333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 10,
+      "last_seen": 0
+    },
+    {
+      "addr": "100.52.219.142:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 10,
+      "last_seen": 0
+    },
+    {
+      "addr": "44.233.24.135:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 10,
+      "last_seen": 0
+    },
+    {
+      "addr": "135.180.99.74:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 9,
+      "last_seen": 0
+    },
+    {
+      "addr": "67.81.240.18:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 9,
+      "last_seen": 0
+    },
+    {
+      "addr": "2m4yjmxoamgtzskezmaqwrhfi5hnnzehv44q3fj3ryjwhtz5e53cqmyd.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 9,
+      "last_seen": 0
+    },
+    {
+      "addr": "7jd422hqevrz334ax3fh77wzww7clnr4kpyos25oe64nifg623bjqfqd.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 9,
+      "last_seen": 0
+    },
+    {
+      "addr": "77.90.35.156:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 9,
+      "last_seen": 0
+    },
+    {
+      "addr": "103.99.170.203:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 29,
+      "last_seen": 0
+    },
+    {
+      "addr": "206.223.233.185:18801",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 29,
+      "last_seen": 0
+    },
+    {
+      "addr": "irwyrdkcrcdgwtsltcrqexqylwc3ezjhhra7u4i3gkwktezcut36buqd.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 12,
+      "last_seen": 0
+    },
+    {
+      "addr": "198.206.204.71:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 12,
+      "last_seen": 0
+    },
+    {
+      "addr": "54.165.187.132:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 12,
+      "last_seen": 0
+    },
+    {
+      "addr": "ntj32gqatlaripp23m2fhvqunc62agcj5uujqqp2gjxg6w7wt4gyeoyd.onion:8333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 12,
+      "last_seen": 0
+    },
+    {
+      "addr": "116.203.184.251:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 12,
+      "last_seen": 0
+    },
+    {
+      "addr": "qmd5qvyhnanqj6wyf4klrvfqoypuz6xjajhx2n272vr5il7nlwyoosqd.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 28,
+      "last_seen": 0
+    },
+    {
+      "addr": "207.246.106.79:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 28,
+      "last_seen": 0
+    },
+    {
+      "addr": "103.99.170.202:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 28,
+      "last_seen": 0
+    },
+    {
+      "addr": "a6yijgwn4vtmmhl7uybtbuyvtl7mtj7arld5f4csqsx4syeii4gt3vqd.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 11,
+      "last_seen": 0
+    },
+    {
+      "addr": "3.235.24.238:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 11,
+      "last_seen": 0
+    },
+    {
+      "addr": "hb44egze5hjbi3n2rc6w4pwahr6zltc4ilfzin3kkdi2rmozvxlo65qd.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 24,
+      "last_seen": 0
+    },
+    {
+      "addr": "kf6q2wza2ebo7cxln5ejcjjwvrew4vb2hf4vd5wo4nyzbnjv3yccduqd.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 24,
+      "last_seen": 0
+    },
+    {
+      "addr": "71.13.92.62:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 24,
+      "last_seen": 0
+    },
+    {
+      "addr": "vh72vs4kp4mf4c6dopdprfavuuuq56vgtltozx5qik7awvy335h7btqd.onion:48333",
+      "priority": 0,
+      "network": "onion",
+      "source_node_id": 24,
+      "last_seen": 0
+    },
+    {
+      "addr": "193.168.140.155:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 24,
+      "last_seen": 0
+    },
+    {
+      "addr": "222.66.94.2:18333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 25,
+      "last_seen": 0
+    },
+    {
+      "addr": "167.172.77.184:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 25,
+      "last_seen": 0
+    },
+    {
+      "addr": "34.65.45.157:18333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 25,
+      "last_seen": 0
+    },
+    {
+      "addr": "103.165.192.200:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 7,
+      "last_seen": 0
+    },
+    {
+      "addr": "209.146.50.202:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 7,
+      "last_seen": 0
+    },
+    {
+      "addr": "65.109.158.184:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 7,
+      "last_seen": 0
+    },
+    {
+      "addr": "216.230.225.43:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 7,
+      "last_seen": 0
+    },
+    {
+      "addr": "148.51.196.40:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 30,
+      "last_seen": 0
+    },
+    {
+      "addr": "103.99.168.205:48333",
+      "priority": 0,
+      "network": "ipv4",
+      "source_node_id": 30,
+      "last_seen": 0
+    },
+    {
+      "addr": "[2001:99a:dc0:ad00:1417:f40a:abe9:5e74]:48333",
+      "priority": 2,
+      "network": "ipv6",
+      "source_node_id": -1,
+      "last_seen": 0
+    },
+    {
+      "addr": "[2001:bc8:1201:409:1618:77ff:fe5f:b12]:48333",
+      "priority": 2,
+      "network": "ipv6",
+      "source_node_id": -1,
+      "last_seen": 0
+    },
+    {
+      "addr": "[2a02:29e0:1:420::64]:48333",
+      "priority": 2,
+      "network": "ipv6",
+      "source_node_id": -1,
+      "last_seen": 0
+    },
+    {
+      "addr": "[2a03:d9c2:100:1068::a]:48333",
+      "priority": 2,
+      "network": "ipv6",
+      "source_node_id": -1,
+      "last_seen": 0
+    },
+    {
+      "addr": "[2001:df6:7280::92:209]:48333",
+      "priority": 2,
+      "network": "ipv6",
+      "source_node_id": -1,
+      "last_seen": 0
+    },
+    {
+      "addr": "[2001:df6:7280::92:210]:48333",
+      "priority": 2,
+      "network": "ipv6",
+      "source_node_id": -1,
+      "last_seen": 0
+    },
+    {
+      "addr": "[2001:df6:7280::92:211]:48333",
+      "priority": 2,
+      "network": "ipv6",
+      "source_node_id": -1,
+      "last_seen": 0
+    },
+    {
+      "addr": "[2001:df6:7280::92:212]:48333",
+      "priority": 2,
+      "network": "ipv6",
+      "source_node_id": -1,
+      "last_seen": 0
+    },
+    {
+      "addr": "73lfqz5dilvmpqymn2fg4c6mswgegirmb7g5s3u2vh7n53lclurui6qd.onion:8333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 29,
+      "last_seen": 1792413571
+    },
+    {
+      "addr": "159.195.129.108:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792413448
+    },
+    {
+      "addr": "[2a01:7a7:2:2e07:ec4:7aff:fe57:17fa]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792412341
+    },
+    {
+      "addr": "103.99.168.201:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792410442
+    },
+    {
+      "addr": "43.199.104.192:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792410426
+    },
+    {
+      "addr": "[2804:31b8:425:b500:b10f:c682:82fb:78cb]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 28,
+      "last_seen": 1792409294
+    },
+    {
+      "addr": "45.8.96.66:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792408182
+    },
+    {
+      "addr": "[2401:b140:1::92:206]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792406231
+    },
+    {
+      "addr": "tntxk2oda33ov6ufvtsc6xfn2iqgcamiooyxbjggs3474c3pqcdzxbid.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 14,
+      "last_seen": 1792406112
+    },
+    {
+      "addr": "[2a03:4000:b:1623:84ce:7fff:fe2e:7cdd]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792406074
+    },
+    {
+      "addr": "[2001:df6:7280::92:214]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792405987
+    },
+    {
+      "addr": "103.99.171.212:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792405591
+    },
+    {
+      "addr": "[2401:b140::92:203]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792405520
+    },
+    {
+      "addr": "zfejt2ruajk2hrogtnfvpq2zssctz6lnstmsmd2y22q6lmzjk6plxmid.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 14,
+      "last_seen": 1792404954
+    },
+    {
+      "addr": "[2001:9e8:6a7:ac00:900f:f2ff:fea3:bbcd]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 16,
+      "last_seen": 1792403611
+    },
+    {
+      "addr": "170.75.160.56:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792403591
+    },
+    {
+      "addr": "[2401:b140:3::92:214]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792403083
+    },
+    {
+      "addr": "[2a13:2c0::c5fa:65b3:c7ae:38ef]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792402691
+    },
+    {
+      "addr": "mtywwwzjnsht56tcrenn5r7vtvmjjgeyqmf47kxgm2xetx5rrndjqxqd.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 29,
+      "last_seen": 1792402684
+    },
+    {
+      "addr": "209.146.50.204:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792402446
+    },
+    {
+      "addr": "[2606:6080:2001:1042::a]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792401932
+    },
+    {
+      "addr": "[2001:19f0:5c00:15ea:5400:6ff:fea9:ea2e]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792401456
+    },
+    {
+      "addr": "[2a06:1700:2:557::4861:5221]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792399052
+    },
+    {
+      "addr": "[2a0a:4cc0:0:2d4:b46a:39ff:fef2:9597]:18333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792398271
+    },
+    {
+      "addr": "i22efh4itlcfthvaavcz2rvigu4x6jqvlwuksz44bukslhg76bsgrxqd.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 14,
+      "last_seen": 1792397130
+    },
+    {
+      "addr": "[2401:b140:4::92:202]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792393486
+    },
+    {
+      "addr": "gujxforhwszry5falvnarfcyajjxxsuvqevx6gk6meou5ordrxw3mdad.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 14,
+      "last_seen": 1792391988
+    },
+    {
+      "addr": "15.204.85.14:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792391495
+    },
+    {
+      "addr": "[2a01:4f9:3080:1586::2]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 29,
+      "last_seen": 1792389990
+    },
+    {
+      "addr": "69.162.121.96:8333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792389989
+    },
+    {
+      "addr": "204.111.39.166:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 29,
+      "last_seen": 1792389694
+    },
+    {
+      "addr": "103.99.171.211:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792388491
+    },
+    {
+      "addr": "[2401:d002:3902:700:a038:c772:884b:8a70]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 29,
+      "last_seen": 1792387585
+    },
+    {
+      "addr": "103.99.169.209:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792387517
+    },
+    {
+      "addr": "[2401:b140:2::92:211]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792386672
+    },
+    {
+      "addr": "5rh3ln6ypycmn57qlmke3dliffg2id3ziz4dhsujng4tk34oklnbqtyd.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 14,
+      "last_seen": 1792384825
+    },
+    {
+      "addr": "100.30.166.14:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792384178
+    },
+    {
+      "addr": "[2401:b140:1::92:203]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792382550
+    },
+    {
+      "addr": "[2a02:c207:2329:3429::1]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792382549
+    },
+    {
+      "addr": "[2401:b140:3::92:207]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 17,
+      "last_seen": 1792381860
+    },
+    {
+      "addr": "169.58.182.249:8333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792381693
+    },
+    {
+      "addr": "[2a01:7a7:2:2391:ec4:7aff:fe57:17fa]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792381072
+    },
+    {
+      "addr": "qix4ctrcukblslaaimcttj55c5dp7fp3nkbjkwoktwawo43bxvcavzid.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 29,
+      "last_seen": 1792378998
+    },
+    {
+      "addr": "2nf3pwqszryes35e77nzso7syqrg3bwtk37uksa5wy7ttlv4gjadn6ad.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 29,
+      "last_seen": 1792378855
+    },
+    {
+      "addr": "[2401:b140:4::92:203]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792377334
+    },
+    {
+      "addr": "[2401:b140::92:202]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792376748
+    },
+    {
+      "addr": "hnguqpsswg2pktx53skxezcj7k27772f5qu7zx62nhurup6cdvlc5dqd.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 14,
+      "last_seen": 1792374185
+    },
+    {
+      "addr": "[2401:b140:2::92:209]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792373905
+    },
+    {
+      "addr": "vt2w4mverrmra2vu5rwo2jth6dtbwlbtyiaabrv2atgkiy3ugt4atoid.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 14,
+      "last_seen": 1792373584
+    },
+    {
+      "addr": "[2401:b140:4::92:208]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792373163
+    },
+    {
+      "addr": "fwsrcrhnggi3qy5rsfiad3cwep3bf7uovcupgockbntjcfvoqxzr75id.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 17,
+      "last_seen": 1792372148
+    },
+    {
+      "addr": "[2401:b140:4::92:211]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792372070
+    },
+    {
+      "addr": "[2401:b140:2::92:210]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792371723
+    },
+    {
+      "addr": "[2401:b140:4::92:207]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792371334
+    },
+    {
+      "addr": "[2a02:c206:2146:8702::1]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792369598
+    },
+    {
+      "addr": "8.235.10.14:32740",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 29,
+      "last_seen": 1792369493
+    },
+    {
+      "addr": "208.68.4.71:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792367688
+    },
+    {
+      "addr": "[2401:b140::92:201]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792367284
+    },
+    {
+      "addr": "103.99.171.214:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792367038
+    },
+    {
+      "addr": "44.210.35.117:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792365254
+    },
+    {
+      "addr": "[2605:6440:4007:1de:925a:8ff:fe31:ec0]:18801",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792365216
+    },
+    {
+      "addr": "[2401:b140:4::92:205]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792365210
+    },
+    {
+      "addr": "f2tt2hdbqlbslvdlpworasoijtqfxlkkcabl2kbu7gptojc2synwq6qd.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 29,
+      "last_seen": 1792364838
+    },
+    {
+      "addr": "[2401:b140:1::92:201]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792362723
+    },
+    {
+      "addr": "[2a01:4f8:172:33c1::2]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792362380
+    },
+    {
+      "addr": "185.219.128.32:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 29,
+      "last_seen": 1792362092
+    },
+    {
+      "addr": "5sdzs2qu3ygb44jwo45y2kmbnqc6ijzpndaqn43zgngsiwq7mx6b7yyd.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 14,
+      "last_seen": 1792361828
+    },
+    {
+      "addr": "63.254.177.74:8333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792361478
+    },
+    {
+      "addr": "63.182.223.208:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792360476
+    },
+    {
+      "addr": "[2a01:4f8:190:72a4::2]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792359873
+    },
+    {
+      "addr": "4uzerod2wrqtjuaea6vr43uddq2sg3cgfuk4khqotqsqdsxpwdmcphqd.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 29,
+      "last_seen": 1792358855
+    },
+    {
+      "addr": "[2a01:4f8:13a:684::2]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 29,
+      "last_seen": 1792357864
+    },
+    {
+      "addr": "[2001:df6:7280::92:213]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792354352
+    },
+    {
+      "addr": "[2401:b140:4::92:204]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792353255
+    },
+    {
+      "addr": "[2401:b140:3::92:200]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792350968
+    },
+    {
+      "addr": "[2401:b140:3::92:204]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792350843
+    },
+    {
+      "addr": "34.34.63.118:31275",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792350748
+    },
+    {
+      "addr": "[2a01:4f9:3090:2209::2]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792349956
+    },
+    {
+      "addr": "92.118.190.25:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792348299
+    },
+    {
+      "addr": "103.99.168.211:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792347723
+    },
+    {
+      "addr": "103.99.171.210:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792345618
+    },
+    {
+      "addr": "103.99.168.206:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792345225
+    },
+    {
+      "addr": "103.99.168.207:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792344025
+    },
+    {
+      "addr": "[2401:b140:4::92:213]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792343131
+    },
+    {
+      "addr": "4xjpowmbirjgmjfsblwkyd2a26b4pnfvplrsopkbtfomelgtgmdbmlad.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 14,
+      "last_seen": 1792341845
+    },
+    {
+      "addr": "[2a01:4f9:c014:b5ef::1]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792338752
+    },
+    {
+      "addr": "[2401:b140:2::92:212]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792337519
+    },
+    {
+      "addr": "69.162.121.116:8333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792337503
+    },
+    {
+      "addr": "[2001:5a8:4164:7a00::1f8]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 29,
+      "last_seen": 1792337417
+    },
+    {
+      "addr": "103.99.171.202:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792337179
+    },
+    {
+      "addr": "136.243.173.99:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792336446
+    },
+    {
+      "addr": "[2401:b140:3::92:206]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792335970
+    },
+    {
+      "addr": "103.99.168.208:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792335819
+    },
+    {
+      "addr": "77.42.4.29:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792335016
+    },
+    {
+      "addr": "[2401:b140:4::92:206]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792334937
+    },
+    {
+      "addr": "103.99.170.204:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 29,
+      "last_seen": 1792334645
+    },
+    {
+      "addr": "103.99.168.209:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792334576
+    },
+    {
+      "addr": "mdiwdijucocysdvx5dk2iyo5wsav3ehyiggegzfk3ezfcce6nstp4nid.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 14,
+      "last_seen": 1792332810
+    },
+    {
+      "addr": "[2a01:4f8:1c1e:9949::1]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792331762
+    },
+    {
+      "addr": "x66at4pel4ody42wujl4upr2tbulbpn54nzvrk7gomzv4dwkhazfjdqd.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 14,
+      "last_seen": 1792331403
+    },
+    {
+      "addr": "5.9.86.53:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792331206
+    },
+    {
+      "addr": "zjttaesjhj7ail437ag4emdufr775h5rtgoohlbca5rwc4re6dr5k7ad.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 14,
+      "last_seen": 1792329751
+    },
+    {
+      "addr": "[2401:b140:3::92:203]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792328756
+    },
+    {
+      "addr": "gsw6sn27quwf6u3swgra6o7lrp5qau6kt3ymuyoxgkth6wntzm2bjwyd.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 0,
+      "last_seen": 1792327556
+    },
+    {
+      "addr": "ijtnjl5ep4h34yui3swra5kg6iz33aw27x3isvshzcwoswkxxfwr7eqd.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 29,
+      "last_seen": 1792327512
+    },
+    {
+      "addr": "103.99.171.213:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792327020
+    },
+    {
+      "addr": "[2401:b140:4::92:212]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792326830
+    },
+    {
+      "addr": "qhzfac4qvomln4ikp6xgfwgb2koxdgjsbeut3iplvsu5o33yf4ewf2ad.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 14,
+      "last_seen": 1792326272
+    },
+    {
+      "addr": "[2401:b140:3::92:205]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792325140
+    },
+    {
+      "addr": "103.99.168.210:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792325116
+    },
+    {
+      "addr": "havkohvjhg5tglbdecf4ufhz5es3f33ctj3b6loebj4pi6qrtjemfbyd.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 14,
+      "last_seen": 1792323475
+    },
+    {
+      "addr": "wifhuhsho6yiqv3xw572kovqanprmlawk6xgh7nrgkhhngyb3m5bhvid.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 14,
+      "last_seen": 1792323391
+    },
+    {
+      "addr": "4n2qnpq5zqnfbylg752q7djijs77w6ivvnuycfx6k7efepbcx2njwjid.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 14,
+      "last_seen": 1792319449
+    },
+    {
+      "addr": "103.99.168.214:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792318772
+    },
+    {
+      "addr": "103.99.169.212:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792318705
+    },
+    {
+      "addr": "[2401:b140:4::92:201]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 17,
+      "last_seen": 1792317852
+    },
+    {
+      "addr": "[2602:f480:ac:c010::71]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792315805
+    },
+    {
+      "addr": "e7blj2sj6qsoshc4yrbtdp7jnxycrjcp4h6xyx7xrpadwi25ls3bqcid.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 29,
+      "last_seen": 1792314283
+    },
+    {
+      "addr": "69.162.121.84:8333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792313779
+    },
+    {
+      "addr": "[2607:5300:203:9012::]:64333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792312888
+    },
+    {
+      "addr": "ll6woj4uug6mv53pb6gbmzco7yykhzkojyvx5mbkeygo4ad5xjysiiid.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 14,
+      "last_seen": 1792306827
+    },
+    {
+      "addr": "[2401:b140:4::92:214]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792306661
+    },
+    {
+      "addr": "85.203.53.149:18333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792305823
+    },
+    {
+      "addr": "[2401:b140::92:204]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 0,
+      "last_seen": 1792305306
+    },
+    {
+      "addr": "[2a02:c202:2234:7688::1]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792305259
+    },
+    {
+      "addr": "[2a02:c207:3020:1323::1]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792302896
+    },
+    {
+      "addr": "103.99.169.200:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792301920
+    },
+    {
+      "addr": "63.254.176.72:8333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792300305
+    },
+    {
+      "addr": "vfqxysj7olxstghkohezoembjnsyvpp2ph7kc4jaatvszyx2ajz627ad.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 17,
+      "last_seen": 1792297958
+    },
+    {
+      "addr": "72.179.148.45:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792292291
+    },
+    {
+      "addr": "[2a02:c207:2291:6064::1]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 29,
+      "last_seen": 1792288664
+    },
+    {
+      "addr": "[2405:e480:2:1a::2]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 29,
+      "last_seen": 1792284606
+    },
+    {
+      "addr": "103.99.168.204:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792282042
+    },
+    {
+      "addr": "103.99.171.209:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792281789
+    },
+    {
+      "addr": "103.99.168.212:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792279652
+    },
+    {
+      "addr": "72.179.148.45:48335",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792277300
+    },
+    {
+      "addr": "vizb74h32bx3u6zksgsi6seq6hcqdhok5pd4z2x5yj3ll72tu7pcu7id.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 14,
+      "last_seen": 1792275336
+    },
+    {
+      "addr": "wkvaxtftpwmmvrptqavx6mwhrcwiecbodtshuenvot3cjgxsycuurcid.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 14,
+      "last_seen": 1792272531
+    },
+    {
+      "addr": "dnshzxr6osjf2l5gjsbattjtoefgkzmd3p3fdyatr5ltz243zspsilyd.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 14,
+      "last_seen": 1792267749
+    },
+    {
+      "addr": "[2401:b140:3::92:208]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792267678
+    },
+    {
+      "addr": "zu3gjmendiuoogirxm6udfpympmchh2lxl3aeifzu7ahyuas3pzkgzid.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 14,
+      "last_seen": 1792267574
+    },
+    {
+      "addr": "5wpcussznj2dg5222zrtfdsx5ttco6xlv7447azzaaywu2t5xukqcaqd.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 14,
+      "last_seen": 1792267340
+    },
+    {
+      "addr": "c7nbt6bs5c7foimwc4wmwlrqd7fg22r76i22nglv2inx7tsav677gzyd.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 29,
+      "last_seen": 1792267006
+    },
+    {
+      "addr": "85.118.181.120:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 0,
+      "last_seen": 1792265300
+    },
+    {
+      "addr": "wb2ldwiyp3ijxqsagobtuglguwool663jiufkmgraf5b3dycn3gq5eid.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 14,
+      "last_seen": 1792264976
+    },
+    {
+      "addr": "[2401:b140:3::92:202]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792264484
+    },
+    {
+      "addr": "5fkz5ijh76cgfwvxz4pyl4br4hekqflijz7d467ldey3xme2trqrgjad.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 29,
+      "last_seen": 1792264307
+    },
+    {
+      "addr": "rb2ekvp77t4hhhipt7dfuriwges4efybffrb5qurk3xrokgo5or5z2yd.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 29,
+      "last_seen": 1792263993
+    },
+    {
+      "addr": "3.212.232.10:18333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792263096
+    },
+    {
+      "addr": "jmcnogfmfarr6vx5yykeephu43t4lhvpsvgzuhsqlaq6whd2feywbtid.onion:8333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 14,
+      "last_seen": 1792259970
+    },
+    {
+      "addr": "207.81.196.105:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792259827
+    },
+    {
+      "addr": "2t3bmmftxrdiaczyu4ncv5uhtsykfhrm3kppbqxvzs5oqy7xnda73oid.onion:8333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 14,
+      "last_seen": 1792259552
+    },
+    {
+      "addr": "[2a01:e0a:e6e:6bb0:2e0:4cff:fe68:232]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 29,
+      "last_seen": 1792258418
+    },
+    {
+      "addr": "ndml6tztza2fmjwfxwrpwbtbannfnryetwb55wkdqtjtu7ybsphyzxad.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 14,
+      "last_seen": 1792258204
+    },
+    {
+      "addr": "84.247.139.105:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792258065
+    },
+    {
+      "addr": "mavvwxts5f3axuz4cyjqpz75veijkdkdueavekb5hia67zk257eg7tqd.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 14,
+      "last_seen": 1792258028
+    },
+    {
+      "addr": "[2602:f480:ac:c010::50]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 16,
+      "last_seen": 1792258028
+    },
+    {
+      "addr": "a3aej552sklp5nhrosr5wv7qylgkmnu5u7zh7se56vtllvhgctzkbjqd.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 14,
+      "last_seen": 1792256988
+    },
+    {
+      "addr": "7kwh7rg3a4e5lgjvybesixzhwzxvf6dqo3gc4h7k5vilwmdjvtzidtid.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 14,
+      "last_seen": 1792256515
+    },
+    {
+      "addr": "[2a02:c207:2356:188::1]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792254728
+    },
+    {
+      "addr": "92.204.243.115:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792254637
+    },
+    {
+      "addr": "[2605:3380:422e:1::50]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 0,
+      "last_seen": 1792248307
+    },
+    {
+      "addr": "95.216.161.39:18333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792247648
+    },
+    {
+      "addr": "[2a01:4f8:272:3bca::1]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792245936
+    },
+    {
+      "addr": "209.145.54.240:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 31,
+      "last_seen": 1792244767
+    },
+    {
+      "addr": "[2401:b140:1::92:205]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 29,
+      "last_seen": 1792240963
+    },
+    {
+      "addr": "[2401:b140:2::92:214]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 17,
+      "last_seen": 1792240379
+    },
+    {
+      "addr": "3.235.25.166:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792235883
+    },
+    {
+      "addr": "[2401:b140:3::92:209]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792234358
+    },
+    {
+      "addr": "zmd4eq6svwn3qgm56dyodktagzi3xo4smxebgjdk2jbjkbmvn7gjm5qd.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 29,
+      "last_seen": 1792232753
+    },
+    {
+      "addr": "[2401:b140:2::92:213]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792230272
+    },
+    {
+      "addr": "[2401:b140:4::92:209]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792229866
+    },
+    {
+      "addr": "[2401:b140:4::92:210]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792229514
+    },
+    {
+      "addr": "[2604:2dc0:100:1933::]:21333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 0,
+      "last_seen": 1792229428
+    },
+    {
+      "addr": "193.70.34.37:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792228835
+    },
+    {
+      "addr": "gcch24rhspcfds4bzn6hqov5dzdrbhxr6uerqy7svsdbsvzv3q6fuhyd.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 14,
+      "last_seen": 1792228184
+    },
+    {
+      "addr": "[2a02:c207:2343:3147::1]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792225714
+    },
+    {
+      "addr": "[2001:5a8:4164:7a00:be60:b5aa:22f0:d1cb]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792223838
+    },
+    {
+      "addr": "[2401:b140:2::92:201]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792223516
+    },
+    {
+      "addr": "yz2t7sin6rcelhpho2mw7evtmmvh5b6645btxnsd6pyxlscijdvq5qyd.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 29,
+      "last_seen": 1792222066
+    },
+    {
+      "addr": "165.154.224.208:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792219677
+    },
+    {
+      "addr": "ncojyq66kkky5tizdz4oz3voofevv6bov3iltxj3i3a366xxcnp5fsid.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 29,
+      "last_seen": 1792212622
+    },
+    {
+      "addr": "[2401:b140:1::92:204]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792212435
+    },
+    {
+      "addr": "zdh7vrzykdv7474yioe5jiv3kgajky727t5phxsbt47lefjseo3ypaqd.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 29,
+      "last_seen": 1792205877
+    },
+    {
+      "addr": "208.68.4.50:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792205516
+    },
+    {
+      "addr": "[2a01:4f9:c014:a04b::1]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792199719
+    },
+    {
+      "addr": "6yzdo3m7wangpemsjeuty24d2g5pxmecewmmmcmxfqmggxkubgiqimqd.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 14,
+      "last_seen": 1792193204
+    },
+    {
+      "addr": "[2001:df6:7280::92:201]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792192472
+    },
+    {
+      "addr": "7z36qr6zyhxe4dvv6inp72qgaheyp27fvsvvtkjeqfhhdgqwbh3wkyid.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 14,
+      "last_seen": 1792190479
+    },
+    {
+      "addr": "103.99.171.201:48333",
+      "priority": 3,
+      "network": "ipv4",
+      "source_node_id": 14,
+      "last_seen": 1792187079
+    },
+    {
+      "addr": "yiolb6ahgjry66g3vt4dtlnybhdgy4udakakbjxuekj33ligd57mdlqd.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 14,
+      "last_seen": 1792183107
+    },
+    {
+      "addr": "bkip4awufiy5dlr25dnya47un3xfoiejpaudda6de7k3qj667zxvahid.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 14,
+      "last_seen": 1792181381
+    },
+    {
+      "addr": "53d3d2x7eqgyhlrvyffmmsdravj6bhrqr4xpghng6omnq2sg5uomwayd.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 14,
+      "last_seen": 1792180212
+    },
+    {
+      "addr": "6g6dwtby74ic2ggnzkbfqy7saslopho7or6z4uad737c2tq24fj3ltyd.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 14,
+      "last_seen": 1792179845
+    },
+    {
+      "addr": "2hy55g5uyk4w2e5sattzbmsbsf7uebilbqhzlzedfkkglys7xgdj3qyd.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 14,
+      "last_seen": 1792172411
+    },
+    {
+      "addr": "lte5c3bmdxzffvpdvcxxb6hjl7wqhx3byybpiklagnwie2loinxsoyqd.onion:48333",
+      "priority": 3,
+      "network": "onion",
+      "source_node_id": 14,
+      "last_seen": 1792171021
+    },
+    {
+      "addr": "[2401:b140:3::92:212]:48333",
+      "priority": 3,
+      "network": "ipv6",
+      "source_node_id": 14,
+      "last_seen": 1792170029
+    }
+  ]
+}
