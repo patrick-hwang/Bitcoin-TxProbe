@@ -197,6 +197,7 @@ def generate_block_propagation_snapshots(
     end_time: float,
     step_ms: float = 10.0,
     all_nodes: Sequence[int] | None = None,
+    stop_on_convergence: bool = False,
 ) -> list[BlockPropagationSnapshot]:
     """Slice continuous block propagation timeline into discrete BlockPropagationSnapshots."""
     if end_time < start_time:
@@ -219,6 +220,8 @@ def generate_block_propagation_snapshots(
             all_nodes=all_nodes,
         )
         snapshots.append(snap)
+        if stop_on_convergence and len(snap.known_nodes) == snap.total_nodes:
+            break
         idx += 1
 
     return snapshots
@@ -689,6 +692,13 @@ def main() -> None:
         help="Run side-by-side comparison between Ground Truth topology and TxProbe Inferred topology",
     )
     parser.add_argument(
+        "--use-inferred",
+        "--inferred-only",
+        action="store_true",
+        dest="use_inferred",
+        help="Run backward propagation inference using TxProbe Inferred topology instead of ground truth",
+    )
+    parser.add_argument(
         "-b",
         "--block",
         type=str,
@@ -800,7 +810,19 @@ def main() -> None:
                 print(f"\nSaved comparison evaluation results for {label} to: {save_path}")
 
     else:
-        adjacency = load_topology(args.topology)
+        if args.use_inferred:
+            if not args.inferred_topology.exists():
+                log.error("Inferred topology file not found: %s", args.inferred_topology)
+                sys.exit(1)
+            topology_path = args.inferred_topology
+            title_header = "PAST BLOCK PROPAGATION INFERENCE (TxProbe Inferred Topology)"
+            file_prefix = "eval_inferred"
+        else:
+            topology_path = args.topology
+            title_header = "PAST BLOCK PROPAGATION INFERENCE (Ground Truth Topology)"
+            file_prefix = "eval_inference"
+
+        adjacency = load_topology(topology_path)
         all_results: dict[str, dict[str, Any]] = {}
         for blk in target_blocks:
             results = evaluate_snapshot_data(data, adjacency, target_block=blk, step_index=args.step)
@@ -808,7 +830,7 @@ def main() -> None:
             all_results[label] = results
 
             print("\n" + "=" * 60)
-            print("PAST BLOCK PROPAGATION INFERENCE EVALUATION")
+            print(title_header)
             print("=" * 60)
             print(f"Target Block: {results['target_block_label']} ({results['target_block_hash'][:16]}...)")
             print(f"Total Nodes: {results['total_nodes']} | Steps Evaluated: {results['total_steps_evaluated']}")
@@ -834,7 +856,7 @@ def main() -> None:
                     save_path = args.output
                 else:
                     out_dir = args.output if (args.output.is_dir() or args.output.suffix == "") else args.output.parent
-                    save_path = out_dir / f"eval_inference_{label}.json"
+                    save_path = out_dir / f"{file_prefix}_{label}.json"
 
                 save_path.parent.mkdir(parents=True, exist_ok=True)
                 with open(save_path, "w", encoding="utf-8") as f:

@@ -78,6 +78,9 @@ def get_ports(node_id: int, base_p2p: int = BASE_P2P_PORT, base_rpc: int = BASE_
 def parse_node_id(node_val: Any, base_p2p: int = BASE_P2P_PORT) -> int:
     """Parse node ID from int, string int, or IP:Port format (e.g. '127.0.0.1:10002' -> 2)."""
     s = str(node_val).strip()
+    for prefix in ("bitcoin-", "bitcoin_", "node-", "node_"):
+        if s.lower().startswith(prefix):
+            s = s[len(prefix):]
     if ":" in s:
         s = s.split(":")[-1]
     nid = int(s)
@@ -112,13 +115,21 @@ def load_all_nodes(total_nodes: int = TOTAL_NODES, base_dir: Path = DEFAULT_REGT
     return {nid: get_node_config(nid, base_dir=base_dir) for nid in range(total_nodes)}
 
 
-def load_topology(topology_path: Path = DEFAULT_TOPOLOGY_PATH) -> dict[int, list[int]]:
+def load_topology(
+    topology_path: Path = DEFAULT_TOPOLOGY_PATH,
+    symmetrize: bool = True,
+) -> dict[int, list[int]]:
     """Load network topology adjacency list from JSON (supports Groundtruth and TxProbe Inferred formats).
 
     Supported formats:
     - Ground Truth topology: {"adjacency": {"2": [213, 268, ...]}}
     - TxProbe Inferred topology: {"adj_list": {"127.0.0.1:10002": ["127.0.0.1:10213", ...]}}
     - Reconciled topology: {"full_inferred_topology": {"adj_list": ...}} or {"evaluation_inferred_topology": {"adj_list": ...}}
+
+    Args:
+        topology_path: Path to topology JSON file.
+        symmetrize: If True, ensures all edges are bidirectional (u in adj[v] <=> v in adj[u]),
+            reflecting the bidirectional physical reality of Bitcoin P2P connections.
 
     Returns:
         dict[int, list[int]]: mapping of node_id -> list of neighbor node_ids.
@@ -142,6 +153,15 @@ def load_topology(topology_path: Path = DEFAULT_TOPOLOGY_PATH) -> dict[int, list
     for node_str, neighbors in raw_adj.items():
         u = parse_node_id(node_str)
         adj[u] = [parse_node_id(n) for n in neighbors]
+
+    if symmetrize:
+        sym_adj: dict[int, set[int]] = {u: set(nbrs) for u, nbrs in adj.items()}
+        for u, nbrs in adj.items():
+            for v in nbrs:
+                if v not in sym_adj:
+                    sym_adj[v] = set()
+                sym_adj[v].add(u)
+        adj = {u: sorted(list(nbrs)) for u, nbrs in sorted(sym_adj.items())}
 
     return adj
 

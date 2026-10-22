@@ -233,7 +233,8 @@ async def run_live_experiment(
     }
 
     start_t = timings.b1_published_at
-    end_t = timings.reorg_converged_at
+    step_sec = step_ms / 1000.0
+    end_t = timings.reorg_converged_at + step_sec
     snapshots = tracker.generate_sliced_snapshots(
         start_time=start_t,
         end_time=end_t,

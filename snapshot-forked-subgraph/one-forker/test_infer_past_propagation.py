@@ -383,3 +383,100 @@ def test_compare_topologies_evaluation() -> None:
     assert abs(diffs["accuracy"]) < 0.05
 
 
+def test_generate_block_propagation_snapshots_stop_on_convergence() -> None:
+    """Verify generate_block_propagation_snapshots stops immediately when all nodes know block."""
+    node_timings = {
+        2: {"block_received_at": {"mock_block": 10.010}},
+        3: {"block_received_at": {"mock_block": 10.020}},
+    }
+    all_snaps = generate_block_propagation_snapshots(
+        node_timings=node_timings,
+        target_block_hash="mock_block",
+        start_time=10.0,
+        end_time=10.100,
+        step_ms=10.0,
+        all_nodes=[2, 3],
+        stop_on_convergence=False,
+    )
+    assert len(all_snaps) == 11
+
+    stopped_snaps = generate_block_propagation_snapshots(
+        node_timings=node_timings,
+        target_block_hash="mock_block",
+        start_time=10.0,
+        end_time=10.100,
+        step_ms=10.0,
+        all_nodes=[2, 3],
+        stop_on_convergence=True,
+    )
+    assert len(stopped_snaps) == 3
+    assert len(stopped_snaps[-1].known_nodes) == 2
+
+
+@pytest.mark.asyncio
+async def test_simulated_experiment_integration(tmp_path: Path) -> None:
+    """Verify run_simulated_experiment executes and stops immediately upon convergence."""
+    from config import ExperimentConfig
+    from run_experiment import run_simulated_experiment
+
+    sim_out = tmp_path / "test_sim_fork.json"
+    cfg = ExperimentConfig(results_dir=tmp_path)
+
+    res_path = await run_simulated_experiment(config=cfg, step_ms=10.0, out_path=sim_out)
+    assert res_path.exists()
+
+    with open(res_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    assert "snapshots" in data
+    assert len(data["snapshots"]) > 0
+    last_snap = data["snapshots"][-1]
+    # Check that last snapshot stopped when B3 reached 100% convergence (all 1000 nodes)
+    b3_hash = data["fork_blocks"]["B3"]
+    assert last_snap["subgraph_counts"][b3_hash] == 1000
+
+
+@pytest.mark.asyncio
+async def test_end_to_end_simulation_and_export_comparison() -> None:
+    """Run fork simulation and generate/update backward inference comparison results."""
+    from config import ExperimentConfig, load_topology
+    from run_experiment import run_simulated_experiment
+
+    if not (DEFAULT_TOPOLOGY_PATH.exists() and DEFAULT_INFERRED_TOPOLOGY_PATH.exists()):
+        pytest.skip("Topology files not found for end-to-end test")
+
+    cfg = ExperimentConfig(results_dir=DEFAULT_RESULTS_DIR)
+    target_out = DEFAULT_RESULTS_DIR / "fork_subgraph_height_102.json"
+    res_path = await run_simulated_experiment(config=cfg, step_ms=10.0, out_path=target_out)
+    assert res_path.exists()
+
+    with open(res_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    gt_adj = load_topology(DEFAULT_TOPOLOGY_PATH, symmetrize=True)
+    inf_adj = load_topology(DEFAULT_INFERRED_TOPOLOGY_PATH, symmetrize=True)
+
+    for blk in ["B1", "B2", "B3"]:
+        comp = compare_topologies_evaluation(data, gt_adj, inf_adj, target_block=blk)
+        label = comp["target_block_label"]
+
+        # Export comparison JSON
+        comp_out = DEFAULT_RESULTS_DIR / f"eval_comparison_{label}.json"
+        with open(comp_out, "w", encoding="utf-8") as f:
+            json.dump(comp, f, indent=2)
+
+        # Export standard GT inference JSON
+        inf_out = DEFAULT_RESULTS_DIR / f"eval_inference_{label}.json"
+        with open(inf_out, "w", encoding="utf-8") as f:
+            json.dump(comp["groundtruth_topology"], f, indent=2)
+
+        assert comp_out.exists()
+        assert inf_out.exists()
+
+        if blk in ("B1", "B3"):
+            assert comp["groundtruth_topology"]["mean_metrics"]["accuracy"] > 0.95
+            assert comp["inferred_topology"]["mean_metrics"]["accuracy"] > 0.95
+
+
+
+

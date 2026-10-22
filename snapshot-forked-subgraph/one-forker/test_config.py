@@ -137,17 +137,24 @@ def test_parse_node_id() -> None:
     assert parse_node_id("127.0.0.1:10500") == 500
     assert parse_node_id("10002") == 2
     assert parse_node_id(10002) == 2
+    assert parse_node_id("bitcoin-2") == 2
+    assert parse_node_id("node-500") == 500
+    assert parse_node_id("node_7") == 7
 
 
 def test_load_inferred_topology() -> None:
-    """Verify loading TxProbe full_inferred_topology.json format."""
+    """Verify loading TxProbe full_inferred_topology.json format and symmetrization."""
     from config import DEFAULT_INFERRED_TOPOLOGY_PATH, load_topology
 
     if DEFAULT_INFERRED_TOPOLOGY_PATH.exists():
-        adj = load_topology(DEFAULT_INFERRED_TOPOLOGY_PATH)
+        adj = load_topology(DEFAULT_INFERRED_TOPOLOGY_PATH, symmetrize=True)
         assert len(adj) == 1000
         assert 2 in adj
         assert 1001 in adj
         # Check sample edges
         assert len(adj[2]) > 0
         assert all(isinstance(neighbor, int) for neighbor in adj[2])
+        # Check symmetry: for every u in adj, v in adj[u] implies u in adj[v]
+        for u in [2, 10, 50, 100]:
+            for v in adj[u]:
+                assert u in adj[v]

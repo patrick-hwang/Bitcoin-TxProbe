@@ -25,9 +25,9 @@ for p in (TXPROBE_DIR, PROJECT_ROOT):
 from txprobe.rpc.client import AsyncBitcoinRpc
 
 try:
-    from .config import DEFAULT_RESULTS_DIR, ExperimentConfig, compute_bfs_distances, load_topology
+    from .config import DEFAULT_RESULTS_DIR, ExperimentConfig, compute_bfs_distances, load_topology, parse_node_id
 except ImportError:
-    from config import DEFAULT_RESULTS_DIR, ExperimentConfig, compute_bfs_distances, load_topology
+    from config import DEFAULT_RESULTS_DIR, ExperimentConfig, compute_bfs_distances, load_topology, parse_node_id
 
 log = logging.getLogger("snapshot_fork.prober")
 
@@ -103,8 +103,8 @@ class SubgraphTracker:
         self.b2_hash = fork_block_hashes.get("B2", "")
         self.b3_hash = fork_block_hashes.get("B3", "")
 
-        self.target_node_ids = target_node_ids or list(range(2, 1002))
-        self.hop_distances = hop_distances or {}
+        self.target_node_ids = [parse_node_id(nid) for nid in (target_node_ids or list(range(2, 1002)))]
+        self.hop_distances = {parse_node_id(nid): d for nid, d in (hop_distances or {}).items()}
 
         # Matrix: node_id -> NodeTimingInfo
         self.timings: dict[int, NodeTimingInfo] = {
@@ -120,19 +120,20 @@ class SubgraphTracker:
 
     def record_event(
         self,
-        node_id: int,
+        node_id: int | str,
         block_hash: str,
         timestamp: float | None = None,
         probe_id: int = 0,
         message_type: str = "inv",
     ) -> BlockArrivalEvent:
         """Record a block arrival observation from a target node."""
+        nid = parse_node_id(node_id)
         if timestamp is None:
             timestamp = time.time()
 
         event = BlockArrivalEvent(
             timestamp=timestamp,
-            node_id=node_id,
+            node_id=nid,
             block_hash=block_hash,
             probe_id=probe_id,
             message_type=message_type,
@@ -140,14 +141,14 @@ class SubgraphTracker:
         self.event_log.append(event)
 
         # Update node matrix if first time seeing this block on this node
-        if node_id in self.timings:
-            node_timing = self.timings[node_id]
+        if nid in self.timings:
+            node_timing = self.timings[nid]
             if block_hash not in node_timing.block_received_at:
                 node_timing.block_received_at[block_hash] = timestamp
 
         return event
 
-    def get_node_active_tip(self, node_id: int, t: float) -> str:
+    def get_node_active_tip(self, node_id: int | str, t: float) -> str:
         """Determine which block node_id considers active at continuous timestamp t.
 
         Consensus rules applied:
@@ -158,7 +159,8 @@ class SubgraphTracker:
         4. Else if only B2 has arrived <= t, active tip is B2.
         5. If neither has arrived <= t, active tip is parent_hash.
         """
-        node_timing = self.timings.get(node_id)
+        nid = parse_node_id(node_id)
+        node_timing = self.timings.get(nid)
         if not node_timing:
             return self.parent_hash
 
@@ -220,7 +222,8 @@ class SubgraphTracker:
     def get_convergence_time(self, block_hash: str) -> float | None:
         """Return the timestamp when 100% of target nodes received block_hash, or None if not fully converged."""
         rec_times: list[float] = []
-        for nid in self.target_node_ids:
+        for raw_nid in self.target_node_ids:
+            nid = parse_node_id(raw_nid)
             node_timing = self.timings.get(nid)
             if not node_timing:
                 return None

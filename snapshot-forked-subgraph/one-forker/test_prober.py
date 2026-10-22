@@ -236,3 +236,22 @@ def test_sliced_snapshots_stops_on_convergence() -> None:
     assert stopped_snaps[-1].snapshot_index == 2
     assert stopped_snaps[-1].subgraph_counts["b1_mock"] == 2
 
+
+def test_record_event_string_node_ids() -> None:
+    """Verify SubgraphTracker correctly normalizes string, IP:Port, and prefix node IDs."""
+    tracker = SubgraphTracker(
+        height=100,
+        parent_hash="parent_mock",
+        fork_block_hashes={"B1": "b1_mock"},
+        target_node_ids=[2, 3],
+    )
+
+    tracker.record_event("127.0.0.1:10002", "b1_mock", timestamp=10.0)
+    tracker.record_event("bitcoin-3", "b1_mock", timestamp=10.5)
+
+    assert tracker.timings[2].block_received_at["b1_mock"] == 10.0
+    assert tracker.timings[3].block_received_at["b1_mock"] == 10.5
+    assert tracker.get_node_active_tip("127.0.0.1:10002", 10.1) == "b1_mock"
+    assert tracker.get_convergence_time("b1_mock") == 10.5
+
+
