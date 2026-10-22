@@ -217,18 +217,38 @@ class SubgraphTracker:
             subgraph_counts=counts,
         )
 
+    def get_convergence_time(self, block_hash: str) -> float | None:
+        """Return the timestamp when 100% of target nodes received block_hash, or None if not fully converged."""
+        rec_times: list[float] = []
+        for nid in self.target_node_ids:
+            node_timing = self.timings.get(nid)
+            if not node_timing:
+                return None
+            t = node_timing.block_received_at.get(block_hash)
+            if t is None:
+                return None
+            rec_times.append(t)
+        return max(rec_times) if rec_times else None
+
     def generate_sliced_snapshots(
         self,
         start_time: float,
         end_time: float,
         step_ms: float = 10.0,
+        stop_on_convergence_hash: str | None = None,
     ) -> list[SubgraphSnapshot]:
-        """Slice the continuous timeline into discrete snapshots with step_ms intervals."""
+        """Slice the continuous timeline into discrete snapshots with step_ms intervals.
+
+        If stop_on_convergence_hash is provided, snapshot generation stops immediately
+        after recording the first snapshot in which 100% of target nodes have converged
+        on that block, preventing redundant identical trailing snapshots.
+        """
         if end_time < start_time:
             raise ValueError(f"end_time ({end_time}) cannot be earlier than start_time ({start_time})")
 
         step_sec = step_ms / 1000.0
         snapshots: list[SubgraphSnapshot] = []
+        total_targets = len(self.target_node_ids)
 
         idx = 0
         while True:
@@ -237,6 +257,15 @@ class SubgraphTracker:
                 break
             snap = self.get_subgraphs_at(curr_t, snapshot_index=idx, rel_origin_t=start_time)
             snapshots.append(snap)
+
+            # Check if 100% of target nodes have adopted stop_on_convergence_hash
+            if stop_on_convergence_hash and snap.subgraph_counts.get(stop_on_convergence_hash, 0) == total_targets:
+                log.info(
+                    "100%% convergence reached on %s at snapshot index %d (%.1f ms). Stopping snapshot generation.",
+                    stop_on_convergence_hash[:16], idx, snap.rel_time_ms
+                )
+                break
+
             idx += 1
 
         return snapshots

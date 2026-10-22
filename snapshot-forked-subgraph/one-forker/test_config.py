@@ -125,3 +125,29 @@ def test_experiment_config_initialization() -> None:
 
     custom_cfg = ExperimentConfig(funding_target_sats=50_000)
     assert custom_cfg.funding_target_sats == 50_000
+
+
+def test_parse_node_id() -> None:
+    """Verify parse_node_id correctly converts various ID formats."""
+    from config import parse_node_id
+
+    assert parse_node_id(2) == 2
+    assert parse_node_id("2") == 2
+    assert parse_node_id("127.0.0.1:10002") == 2
+    assert parse_node_id("127.0.0.1:10500") == 500
+    assert parse_node_id("10002") == 2
+    assert parse_node_id(10002) == 2
+
+
+def test_load_inferred_topology() -> None:
+    """Verify loading TxProbe full_inferred_topology.json format."""
+    from config import DEFAULT_INFERRED_TOPOLOGY_PATH, load_topology
+
+    if DEFAULT_INFERRED_TOPOLOGY_PATH.exists():
+        adj = load_topology(DEFAULT_INFERRED_TOPOLOGY_PATH)
+        assert len(adj) == 1000
+        assert 2 in adj
+        assert 1001 in adj
+        # Check sample edges
+        assert len(adj[2]) > 0
+        assert all(isinstance(neighbor, int) for neighbor in adj[2])

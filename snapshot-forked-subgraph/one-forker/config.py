@@ -16,8 +16,10 @@ from typing import Any
 log = logging.getLogger("snapshot_fork.config")
 
 # Base filesystem paths
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DEFAULT_REGTEST_DIR = Path("/mnt/ssd/hdhphat-mindfullab/regtest-node-data")
 DEFAULT_TOPOLOGY_PATH = DEFAULT_REGTEST_DIR / "groundtruth_topology.json"
+DEFAULT_INFERRED_TOPOLOGY_PATH = PROJECT_ROOT / "results-regtest" / "run_2026-10-12_22-12-42" / "full_inferred_topology.json"
 DEFAULT_RESULTS_DIR = Path(__file__).resolve().parent / "results"
 
 # Default network configuration
@@ -73,6 +75,17 @@ def get_ports(node_id: int, base_p2p: int = BASE_P2P_PORT, base_rpc: int = BASE_
     return base_p2p + node_id, base_rpc + node_id
 
 
+def parse_node_id(node_val: Any, base_p2p: int = BASE_P2P_PORT) -> int:
+    """Parse node ID from int, string int, or IP:Port format (e.g. '127.0.0.1:10002' -> 2)."""
+    s = str(node_val).strip()
+    if ":" in s:
+        s = s.split(":")[-1]
+    nid = int(s)
+    if nid >= base_p2p:
+        return nid - base_p2p
+    return nid
+
+
 def get_node_config(node_id: int, base_dir: Path = DEFAULT_REGTEST_DIR) -> NodeConfig:
     """Build NodeConfig dataclass for a specific node ID."""
     p2p, rpc = get_ports(node_id)
@@ -100,7 +113,12 @@ def load_all_nodes(total_nodes: int = TOTAL_NODES, base_dir: Path = DEFAULT_REGT
 
 
 def load_topology(topology_path: Path = DEFAULT_TOPOLOGY_PATH) -> dict[int, list[int]]:
-    """Load groundtruth topology adjacency list from JSON.
+    """Load network topology adjacency list from JSON (supports Groundtruth and TxProbe Inferred formats).
+
+    Supported formats:
+    - Ground Truth topology: {"adjacency": {"2": [213, 268, ...]}}
+    - TxProbe Inferred topology: {"adj_list": {"127.0.0.1:10002": ["127.0.0.1:10213", ...]}}
+    - Reconciled topology: {"full_inferred_topology": {"adj_list": ...}} or {"evaluation_inferred_topology": {"adj_list": ...}}
 
     Returns:
         dict[int, list[int]]: mapping of node_id -> list of neighbor node_ids.
@@ -111,10 +129,19 @@ def load_topology(topology_path: Path = DEFAULT_TOPOLOGY_PATH) -> dict[int, list
     with open(topology_path, "r", encoding="utf-8") as f:
         data = json.load(f)
 
-    raw_adj = data.get("adjacency", {})
+    raw_adj = (
+        data.get("adjacency")
+        or data.get("adj_list")
+        or data.get("full_inferred_topology", {}).get("adj_list")
+        or data.get("evaluation_inferred_topology", {}).get("adj_list")
+        or data.get("reconciled_groundtruth", {}).get("adj_list")
+        or {}
+    )
+
     adj: dict[int, list[int]] = {}
     for node_str, neighbors in raw_adj.items():
-        adj[int(node_str)] = [int(n) for n in neighbors]
+        u = parse_node_id(node_str)
+        adj[u] = [parse_node_id(n) for n in neighbors]
 
     return adj
 

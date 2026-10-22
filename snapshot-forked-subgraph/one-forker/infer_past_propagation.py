@@ -27,9 +27,9 @@ for p in (CURRENT_DIR, TXPROBE_DIR, PROJECT_ROOT):
         sys.path.insert(0, str(p))
 
 try:
-    from config import DEFAULT_RESULTS_DIR, DEFAULT_TOPOLOGY_PATH, load_topology
+    from config import DEFAULT_INFERRED_TOPOLOGY_PATH, DEFAULT_RESULTS_DIR, DEFAULT_TOPOLOGY_PATH, load_topology
 except ImportError:
-    from .config import DEFAULT_RESULTS_DIR, DEFAULT_TOPOLOGY_PATH, load_topology
+    from .config import DEFAULT_INFERRED_TOPOLOGY_PATH, DEFAULT_RESULTS_DIR, DEFAULT_TOPOLOGY_PATH, load_topology
 
 log = logging.getLogger("snapshot_fork.infer_past")
 
@@ -611,6 +611,54 @@ def evaluate_snapshot_data(
     }
 
 
+def compare_topologies_evaluation(
+    data: dict[str, Any],
+    gt_adjacency: dict[int, list[int]],
+    inferred_adjacency: dict[int, list[int]],
+    target_block: str = "B1",
+    step_index: int | None = None,
+    use_timings_groundtruth: bool = True,
+) -> dict[str, Any]:
+    """Execute backward propagation inference across both Ground Truth and Inferred topologies and compare."""
+    res_gt = evaluate_snapshot_data(
+        data=data,
+        adjacency=gt_adjacency,
+        target_block=target_block,
+        step_index=step_index,
+        use_timings_groundtruth=use_timings_groundtruth,
+    )
+    res_inf = evaluate_snapshot_data(
+        data=data,
+        adjacency=inferred_adjacency,
+        target_block=target_block,
+        step_index=step_index,
+        use_timings_groundtruth=use_timings_groundtruth,
+    )
+
+    mean_gt = res_gt["mean_metrics"]
+    mean_inf = res_inf["mean_metrics"]
+
+    diff_metrics = {
+        k: round(mean_inf[k] - mean_gt[k], 4)
+        for k in mean_gt
+    }
+
+    return {
+        "target_block_label": res_gt["target_block_label"],
+        "target_block_hash": res_gt["target_block_hash"],
+        "delta_ms": res_gt["delta_ms"],
+        "total_nodes": res_gt["total_nodes"],
+        "total_steps_evaluated": res_gt["total_steps_evaluated"],
+        "groundtruth_topology": res_gt,
+        "inferred_topology": res_inf,
+        "comparison": {
+            "mean_gt_metrics": mean_gt,
+            "mean_inferred_metrics": mean_inf,
+            "metric_differences_inf_minus_gt": diff_metrics,
+        },
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Infer past block propagation snapshot using backward constraint and evaluate against ground truth."
@@ -627,7 +675,18 @@ def main() -> None:
         "--topology",
         type=Path,
         default=DEFAULT_TOPOLOGY_PATH,
-        help="Path to groundtruth_topology.json",
+        help="Path to ground truth topology JSON (default: groundtruth_topology.json)",
+    )
+    parser.add_argument(
+        "--inferred-topology",
+        type=Path,
+        default=DEFAULT_INFERRED_TOPOLOGY_PATH,
+        help="Path to TxProbe inferred topology JSON (default: full_inferred_topology.json)",
+    )
+    parser.add_argument(
+        "--compare",
+        action="store_true",
+        help="Run side-by-side comparison between Ground Truth topology and TxProbe Inferred topology",
     )
     parser.add_argument(
         "-b",
@@ -670,8 +729,6 @@ def main() -> None:
     with open(args.input_file, "r", encoding="utf-8") as f:
         data = json.load(f)
 
-    adjacency = load_topology(args.topology)
-
     # Determine which blocks to evaluate
     fork_blocks = data.get("fork_blocks", {})
     if args.block.strip().lower() == "all":
@@ -681,45 +738,108 @@ def main() -> None:
     else:
         target_blocks = [args.block.strip()]
 
-    all_results: dict[str, dict[str, Any]] = {}
-    for blk in target_blocks:
-        results = evaluate_snapshot_data(data, adjacency, target_block=blk, step_index=args.step)
-        label = results["target_block_label"]
-        all_results[label] = results
+    if args.compare:
+        if not args.inferred_topology.exists():
+            log.error("Inferred topology file not found: %s", args.inferred_topology)
+            sys.exit(1)
 
-        print("\n" + "=" * 60)
-        print("PAST BLOCK PROPAGATION INFERENCE EVALUATION")
-        print("=" * 60)
-        print(f"Target Block: {results['target_block_label']} ({results['target_block_hash'][:16]}...)")
-        print(f"Total Nodes: {results['total_nodes']} | Steps Evaluated: {results['total_steps_evaluated']}")
-        print("-" * 60)
-        print("Mean Metrics across evaluated steps:")
-        for k, v in results["mean_metrics"].items():
-            print(f"  {k.capitalize():12s}: {v:.4f}")
-        print("=" * 60)
+        gt_adjacency = load_topology(args.topology)
+        inf_adjacency = load_topology(args.inferred_topology)
 
-        if args.verbose or args.step is not None:
-            print("\nStep-by-step breakdown:")
-            print(f"{'Step':>5} | {'RelTime(ms)':>11} | {'RealKnown':>9} | {'InfKnown':>8} | {'TP':>5} | {'FP':>5} | {'TN':>5} | {'FN':>5} | {'Acc':>6} | {'Prec':>6} | {'Rec':>6} | {'F1':>6}")
-            print("-" * 105)
-            for m in results["step_metrics"]:
-                print(
-                    f"{m['snapshot_index']:5d} | {m['rel_time_ms']:11.1f} | {m['real_known_count']:9d} | "
-                    f"{m['inferred_known_count']:8d} | {m['tp']:5d} | {m['fp']:5d} | {m['tn']:5d} | {m['fn']:5d} | "
-                    f"{m['accuracy']:6.4f} | {m['precision']:6.4f} | {m['recall']:6.4f} | {m['f1_score']:6.4f}"
-                )
+        all_comparisons: dict[str, dict[str, Any]] = {}
+        for blk in target_blocks:
+            comp = compare_topologies_evaluation(
+                data=data,
+                gt_adjacency=gt_adjacency,
+                inferred_adjacency=inf_adjacency,
+                target_block=blk,
+                step_index=args.step,
+            )
+            label = comp["target_block_label"]
+            all_comparisons[label] = comp
+            mean_gt = comp["comparison"]["mean_gt_metrics"]
+            mean_inf = comp["comparison"]["mean_inferred_metrics"]
+            diffs = comp["comparison"]["metric_differences_inf_minus_gt"]
 
-        if args.output:
-            if len(target_blocks) == 1 and not (args.output.is_dir() or args.output.suffix == ""):
-                save_path = args.output
-            else:
-                out_dir = args.output if (args.output.is_dir() or args.output.suffix == "") else args.output.parent
-                save_path = out_dir / f"eval_inference_{label}.json"
+            print("\n" + "=" * 80)
+            print(f"TOPOLOGY COMPARISON: Ground Truth vs. TxProbe Inferred ({label})")
+            print("=" * 80)
+            print(f"Target Block: {label} ({comp['target_block_hash'][:16]}...)")
+            print(f"Total Nodes: {comp['total_nodes']} | Steps Evaluated: {comp['total_steps_evaluated']}")
+            print("-" * 80)
+            print(f"{'Metric':<14} | {'Ground Truth':<15} | {'TxProbe Inferred':<18} | {'Difference':<12}")
+            print("-" * 80)
+            for m_key in ["accuracy", "precision", "recall", "f1_score"]:
+                v_gt = mean_gt[m_key]
+                v_inf = mean_inf[m_key]
+                v_diff = diffs[m_key]
+                print(f"{m_key.capitalize():<14} | {v_gt:<15.4f} | {v_inf:<18.4f} | {v_diff:+12.4f}")
+            print("=" * 80)
 
-            save_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(save_path, "w", encoding="utf-8") as f:
-                json.dump(results, f, indent=2)
-            print(f"\nSaved evaluation results for {label} to: {save_path}")
+            if args.verbose or args.step is not None:
+                print("\nTxProbe Inferred Step-by-step breakdown:")
+                print(f"{'Step':>5} | {'RelTime(ms)':>11} | {'RealKnown':>9} | {'InfKnown':>8} | {'TP':>5} | {'FP':>5} | {'TN':>5} | {'FN':>5} | {'Acc':>6} | {'Prec':>6} | {'Rec':>6} | {'F1':>6}")
+                print("-" * 105)
+                for m in comp["inferred_topology"]["step_metrics"]:
+                    print(
+                        f"{m['snapshot_index']:5d} | {m['rel_time_ms']:11.1f} | {m['real_known_count']:9d} | "
+                        f"{m['inferred_known_count']:8d} | {m['tp']:5d} | {m['fp']:5d} | {m['tn']:5d} | {m['fn']:5d} | "
+                        f"{m['accuracy']:6.4f} | {m['precision']:6.4f} | {m['recall']:6.4f} | {m['f1_score']:6.4f}"
+                    )
+
+            if args.output:
+                if len(target_blocks) == 1 and not (args.output.is_dir() or args.output.suffix == ""):
+                    save_path = args.output
+                else:
+                    out_dir = args.output if (args.output.is_dir() or args.output.suffix == "") else args.output.parent
+                    save_path = out_dir / f"eval_comparison_{label}.json"
+
+                save_path.parent.mkdir(parents=True, exist_ok=True)
+                with open(save_path, "w", encoding="utf-8") as f:
+                    json.dump(comp, f, indent=2)
+                print(f"\nSaved comparison evaluation results for {label} to: {save_path}")
+
+    else:
+        adjacency = load_topology(args.topology)
+        all_results: dict[str, dict[str, Any]] = {}
+        for blk in target_blocks:
+            results = evaluate_snapshot_data(data, adjacency, target_block=blk, step_index=args.step)
+            label = results["target_block_label"]
+            all_results[label] = results
+
+            print("\n" + "=" * 60)
+            print("PAST BLOCK PROPAGATION INFERENCE EVALUATION")
+            print("=" * 60)
+            print(f"Target Block: {results['target_block_label']} ({results['target_block_hash'][:16]}...)")
+            print(f"Total Nodes: {results['total_nodes']} | Steps Evaluated: {results['total_steps_evaluated']}")
+            print("-" * 60)
+            print("Mean Metrics across evaluated steps:")
+            for k, v in results["mean_metrics"].items():
+                print(f"  {k.capitalize():12s}: {v:.4f}")
+            print("=" * 60)
+
+            if args.verbose or args.step is not None:
+                print("\nStep-by-step breakdown:")
+                print(f"{'Step':>5} | {'RelTime(ms)':>11} | {'RealKnown':>9} | {'InfKnown':>8} | {'TP':>5} | {'FP':>5} | {'TN':>5} | {'FN':>5} | {'Acc':>6} | {'Prec':>6} | {'Rec':>6} | {'F1':>6}")
+                print("-" * 105)
+                for m in results["step_metrics"]:
+                    print(
+                        f"{m['snapshot_index']:5d} | {m['rel_time_ms']:11.1f} | {m['real_known_count']:9d} | "
+                        f"{m['inferred_known_count']:8d} | {m['tp']:5d} | {m['fp']:5d} | {m['tn']:5d} | {m['fn']:5d} | "
+                        f"{m['accuracy']:6.4f} | {m['precision']:6.4f} | {m['recall']:6.4f} | {m['f1_score']:6.4f}"
+                    )
+
+            if args.output:
+                if len(target_blocks) == 1 and not (args.output.is_dir() or args.output.suffix == ""):
+                    save_path = args.output
+                else:
+                    out_dir = args.output if (args.output.is_dir() or args.output.suffix == "") else args.output.parent
+                    save_path = out_dir / f"eval_inference_{label}.json"
+
+                save_path.parent.mkdir(parents=True, exist_ok=True)
+                with open(save_path, "w", encoding="utf-8") as f:
+                    json.dump(results, f, indent=2)
+                print(f"\nSaved evaluation results for {label} to: {save_path}")
 
 
 if __name__ == "__main__":

@@ -118,8 +118,10 @@ async def run_simulated_experiment(
         arr_t = t0 + (d * 0.010) + ((nid % 5) * 0.001)
         tracker.record_event(nid, b1.block_hash, timestamp=arr_t, probe_id=(nid % 2))
 
-    # Forker publishes B2 + B3 after B1 converges
-    t_reorg = t0 + 0.100
+    b1_conv_t = tracker.get_convergence_time(b1.block_hash) or (t0 + 0.060)
+
+    # Forker publishes B2 + B3 immediately upon B1 convergence
+    t_reorg = b1_conv_t + 0.001
     tracker.record_event(2, b2.block_hash, timestamp=t_reorg, probe_id=0, message_type="publish")
     tracker.record_event(2, b3.block_hash, timestamp=t_reorg + 0.001, probe_id=0, message_type="publish")
 
@@ -130,11 +132,19 @@ async def run_simulated_experiment(
         arr_t = t_reorg + 0.001 + (d * 0.012) + ((nid % 4) * 0.001)
         tracker.record_event(nid, b3.block_hash, timestamp=arr_t, probe_id=(nid % 2))
 
-    t_final = t_reorg + 0.150
+    # Stop condition: Experiment stops immediately when the target block(s) / reorg have fully converged across 100% of nodes
+    b3_conv_t = tracker.get_convergence_time(b3.block_hash) or (t_reorg + 0.080)
+    step_sec = step_ms / 1000.0
+    t_final = b3_conv_t + step_sec
 
-    # 4. Generate discrete snapshots
-    snapshots = tracker.generate_sliced_snapshots(start_time=t0, end_time=t_final, step_ms=step_ms)
-    log.info("Generated %d sliced snapshots (step=%.1fms)", len(snapshots), step_ms)
+    # 4. Generate discrete snapshots stopping immediately upon full convergence
+    snapshots = tracker.generate_sliced_snapshots(
+        start_time=t0,
+        end_time=t_final,
+        step_ms=step_ms,
+        stop_on_convergence_hash=b3.block_hash,
+    )
+    log.info("Generated %d sliced snapshots (step=%.1fms, 100%% converged at %.3fs)", len(snapshots), step_ms, b3_conv_t)
 
     # 5. Export to JSON
     if out_path is None:
@@ -144,6 +154,7 @@ async def run_simulated_experiment(
         "mode": "simulation",
         "timings": {
             "b1_published_at": t0,
+            "b1_converged_at": b1_conv_t,
             "reorg_published_at": t_reorg,
             "final_converged_at": t_final,
         },
@@ -222,8 +233,13 @@ async def run_live_experiment(
     }
 
     start_t = timings.b1_published_at
-    end_t = timings.reorg_converged_at + 0.100
-    snapshots = tracker.generate_sliced_snapshots(start_time=start_t, end_time=end_t, step_ms=step_ms)
+    end_t = timings.reorg_converged_at
+    snapshots = tracker.generate_sliced_snapshots(
+        start_time=start_t,
+        end_time=end_t,
+        step_ms=step_ms,
+        stop_on_convergence_hash=fork_pkg.b3.block_hash,
+    )
 
     tracker.export_to_json(out_path, fork_metadata=meta, snapshots=snapshots, step_ms=step_ms)
     log.info("Live experiment complete! Output saved to: %s", out_path)

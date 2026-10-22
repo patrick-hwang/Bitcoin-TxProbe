@@ -184,3 +184,55 @@ def test_create_subgraph_tracker_from_config() -> None:
     assert 1001 in tracker.timings
     assert tracker.timings[2].hop_distance_from_forker == 0
     assert tracker.timings[1001].hop_distance_from_forker > 0
+
+
+def test_get_convergence_time() -> None:
+    """Verify get_convergence_time returns None until all nodes receive block, then returns max time."""
+    tracker = SubgraphTracker(
+        height=100,
+        parent_hash="parent_mock",
+        fork_block_hashes={"B1": "b1_mock"},
+        target_node_ids=[2, 3, 4],
+    )
+
+    assert tracker.get_convergence_time("b1_mock") is None
+
+    tracker.record_event(2, "b1_mock", timestamp=10.0)
+    assert tracker.get_convergence_time("b1_mock") is None
+
+    tracker.record_event(3, "b1_mock", timestamp=10.05)
+    assert tracker.get_convergence_time("b1_mock") is None
+
+    tracker.record_event(4, "b1_mock", timestamp=10.08)
+    assert tracker.get_convergence_time("b1_mock") == 10.08
+
+
+def test_sliced_snapshots_stops_on_convergence() -> None:
+    """Verify snapshot generation stops immediately when 100% convergence is reached without redundant snapshots."""
+    tracker = SubgraphTracker(
+        height=100,
+        parent_hash="parent_mock",
+        fork_block_hashes={"B1": "b1_mock"},
+        target_node_ids=[2, 3],
+    )
+
+    t0 = 1000.0
+    tracker.record_event(2, "b1_mock", timestamp=t0 + 0.010)
+    tracker.record_event(3, "b1_mock", timestamp=t0 + 0.020)
+
+    # If end_time is 1000.100 (10 snapshots), but 100% convergence on b1_mock occurs at t0 + 0.020 (step 2):
+    # Without stop_on_convergence_hash: produces 11 snapshots (0..10)
+    all_snaps = tracker.generate_sliced_snapshots(t0, t0 + 0.100, step_ms=10.0)
+    assert len(all_snaps) == 11
+
+    # With stop_on_convergence_hash: stops at step 2 (index 2: 20ms) where all 2 nodes have b1_mock
+    stopped_snaps = tracker.generate_sliced_snapshots(
+        t0,
+        t0 + 0.100,
+        step_ms=10.0,
+        stop_on_convergence_hash="b1_mock",
+    )
+    assert len(stopped_snaps) == 3  # Indices 0 (0ms), 1 (10ms), 2 (20ms)
+    assert stopped_snaps[-1].snapshot_index == 2
+    assert stopped_snaps[-1].subgraph_counts["b1_mock"] == 2
+
