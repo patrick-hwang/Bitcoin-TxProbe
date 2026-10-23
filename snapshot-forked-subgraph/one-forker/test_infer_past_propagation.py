@@ -478,5 +478,86 @@ async def test_end_to_end_simulation_and_export_comparison() -> None:
             assert comp["inferred_topology"]["mean_metrics"]["accuracy"] > 0.95
 
 
+def test_delay_aware_edge_constraint_filters_slow_links() -> None:
+    """Verify that edges with delay d(u, v) > delta_ms do NOT constrain neighbors."""
+    adjacency = {
+        1: [2],
+        2: [1, 3],
+        3: [2],
+    }
+    all_nodes = [1, 2, 3]
+    known_t = {1, 2}  # Node 3 is unknown at time t
+    delta_ms = 10.0
+
+    # Case A: Unweighted (or edge delay <= delta_ms) -> node 3 constrains neighbor 2
+    inf_k_unweighted, inf_u_unweighted = infer_past_propagation(known_t, adjacency, all_nodes)
+    assert inf_k_unweighted == {1}
+    assert inf_u_unweighted == {2, 3}
+
+    # Case B: Delay-aware with edge (2, 3) = 15ms (> 10ms) -> node 3 does NOT constrain 2
+    edge_delays = {
+        (1, 2): 8.0,
+        (2, 3): 15.0,
+    }
+    inf_k_delay, inf_u_delay = infer_past_propagation(
+        current_known_nodes=known_t,
+        adjacency=adjacency,
+        all_nodes=all_nodes,
+        edge_delays=edge_delays,
+        delta_ms=delta_ms,
+    )
+    assert inf_k_delay == {1, 2}
+    assert inf_u_delay == {3}
+
+
+def test_dijkstra_earliest_arrival_time_lower_bound() -> None:
+    """Verify Dijkstra lower bound marks distant nodes as unknown before physical arrival."""
+    # Line graph: 1 - 2 - 3 - 4 with 10ms per link
+    adjacency = {
+        1: [2],
+        2: [1, 3],
+        3: [2, 4],
+        4: [3],
+    }
+    all_nodes = [1, 2, 3, 4]
+    edge_delays = {
+        (1, 2): 10.0,
+        (2, 3): 10.0,
+        (3, 4): 10.0,
+    }
+
+    # At target time tau = 15.0ms from source 1:
+    # dist(1, 1) = 0ms <= 15 -> can be known
+    # dist(1, 2) = 10ms <= 15 -> can be known
+    # dist(1, 3) = 20ms > 15 -> CANNOT be known
+    # dist(1, 4) = 30ms > 15 -> CANNOT be known
+    inf_k, inf_u = infer_past_propagation(
+        current_known_nodes=[1, 2, 3, 4],
+        adjacency=adjacency,
+        all_nodes=all_nodes,
+        edge_delays=edge_delays,
+        delta_ms=10.0,
+        source_node=1,
+        target_rel_time_ms=15.0,
+    )
+    assert inf_k == {1, 2}
+    assert inf_u == {3, 4}
+
+
+def test_load_empirical_edge_delays_file() -> None:
+    """Verify that default empirical 20-round min delay file loads correctly."""
+    from config import DEFAULT_EDGE_DELAYS_PATH, load_edge_delays
+
+    if not DEFAULT_EDGE_DELAYS_PATH.exists():
+        pytest.skip(f"Edge delays file {DEFAULT_EDGE_DELAYS_PATH} not generated yet")
+
+    delays = load_edge_delays(DEFAULT_EDGE_DELAYS_PATH)
+    assert len(delays) >= 3900  # 4005 total edges in 1000-node topology
+    all_delays = list(delays.values())
+    assert min(all_delays) >= 7.0
+    assert max(all_delays) <= 15.0
+
+
+
 
 

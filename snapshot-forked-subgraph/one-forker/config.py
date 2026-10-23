@@ -21,6 +21,7 @@ DEFAULT_REGTEST_DIR = Path("/mnt/ssd/hdhphat-mindfullab/regtest-node-data")
 DEFAULT_TOPOLOGY_PATH = DEFAULT_REGTEST_DIR / "groundtruth_topology.json"
 DEFAULT_INFERRED_TOPOLOGY_PATH = PROJECT_ROOT / "results-regtest" / "run_2026-10-12_22-12-42" / "full_inferred_topology.json"
 DEFAULT_RESULTS_DIR = Path(__file__).resolve().parent / "results"
+DEFAULT_EDGE_DELAYS_PATH = DEFAULT_RESULTS_DIR / "edge_delays_min_20rounds.json"
 
 # Default network configuration
 BASE_P2P_PORT = 10000
@@ -164,6 +165,33 @@ def load_topology(
         adj = {u: sorted(list(nbrs)) for u, nbrs in sorted(sym_adj.items())}
 
     return adj
+
+
+def load_edge_delays(path: Path | None = None) -> dict[tuple[int, int], float]:
+    """Load empirical minimum edge delays d(u, v) from JSON file.
+
+    Returns:
+        dict[tuple[int, int], float]: mapping canonical edge (min(u, v), max(u, v)) -> delay in ms.
+    """
+    delays_path = Path(path) if path is not None else DEFAULT_EDGE_DELAYS_PATH
+    if not delays_path.exists():
+        raise FileNotFoundError(f"Edge delays file not found at: {delays_path}")
+
+    with open(delays_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    raw_delays = data.get("edge_delays", data)
+    edge_delays: dict[tuple[int, int], float] = {}
+    for edge_key, delay in raw_delays.items():
+        if "_" in str(edge_key):
+            parts = str(edge_key).split("_")
+            u, v = int(parts[0]), int(parts[1])
+            edge_delays[(min(u, v), max(u, v))] = float(delay)
+        elif isinstance(edge_key, (list, tuple)) and len(edge_key) == 2:
+            u, v = int(edge_key[0]), int(edge_key[1])
+            edge_delays[(min(u, v), max(u, v))] = float(delay)
+
+    return edge_delays
 
 
 def compute_bfs_distances(adj: dict[int, list[int]], source: int) -> dict[int, int]:

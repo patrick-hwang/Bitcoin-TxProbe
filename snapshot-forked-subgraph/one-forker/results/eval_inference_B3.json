@@ -4,17 +4,18 @@
   "delta_ms": 10.0,
   "total_nodes": 1000,
   "total_steps_evaluated": 12,
+  "is_delay_aware": true,
   "mean_metrics": {
-    "accuracy": 0.9655,
-    "precision": 0.8726,
+    "accuracy": 0.9646,
+    "precision": 0.8719,
     "recall": 0.7945,
-    "f1_score": 0.7883
+    "f1_score": 0.7878
   },
   "step_metrics": [
     {
       "snapshot_index": 0,
       "source_snapshot_index": 1,
-      "timestamp": 1792634138.426002,
+      "timestamp": 1792771211.763288,
       "rel_time_ms": 0.0,
       "tp": 0,
       "fp": 0,
@@ -31,7 +32,7 @@
     {
       "snapshot_index": 1,
       "source_snapshot_index": 2,
-      "timestamp": 1792634138.436002,
+      "timestamp": 1792771211.773288,
       "rel_time_ms": 10.0,
       "tp": 0,
       "fp": 0,
@@ -48,7 +49,7 @@
     {
       "snapshot_index": 2,
       "source_snapshot_index": 3,
-      "timestamp": 1792634138.446002,
+      "timestamp": 1792771211.783288,
       "rel_time_ms": 20.0,
       "tp": 0,
       "fp": 0,
@@ -65,7 +66,7 @@
     {
       "snapshot_index": 3,
       "source_snapshot_index": 4,
-      "timestamp": 1792634138.456002,
+      "timestamp": 1792771211.793288,
       "rel_time_ms": 30.0,
       "tp": 0,
       "fp": 0,
@@ -82,7 +83,7 @@
     {
       "snapshot_index": 4,
       "source_snapshot_index": 5,
-      "timestamp": 1792634138.466002,
+      "timestamp": 1792771211.803288,
       "rel_time_ms": 40.0,
       "tp": 0,
       "fp": 0,
@@ -99,7 +100,7 @@
     {
       "snapshot_index": 5,
       "source_snapshot_index": 6,
-      "timestamp": 1792634138.476001,
+      "timestamp": 1792771211.813288,
       "rel_time_ms": 50.0,
       "tp": 0,
       "fp": 0,
@@ -116,7 +117,7 @@
     {
       "snapshot_index": 6,
       "source_snapshot_index": 7,
-      "timestamp": 1792634138.486001,
+      "timestamp": 1792771211.823288,
       "rel_time_ms": 60.0,
       "tp": 0,
       "fp": 0,
@@ -133,7 +134,7 @@
     {
       "snapshot_index": 7,
       "source_snapshot_index": 8,
-      "timestamp": 1792634138.496001,
+      "timestamp": 1792771211.833288,
       "rel_time_ms": 70.0,
       "tp": 1,
       "fp": 0,
@@ -150,7 +151,7 @@
     {
       "snapshot_index": 8,
       "source_snapshot_index": 9,
-      "timestamp": 1792634138.506001,
+      "timestamp": 1792771211.843288,
       "rel_time_ms": 80.0,
       "tp": 9,
       "fp": 0,
@@ -167,7 +168,7 @@
     {
       "snapshot_index": 9,
       "source_snapshot_index": 10,
-      "timestamp": 1792634138.516001,
+      "timestamp": 1792771211.853288,
       "rel_time_ms": 90.0,
       "tp": 64,
       "fp": 0,
@@ -184,24 +185,24 @@
     {
       "snapshot_index": 10,
       "source_snapshot_index": 11,
-      "timestamp": 1792634138.526001,
+      "timestamp": 1792771211.863288,
       "rel_time_ms": 100.0,
       "tp": 370,
-      "fp": 350,
-      "tn": 280,
+      "fp": 361,
+      "tn": 269,
       "fn": 0,
-      "accuracy": 0.65,
-      "precision": 0.5139,
+      "accuracy": 0.639,
+      "precision": 0.5062,
       "recall": 1.0,
-      "f1_score": 0.6789,
+      "f1_score": 0.6721,
       "total_nodes": 1000,
       "real_known_count": 370,
-      "inferred_known_count": 720
+      "inferred_known_count": 731
     },
     {
       "snapshot_index": 11,
       "source_snapshot_index": 12,
-      "timestamp": 1792634138.536001,
+      "timestamp": 1792771211.873288,
       "rel_time_ms": 110.0,
       "tp": 957,
       "fp": 43,
@@ -220,7 +221,7 @@
     {
       "snapshot_index": 0,
       "rel_time_ms": 0.0,
-      "timestamp": 1792634138.426002,
+      "timestamp": 1792771211.763288,
       "target_block_hash": "1e4b000000000000000000000000000000000000000000000000000000000003",
       "known_nodes": [],
       "unknown_nodes": [
@@ -1234,7 +1235,7 @@
     {
       "snapshot_index": 1,
       "rel_time_ms": 10.0,
-      "timestamp": 1792634138.436002,
+      "timestamp": 1792771211.773288,
       "target_block_hash": "1e4b000000000000000000000000000000000000000000000000000000000003",
       "known_nodes": [],
       "unknown_nodes": [
@@ -2248,7 +2249,7 @@
     {
       "snapshot_index": 2,
       "rel_time_ms": 20.0,
-      "timestamp": 1792634138.446002,
+      "timestamp": 1792771211.783288,
       "target_block_hash": "1e4b000000000000000000000000000000000000000000000000000000000003",
       "known_nodes": [],
       "unknown_nodes": [
@@ -3262,7 +3263,7 @@
     {
       "snapshot_index": 3,
       "rel_time_ms": 30.0,
-      "timestamp": 1792634138.456002,
+      "timestamp": 1792771211.793288,
       "target_block_hash": "1e4b000000000000000000000000000000000000000000000000000000000003",
       "known_nodes": [],
       "unknown_nodes": [
@@ -4276,7 +4277,7 @@
     {
       "snapshot_index": 4,
       "rel_time_ms": 40.0,
-      "timestamp": 1792634138.466002,
+      "timestamp": 1792771211.803288,
       "target_block_hash": "1e4b000000000000000000000000000000000000000000000000000000000003",
       "known_nodes": [],
       "unknown_nodes": [
@@ -5290,7 +5291,7 @@
     {
       "snapshot_index": 5,
       "rel_time_ms": 50.0,
-      "timestamp": 1792634138.476001,
+      "timestamp": 1792771211.813288,
       "target_block_hash": "1e4b000000000000000000000000000000000000000000000000000000000003",
       "known_nodes": [],
       "unknown_nodes": [
@@ -6304,7 +6305,7 @@
     {
       "snapshot_index": 6,
       "rel_time_ms": 60.0,
-      "timestamp": 1792634138.486001,
+      "timestamp": 1792771211.823288,
       "target_block_hash": "1e4b000000000000000000000000000000000000000000000000000000000003",
       "known_nodes": [],
       "unknown_nodes": [
@@ -7318,7 +7319,7 @@
     {
       "snapshot_index": 7,
       "rel_time_ms": 70.0,
-      "timestamp": 1792634138.496001,
+      "timestamp": 1792771211.833288,
       "target_block_hash": "1e4b000000000000000000000000000000000000000000000000000000000003",
       "known_nodes": [
         2
@@ -8333,7 +8334,7 @@
     {
       "snapshot_index": 8,
       "rel_time_ms": 80.0,
-      "timestamp": 1792634138.506001,
+      "timestamp": 1792771211.843288,
       "target_block_hash": "1e4b000000000000000000000000000000000000000000000000000000000003",
       "known_nodes": [
         2,
@@ -9348,7 +9349,7 @@
     {
       "snapshot_index": 9,
       "rel_time_ms": 90.0,
-      "timestamp": 1792634138.516001,
+      "timestamp": 1792771211.853288,
       "target_block_hash": "1e4b000000000000000000000000000000000000000000000000000000000003",
       "known_nodes": [
         2,
@@ -10363,7 +10364,7 @@
     {
       "snapshot_index": 10,
       "rel_time_ms": 100.0,
-      "timestamp": 1792634138.526001,
+      "timestamp": 1792771211.863288,
       "target_block_hash": "1e4b000000000000000000000000000000000000000000000000000000000003",
       "known_nodes": [
         2,
@@ -10391,6 +10392,7 @@
         32,
         33,
         34,
+        35,
         36,
         37,
         38,
@@ -10439,6 +10441,7 @@
         94,
         95,
         96,
+        97,
         99,
         100,
         103,
@@ -10457,6 +10460,7 @@
         124,
         125,
         127,
+        128,
         129,
         130,
         132,
@@ -10533,6 +10537,7 @@
         223,
         224,
         225,
+        226,
         227,
         228,
         231,
@@ -10706,6 +10711,7 @@
         449,
         451,
         453,
+        455,
         457,
         458,
         459,
@@ -10738,7 +10744,9 @@
         500,
         501,
         502,
+        503,
         506,
+        507,
         508,
         510,
         511,
@@ -10934,8 +10942,10 @@
         787,
         788,
         789,
+        791,
         794,
         795,
+        796,
         797,
         800,
         801,
@@ -10952,6 +10962,7 @@
         818,
         820,
         821,
+        822,
         823,
         824,
         825,
@@ -10976,6 +10987,7 @@
         848,
         849,
         850,
+        851,
         852,
         853,
         854,
@@ -11096,7 +11108,6 @@
         26,
         27,
         30,
-        35,
         39,
         46,
         55,
@@ -11110,7 +11121,6 @@
         85,
         88,
         89,
-        97,
         98,
         101,
         102,
@@ -11123,7 +11133,6 @@
         119,
         123,
         126,
-        128,
         131,
         136,
         138,
@@ -11145,7 +11154,6 @@
         210,
         211,
         219,
-        226,
         229,
         230,
         232,
@@ -11201,7 +11209,6 @@
         450,
         452,
         454,
-        455,
         456,
         464,
         467,
@@ -11217,10 +11224,8 @@
         489,
         491,
         499,
-        503,
         504,
         505,
-        507,
         509,
         513,
         515,
@@ -11309,10 +11314,8 @@
         781,
         786,
         790,
-        791,
         792,
         793,
-        796,
         798,
         799,
         802,
@@ -11322,12 +11325,10 @@
         816,
         817,
         819,
-        822,
         829,
         830,
         838,
         843,
-        851,
         855,
         856,
         864,
@@ -11369,8 +11370,8 @@
         998,
         1000
       ],
-      "known_count": 720,
-      "unknown_count": 280,
+      "known_count": 731,
+      "unknown_count": 269,
       "total_nodes": 1000,
       "is_inferred": true,
       "source_snapshot_index": 11
@@ -11378,7 +11379,7 @@
     {
       "snapshot_index": 11,
       "rel_time_ms": 110.0,
-      "timestamp": 1792634138.536001,
+      "timestamp": 1792771211.873288,
       "target_block_hash": "1e4b000000000000000000000000000000000000000000000000000000000003",
       "known_nodes": [
         2,

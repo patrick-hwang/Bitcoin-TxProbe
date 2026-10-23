@@ -13,9 +13,12 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import asdict, dataclass
+import heapq
 import json
 import logging
 from pathlib import Path
+import random
+import statistics
 import sys
 from typing import Any, Sequence
 
@@ -27,9 +30,23 @@ for p in (CURRENT_DIR, TXPROBE_DIR, PROJECT_ROOT):
         sys.path.insert(0, str(p))
 
 try:
-    from config import DEFAULT_INFERRED_TOPOLOGY_PATH, DEFAULT_RESULTS_DIR, DEFAULT_TOPOLOGY_PATH, load_topology
+    from config import (
+        DEFAULT_EDGE_DELAYS_PATH,
+        DEFAULT_INFERRED_TOPOLOGY_PATH,
+        DEFAULT_RESULTS_DIR,
+        DEFAULT_TOPOLOGY_PATH,
+        load_edge_delays,
+        load_topology,
+    )
 except ImportError:
-    from .config import DEFAULT_INFERRED_TOPOLOGY_PATH, DEFAULT_RESULTS_DIR, DEFAULT_TOPOLOGY_PATH, load_topology
+    from .config import (
+        DEFAULT_EDGE_DELAYS_PATH,
+        DEFAULT_INFERRED_TOPOLOGY_PATH,
+        DEFAULT_RESULTS_DIR,
+        DEFAULT_TOPOLOGY_PATH,
+        load_edge_delays,
+        load_topology,
+    )
 
 log = logging.getLogger("snapshot_fork.infer_past")
 
@@ -271,21 +288,59 @@ def extract_known_nodes(
     return set()
 
 
+def compute_dijkstra_distances(
+    source: int,
+    adjacency: dict[int, list[int]],
+    edge_delays: dict[tuple[int, int], float] | None = None,
+    default_delay_ms: float = 8.5,
+) -> dict[int, float]:
+    """Compute shortest arrival distance (in ms) from source to all nodes using Dijkstra."""
+    distances: dict[int, float] = {node: float("inf") for node in adjacency}
+    if source not in distances:
+        distances[source] = float("inf")
+        return distances
+
+    distances[source] = 0.0
+    pq: list[tuple[float, int]] = [(0.0, source)]
+
+    while pq:
+        d, u = heapq.heappop(pq)
+        if d > distances[u]:
+            continue
+        for v in adjacency.get(u, []):
+            edge = (min(u, v), max(u, v))
+            w = edge_delays.get(edge, default_delay_ms) if edge_delays is not None else 10.0
+            if distances[u] + w < distances.get(v, float("inf")):
+                distances[v] = distances[u] + w
+                heapq.heappush(pq, (distances[v], v))
+
+    return distances
+
+
 def infer_past_propagation(
     current_known_nodes: Sequence[int] | set[int],
     adjacency: dict[int, list[int]],
     all_nodes: Sequence[int] | set[int] | None = None,
+    edge_delays: dict[tuple[int, int], float] | None = None,
+    delta_ms: float = 10.0,
+    source_node: int | None = None,
+    target_rel_time_ms: float | None = None,
+    default_edge_delay_ms: float = 8.5,
 ) -> tuple[set[int], set[int]]:
-    """Infer prior block propagation state at (t - delta) using the backward constraint rule.
+    """Infer prior block propagation state at (t - delta) using delay-aware backward constraint rule.
 
     Principle:
     If a node u does not know the target block at time t (u in U_t),
-    then at time (t - delta), neither u nor any connected neighbor v in N(u)
-    knew the target block.
+    then at time (t - delta):
+    1. u itself was unknown at (t - delta).
+    2. Any neighbor v in N(u) connected by an edge with delay d(u, v) <= delta
+       could not have known the block at (t - delta) (otherwise u would have received it by t).
+       If d(u, v) > delta, v is not constrained by u's state at t.
+    3. Dijkstra Lower Bound: Any node w whose shortest physical propagation path
+       from the source node exceeds target_rel_time_ms cannot have received the block yet.
 
-    Formally:
-    U_inferred(t - delta) = U_t U { v in N(u) for u in U_t }
-    K_inferred(t - delta) = V \\ U_inferred(t - delta) = { w in K_t | N[w] subseteq K_t }
+    If edge_delays is None, falls back to the unweighted discrete-hop backward rule:
+    U_inferred(t - delta) = U_t U { v in N(u) for u in U_t }.
 
     Returns:
         tuple[set[int], set[int]]: (inferred_known_nodes, inferred_unknown_nodes)
@@ -303,12 +358,36 @@ def infer_past_propagation(
     for k, vs in adjacency.items():
         adj_clean[int(k)] = [int(v) for v in vs]
 
-    # Propagate unknown backwards: all unknown nodes and their connected neighbors are unknown
+    # Propagate unknown backwards
     inferred_unknown: set[int] = set(unknown_t)
-    for u in unknown_t:
-        for v in adj_clean.get(u, []):
-            if v in nodes_universe:
-                inferred_unknown.add(v)
+    if edge_delays is not None:
+        for u in unknown_t:
+            for v in adj_clean.get(u, []):
+                if v in nodes_universe:
+                    edge = (min(u, v), max(u, v))
+                    delay = edge_delays.get(edge, default_edge_delay_ms)
+                    if delay <= delta_ms:
+                        inferred_unknown.add(v)
+    else:
+        for u in unknown_t:
+            for v in adj_clean.get(u, []):
+                if v in nodes_universe:
+                    inferred_unknown.add(v)
+
+    # Dijkstra Earliest Arrival Time lower bound
+    if source_node is not None and target_rel_time_ms is not None:
+        if target_rel_time_ms < 0:
+            inferred_unknown.update(nodes_universe)
+        elif target_rel_time_ms == 0:
+            # At t=0, only source_node can know the block
+            for w in nodes_universe:
+                if w != source_node:
+                    inferred_unknown.add(w)
+        else:
+            dists = compute_dijkstra_distances(source_node, adj_clean, edge_delays, default_edge_delay_ms)
+            for w in nodes_universe:
+                if dists.get(w, float("inf")) > target_rel_time_ms + 1e-4:
+                    inferred_unknown.add(w)
 
     inferred_known = nodes_universe - inferred_unknown
     return inferred_known, inferred_unknown
@@ -321,11 +400,12 @@ def infer_past_block_propagation_snapshot(
     delta_ms: float = 10.0,
     all_nodes: Sequence[int] | set[int] | None = None,
     node_timings: dict[str | int, Any] | None = None,
+    edge_delays: dict[tuple[int, int], float] | None = None,
+    source_node: int | None = None,
 ) -> BlockPropagationSnapshot:
     """Infer past BlockPropagationSnapshot at (t - delta) from current snapshot at time t."""
     all_nodes_set = set(all_nodes) if all_nodes is not None else set(adjacency.keys())
     known_curr = extract_known_nodes(current_snapshot, target_block_hash, node_timings=node_timings, all_nodes=all_nodes_set)
-    inferred_known, inferred_unknown = infer_past_propagation(known_curr, adjacency, all_nodes_set)
 
     curr_idx: int = getattr(
         current_snapshot,
@@ -346,6 +426,33 @@ def infer_past_block_propagation_snapshot(
     inferred_idx = max(0, curr_idx - 1)
     inferred_t = max(0.0, curr_t - (delta_ms / 1000.0))
     inferred_rel_ms = max(0.0, curr_rel_ms - delta_ms)
+
+    # Auto-detect source node if not explicitly provided
+    if source_node is None:
+        if node_timings is not None:
+            min_t = float("inf")
+            best_src = None
+            for nid, info in node_timings.items():
+                rec_map = getattr(info, "block_received_at", None) or (info.get("block_received_at") if isinstance(info, dict) else None)
+                if rec_map and target_block_hash in rec_map:
+                    t_val = rec_map[target_block_hash]
+                    if t_val < min_t:
+                        min_t = t_val
+                        best_src = int(nid)
+            if best_src is not None:
+                source_node = best_src
+        if source_node is None:
+            source_node = 2
+
+    inferred_known, inferred_unknown = infer_past_propagation(
+        current_known_nodes=known_curr,
+        adjacency=adjacency,
+        all_nodes=all_nodes_set,
+        edge_delays=edge_delays,
+        delta_ms=delta_ms,
+        source_node=source_node,
+        target_rel_time_ms=inferred_rel_ms,
+    )
 
     return BlockPropagationSnapshot(
         snapshot_index=inferred_idx,
@@ -506,6 +613,8 @@ def infer_multistep_past_propagation(
     delta_ms: float = 10.0,
     all_nodes: Sequence[int] | set[int] | None = None,
     node_timings: dict[str | int, Any] | None = None,
+    edge_delays: dict[tuple[int, int], float] | None = None,
+    source_node: int | None = None,
 ) -> list[BlockPropagationSnapshot]:
     """Recursively infer block propagation state backwards across multiple time steps without intermediate ground truth.
 
@@ -534,6 +643,8 @@ def infer_multistep_past_propagation(
             delta_ms=delta_ms,
             all_nodes=all_nodes_set,
             node_timings=use_timings,
+            edge_delays=edge_delays,
+            source_node=source_node,
         )
         results.append(inferred)
         current_snap = inferred
@@ -547,6 +658,8 @@ def evaluate_snapshot_data(
     target_block: str = "B1",
     step_index: int | None = None,
     use_timings_groundtruth: bool = True,
+    edge_delays: dict[tuple[int, int], float] | None = None,
+    use_delays: bool = True,
 ) -> dict[str, Any]:
     """Execute backward propagation inference across snapshots and compute evaluation metrics."""
     canonical_label, target_block_hash = resolve_target_block(data, target_block)
@@ -554,6 +667,18 @@ def evaluate_snapshot_data(
     snapshots = data.get("snapshots", [])
     node_timings = data.get("node_timings") if use_timings_groundtruth else None
     all_nodes = sorted(int(k) for k in adjacency.keys())
+
+    # Resolve active edge delays: default to loaded delay matrix if enabled
+    active_edge_delays = edge_delays
+    if use_delays and active_edge_delays is None:
+        try:
+            if DEFAULT_EDGE_DELAYS_PATH.exists():
+                active_edge_delays = load_edge_delays(DEFAULT_EDGE_DELAYS_PATH)
+        except Exception as e:
+            log.warning("Could not auto-load default edge delays: %s", e)
+            active_edge_delays = None
+    elif not use_delays:
+        active_edge_delays = None
 
     evaluations: list[InferenceMetrics] = []
     inferred_snapshots: list[BlockPropagationSnapshot] = []
@@ -579,6 +704,7 @@ def evaluate_snapshot_data(
             delta_ms=delta_ms,
             all_nodes=all_nodes,
             node_timings=node_timings,
+            edge_delays=active_edge_delays,
         )
         inferred_snapshots.append(inferred_snap)
 
@@ -603,6 +729,7 @@ def evaluate_snapshot_data(
         "delta_ms": delta_ms,
         "total_nodes": len(all_nodes),
         "total_steps_evaluated": len(evaluations),
+        "is_delay_aware": active_edge_delays is not None,
         "mean_metrics": {
             "accuracy": round(mean_acc, 4),
             "precision": round(mean_prec, 4),
@@ -621,6 +748,8 @@ def compare_topologies_evaluation(
     target_block: str = "B1",
     step_index: int | None = None,
     use_timings_groundtruth: bool = True,
+    edge_delays: dict[tuple[int, int], float] | None = None,
+    use_delays: bool = True,
 ) -> dict[str, Any]:
     """Execute backward propagation inference across both Ground Truth and Inferred topologies and compare."""
     res_gt = evaluate_snapshot_data(
@@ -629,6 +758,8 @@ def compare_topologies_evaluation(
         target_block=target_block,
         step_index=step_index,
         use_timings_groundtruth=use_timings_groundtruth,
+        edge_delays=edge_delays,
+        use_delays=use_delays,
     )
     res_inf = evaluate_snapshot_data(
         data=data,
@@ -636,6 +767,8 @@ def compare_topologies_evaluation(
         target_block=target_block,
         step_index=step_index,
         use_timings_groundtruth=use_timings_groundtruth,
+        edge_delays=edge_delays,
+        use_delays=use_delays,
     )
 
     mean_gt = res_gt["mean_metrics"]
@@ -652,6 +785,7 @@ def compare_topologies_evaluation(
         "delta_ms": res_gt["delta_ms"],
         "total_nodes": res_gt["total_nodes"],
         "total_steps_evaluated": res_gt["total_steps_evaluated"],
+        "is_delay_aware": res_gt.get("is_delay_aware", False),
         "groundtruth_topology": res_gt,
         "inferred_topology": res_inf,
         "comparison": {
@@ -699,6 +833,19 @@ def main() -> None:
         help="Run backward propagation inference using TxProbe Inferred topology instead of ground truth",
     )
     parser.add_argument(
+        "--edge-delays",
+        type=Path,
+        default=DEFAULT_EDGE_DELAYS_PATH,
+        help="Path to empirical edge delays JSON (default: edge_delays_min_20rounds.json)",
+    )
+    parser.add_argument(
+        "--unweighted",
+        "--no-delays",
+        action="store_true",
+        dest="unweighted",
+        help="Disable delay-aware inference and fallback to unweighted discrete-hop model",
+    )
+    parser.add_argument(
         "-b",
         "--block",
         type=str,
@@ -736,6 +883,22 @@ def main() -> None:
         log.error("Topology file not found: %s", args.topology)
         sys.exit(1)
 
+    # Determine delay-aware mode (DEFAULT is True)
+    use_delays = not args.unweighted
+    edge_delays = None
+    if use_delays:
+        if args.edge_delays and args.edge_delays.exists():
+            try:
+                edge_delays = load_edge_delays(args.edge_delays)
+                log.info("Loaded %d empirical edge delays from %s", len(edge_delays), args.edge_delays)
+            except Exception as e:
+                log.warning("Could not load edge delays from %s: %s", args.edge_delays, e)
+                edge_delays = None
+                use_delays = False
+        else:
+            log.warning("Edge delays file %s not found. Falling back to unweighted inference.", args.edge_delays)
+            use_delays = False
+
     with open(args.input_file, "r", encoding="utf-8") as f:
         data = json.load(f)
 
@@ -764,15 +927,18 @@ def main() -> None:
                 inferred_adjacency=inf_adjacency,
                 target_block=blk,
                 step_index=args.step,
+                edge_delays=edge_delays,
+                use_delays=use_delays,
             )
             label = comp["target_block_label"]
             all_comparisons[label] = comp
             mean_gt = comp["comparison"]["mean_gt_metrics"]
             mean_inf = comp["comparison"]["mean_inferred_metrics"]
             diffs = comp["comparison"]["metric_differences_inf_minus_gt"]
+            mode_str = "Delay-Aware (min 20-round delays)" if comp.get("is_delay_aware") else "Unweighted"
 
             print("\n" + "=" * 80)
-            print(f"TOPOLOGY COMPARISON: Ground Truth vs. TxProbe Inferred ({label})")
+            print(f"TOPOLOGY COMPARISON [{mode_str}]: Ground Truth vs. TxProbe Inferred ({label})")
             print("=" * 80)
             print(f"Target Block: {label} ({comp['target_block_hash'][:16]}...)")
             print(f"Total Nodes: {comp['total_nodes']} | Steps Evaluated: {comp['total_steps_evaluated']}")
@@ -825,12 +991,20 @@ def main() -> None:
         adjacency = load_topology(topology_path)
         all_results: dict[str, dict[str, Any]] = {}
         for blk in target_blocks:
-            results = evaluate_snapshot_data(data, adjacency, target_block=blk, step_index=args.step)
+            results = evaluate_snapshot_data(
+                data=data,
+                adjacency=adjacency,
+                target_block=blk,
+                step_index=args.step,
+                edge_delays=edge_delays,
+                use_delays=use_delays,
+            )
             label = results["target_block_label"]
             all_results[label] = results
+            mode_str = "Delay-Aware (min 20-round delays)" if results.get("is_delay_aware") else "Unweighted"
 
             print("\n" + "=" * 60)
-            print(title_header)
+            print(f"{title_header} [{mode_str}]")
             print("=" * 60)
             print(f"Target Block: {results['target_block_label']} ({results['target_block_hash'][:16]}...)")
             print(f"Total Nodes: {results['total_nodes']} | Steps Evaluated: {results['total_steps_evaluated']}")

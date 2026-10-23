@@ -4,6 +4,7 @@
   "delta_ms": 10.0,
   "total_nodes": 1000,
   "total_steps_evaluated": 12,
+  "is_delay_aware": true,
   "mean_metrics": {
     "accuracy": 0.9995,
     "precision": 0.5,
@@ -14,7 +15,7 @@
     {
       "snapshot_index": 0,
       "source_snapshot_index": 1,
-      "timestamp": 1792634138.426002,
+      "timestamp": 1792771211.763288,
       "rel_time_ms": 0.0,
       "tp": 0,
       "fp": 0,
@@ -31,7 +32,7 @@
     {
       "snapshot_index": 1,
       "source_snapshot_index": 2,
-      "timestamp": 1792634138.436002,
+      "timestamp": 1792771211.773288,
       "rel_time_ms": 10.0,
       "tp": 0,
       "fp": 0,
@@ -48,7 +49,7 @@
     {
       "snapshot_index": 2,
       "source_snapshot_index": 3,
-      "timestamp": 1792634138.446002,
+      "timestamp": 1792771211.783288,
       "rel_time_ms": 20.0,
       "tp": 0,
       "fp": 0,
@@ -65,7 +66,7 @@
     {
       "snapshot_index": 3,
       "source_snapshot_index": 4,
-      "timestamp": 1792634138.456002,
+      "timestamp": 1792771211.793288,
       "rel_time_ms": 30.0,
       "tp": 0,
       "fp": 0,
@@ -82,7 +83,7 @@
     {
       "snapshot_index": 4,
       "source_snapshot_index": 5,
-      "timestamp": 1792634138.466002,
+      "timestamp": 1792771211.803288,
       "rel_time_ms": 40.0,
       "tp": 0,
       "fp": 0,
@@ -99,7 +100,7 @@
     {
       "snapshot_index": 5,
       "source_snapshot_index": 6,
-      "timestamp": 1792634138.476001,
+      "timestamp": 1792771211.813288,
       "rel_time_ms": 50.0,
       "tp": 0,
       "fp": 0,
@@ -116,7 +117,7 @@
     {
       "snapshot_index": 6,
       "source_snapshot_index": 7,
-      "timestamp": 1792634138.486001,
+      "timestamp": 1792771211.823288,
       "rel_time_ms": 60.0,
       "tp": 0,
       "fp": 0,
@@ -133,7 +134,7 @@
     {
       "snapshot_index": 7,
       "source_snapshot_index": 8,
-      "timestamp": 1792634138.496001,
+      "timestamp": 1792771211.833288,
       "rel_time_ms": 70.0,
       "tp": 0,
       "fp": 0,
@@ -150,7 +151,7 @@
     {
       "snapshot_index": 8,
       "source_snapshot_index": 9,
-      "timestamp": 1792634138.506001,
+      "timestamp": 1792771211.843288,
       "rel_time_ms": 80.0,
       "tp": 0,
       "fp": 0,
@@ -167,7 +168,7 @@
     {
       "snapshot_index": 9,
       "source_snapshot_index": 10,
-      "timestamp": 1792634138.516001,
+      "timestamp": 1792771211.853288,
       "rel_time_ms": 90.0,
       "tp": 0,
       "fp": 0,
@@ -184,7 +185,7 @@
     {
       "snapshot_index": 10,
       "source_snapshot_index": 11,
-      "timestamp": 1792634138.526001,
+      "timestamp": 1792771211.863288,
       "rel_time_ms": 100.0,
       "tp": 0,
       "fp": 0,
@@ -201,7 +202,7 @@
     {
       "snapshot_index": 11,
       "source_snapshot_index": 12,
-      "timestamp": 1792634138.536001,
+      "timestamp": 1792771211.873288,
       "rel_time_ms": 110.0,
       "tp": 0,
       "fp": 0,
@@ -220,7 +221,7 @@
     {
       "snapshot_index": 0,
       "rel_time_ms": 0.0,
-      "timestamp": 1792634138.426002,
+      "timestamp": 1792771211.763288,
       "target_block_hash": "7c9d000000000000000000000000000000000000000000000000000000000002",
       "known_nodes": [],
       "unknown_nodes": [
@@ -1234,7 +1235,7 @@
     {
       "snapshot_index": 1,
       "rel_time_ms": 10.0,
-      "timestamp": 1792634138.436002,
+      "timestamp": 1792771211.773288,
       "target_block_hash": "7c9d000000000000000000000000000000000000000000000000000000000002",
       "known_nodes": [],
       "unknown_nodes": [
@@ -2248,7 +2249,7 @@
     {
       "snapshot_index": 2,
       "rel_time_ms": 20.0,
-      "timestamp": 1792634138.446002,
+      "timestamp": 1792771211.783288,
       "target_block_hash": "7c9d000000000000000000000000000000000000000000000000000000000002",
       "known_nodes": [],
       "unknown_nodes": [
@@ -3262,7 +3263,7 @@
     {
       "snapshot_index": 3,
       "rel_time_ms": 30.0,
-      "timestamp": 1792634138.456002,
+      "timestamp": 1792771211.793288,
       "target_block_hash": "7c9d000000000000000000000000000000000000000000000000000000000002",
       "known_nodes": [],
       "unknown_nodes": [
@@ -4276,7 +4277,7 @@
     {
       "snapshot_index": 4,
       "rel_time_ms": 40.0,
-      "timestamp": 1792634138.466002,
+      "timestamp": 1792771211.803288,
       "target_block_hash": "7c9d000000000000000000000000000000000000000000000000000000000002",
       "known_nodes": [],
       "unknown_nodes": [
@@ -5290,7 +5291,7 @@
     {
       "snapshot_index": 5,
       "rel_time_ms": 50.0,
-      "timestamp": 1792634138.476001,
+      "timestamp": 1792771211.813288,
       "target_block_hash": "7c9d000000000000000000000000000000000000000000000000000000000002",
       "known_nodes": [],
       "unknown_nodes": [
@@ -6304,7 +6305,7 @@
     {
       "snapshot_index": 6,
       "rel_time_ms": 60.0,
-      "timestamp": 1792634138.486001,
+      "timestamp": 1792771211.823288,
       "target_block_hash": "7c9d000000000000000000000000000000000000000000000000000000000002",
       "known_nodes": [],
       "unknown_nodes": [
@@ -7318,7 +7319,7 @@
     {
       "snapshot_index": 7,
       "rel_time_ms": 70.0,
-      "timestamp": 1792634138.496001,
+      "timestamp": 1792771211.833288,
       "target_block_hash": "7c9d000000000000000000000000000000000000000000000000000000000002",
       "known_nodes": [],
       "unknown_nodes": [
@@ -8332,7 +8333,7 @@
     {
       "snapshot_index": 8,
       "rel_time_ms": 80.0,
-      "timestamp": 1792634138.506001,
+      "timestamp": 1792771211.843288,
       "target_block_hash": "7c9d000000000000000000000000000000000000000000000000000000000002",
       "known_nodes": [],
       "unknown_nodes": [
@@ -9346,7 +9347,7 @@
     {
       "snapshot_index": 9,
       "rel_time_ms": 90.0,
-      "timestamp": 1792634138.516001,
+      "timestamp": 1792771211.853288,
       "target_block_hash": "7c9d000000000000000000000000000000000000000000000000000000000002",
       "known_nodes": [],
       "unknown_nodes": [
@@ -10360,7 +10361,7 @@
     {
       "snapshot_index": 10,
       "rel_time_ms": 100.0,
-      "timestamp": 1792634138.526001,
+      "timestamp": 1792771211.863288,
       "target_block_hash": "7c9d000000000000000000000000000000000000000000000000000000000002",
       "known_nodes": [],
       "unknown_nodes": [
@@ -11374,7 +11375,7 @@
     {
       "snapshot_index": 11,
       "rel_time_ms": 110.0,
-      "timestamp": 1792634138.536001,
+      "timestamp": 1792771211.873288,
       "target_block_hash": "7c9d000000000000000000000000000000000000000000000000000000000002",
       "known_nodes": [],
       "unknown_nodes": [
