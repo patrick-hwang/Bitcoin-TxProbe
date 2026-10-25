@@ -966,6 +966,7 @@ def main() -> None:
             if args.output:
                 if len(target_blocks) == 1 and not (args.output.is_dir() or args.output.suffix == ""):
                     save_path = args.output
+                    out_dir = args.output.parent
                 else:
                     out_dir = args.output if (args.output.is_dir() or args.output.suffix == "") else args.output.parent
                     save_path = out_dir / f"eval_comparison_{label}.json"
@@ -973,7 +974,14 @@ def main() -> None:
                 save_path.parent.mkdir(parents=True, exist_ok=True)
                 with open(save_path, "w", encoding="utf-8") as f:
                     json.dump(comp, f, indent=2)
+                
+                # Also save GT inference file
+                inf_path = out_dir / f"eval_inference_{label}.json"
+                with open(inf_path, "w", encoding="utf-8") as f:
+                    json.dump(comp["groundtruth_topology"], f, indent=2)
+
                 print(f"\nSaved comparison evaluation results for {label} to: {save_path}")
+                print(f"Saved ground truth evaluation results for {label} to: {inf_path}")
 
     else:
         if args.use_inferred:
