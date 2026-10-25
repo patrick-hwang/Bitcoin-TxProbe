@@ -170,7 +170,7 @@ async def run_single_live_round(
     )
 
     log.info(
-        "Round %2d/30 | Source Node %4d | Reached: %d/%d nodes in %.1f ms | Valid Edges: %d/%d",
+        "Round %3d | Source Node %4d | Reached: %d/%d nodes in %.1f ms | Valid Edges: %d/%d",
         round_index,
         source_node,
         len(arrival_times),
