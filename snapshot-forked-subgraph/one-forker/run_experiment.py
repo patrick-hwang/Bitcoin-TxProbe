@@ -249,8 +249,20 @@ async def run_live_experiment(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Blockchain Fork Injection and Subgraph Snapshotting")
-    parser.add_argument("--live", action="store_true", help="Run against live 1,000-node RegTest network")
-    parser.add_argument("--dry-run", action="store_true", default=False, help="Run simulated dry-run without bitcoind")
+    parser.add_argument(
+        "--live",
+        action="store_true",
+        default=True,
+        help="Run against live 1,000-node RegTest network (DEFAULT)",
+    )
+    parser.add_argument(
+        "--dry-run",
+        "--simulated",
+        action="store_true",
+        default=False,
+        dest="dry_run",
+        help="Run simulated dry-run without live bitcoind nodes",
+    )
     parser.add_argument("--funding-sats", type=int, default=DEFAULT_FUNDING_TARGET_SATS, help="Target UTXO sats (default: 100,000)")
     parser.add_argument("--step-ms", type=float, default=10.0, help="Snapshot time slice in milliseconds (default: 10.0)")
     parser.add_argument("--timeout", type=float, default=15.0, help="Convergence timeout in seconds (default: 15.0)")
@@ -266,10 +278,10 @@ def main() -> None:
 
     out_path = Path(args.out) if args.out else None
 
-    if args.live:
-        asyncio.run(run_live_experiment(config, step_ms=args.step_ms, out_path=out_path))
-    else:
+    if args.dry_run:
         asyncio.run(run_simulated_experiment(config, step_ms=args.step_ms, out_path=out_path))
+    else:
+        asyncio.run(run_live_experiment(config, step_ms=args.step_ms, out_path=out_path))
 
 
 if __name__ == "__main__":
