@@ -836,7 +836,7 @@ def main() -> None:
         "--edge-delays",
         type=Path,
         default=DEFAULT_EDGE_DELAYS_PATH,
-        help="Path to empirical edge delays JSON (default: edge_delays_min_20rounds.json)",
+        help="Path to empirical edge delays JSON (default: edge_delays_live_30rounds.json)",
     )
     parser.add_argument(
         "--unweighted",
@@ -935,7 +935,7 @@ def main() -> None:
             mean_gt = comp["comparison"]["mean_gt_metrics"]
             mean_inf = comp["comparison"]["mean_inferred_metrics"]
             diffs = comp["comparison"]["metric_differences_inf_minus_gt"]
-            mode_str = "Delay-Aware (min 20-round delays)" if comp.get("is_delay_aware") else "Unweighted"
+            mode_str = "Delay-Aware (Live 30-round Delays)" if comp.get("is_delay_aware") else "Unweighted"
 
             print("\n" + "=" * 80)
             print(f"TOPOLOGY COMPARISON [{mode_str}]: Ground Truth vs. TxProbe Inferred ({label})")
@@ -1001,7 +1001,7 @@ def main() -> None:
             )
             label = results["target_block_label"]
             all_results[label] = results
-            mode_str = "Delay-Aware (min 20-round delays)" if results.get("is_delay_aware") else "Unweighted"
+            mode_str = "Delay-Aware (Live 30-round Delays)" if results.get("is_delay_aware") else "Unweighted"
 
             print("\n" + "=" * 60)
             print(f"{title_header} [{mode_str}]")

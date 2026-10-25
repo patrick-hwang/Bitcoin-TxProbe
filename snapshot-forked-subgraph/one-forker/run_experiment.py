@@ -3,10 +3,7 @@
 
 Usage:
     # Run full experiment on live 1,000-node RegTest network:
-    python run_experiment.py --live
-
-    # Run dry-run simulation verifying the pipeline end-to-end:
-    python run_experiment.py --dry-run --step-ms 10.0
+    python run_experiment.py
 """
 
 from __future__ import annotations
@@ -39,7 +36,7 @@ from config import (
     load_topology,
     wait_for_topology_ready,
 )
-from block_builder import ConflictingTransactions, CraftedBlock, ForkPackage, build_fork_package
+from block_builder import ForkPackage, build_fork_package
 from funding import ParentUtxo, fund_forker_node
 from forker import ForkerExecutionTimings, execute_forker_sequence
 from prober import SubgraphTracker, create_subgraph_tracker_from_config
@@ -49,120 +46,6 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 log = logging.getLogger("snapshot_fork.orchestrator")
-
-
-async def run_simulated_experiment(
-    config: ExperimentConfig,
-    step_ms: float = 10.0,
-    out_path: Path | None = None,
-) -> Path:
-    """Execute simulated end-to-end experiment to verify data pipeline without live daemons."""
-    log.info("Running simulated fork propagation experiment (dry-run mode)...")
-    height = 102
-    parent_hash = "6b2a000000000000000000000000000000000000000000000000000000000001"
-
-    # 1. Mock transactions and blocks
-    tx0 = ParentUtxo(
-        txid="0000000000000000000000000000000000000000000000000000000000000001",
-        vout=0,
-        amount_sats=config.funding_target_sats,
-        address="bcrt1qforker",
-        script_pub_key="0014mock",
-    )
-    conflicts = ConflictingTransactions(
-        tx0=tx0,
-        tx1_hex="01000000mocktx1",
-        tx1_txid="tx1_mock_id",
-        tx1_dest_addr="bcrt1qrandom",
-        tx2_hex="01000000mocktx2",
-        tx2_txid="tx2_mock_id",
-        tx2_dest_addr="bcrt1qforker",
-        dust_amount_sats=config.dust_amount_sats,
-        fee_sats=config.fee_sats,
-    )
-    b1 = CraftedBlock("B1", height + 1, "4a1f000000000000000000000000000000000000000000000000000000000001", parent_hash, "hex_b1", ["tx1_mock_id"], int(time.time()))
-    b2 = CraftedBlock("B2", height + 1, "7c9d000000000000000000000000000000000000000000000000000000000002", parent_hash, "hex_b2", ["tx2_mock_id"], int(time.time()) + 1)
-    b3 = CraftedBlock("B3", height + 2, "1e4b000000000000000000000000000000000000000000000000000000000003", b2.block_hash, "hex_b3", [], int(time.time()) + 2)
-
-    fork_pkg = ForkPackage(
-        parent_hash=parent_hash,
-        parent_height=height,
-        conflicts=conflicts,
-        b1=b1,
-        b2=b2,
-        b3=b3,
-    )
-
-    # 2. Initialize tracker
-    tracker = create_subgraph_tracker_from_config(
-        height=height,
-        parent_hash=parent_hash,
-        b1_hash=b1.block_hash,
-        b2_hash=b2.block_hash,
-        b3_hash=b3.block_hash,
-        config=config,
-    )
-
-    # 3. Simulate propagation wave based on BFS hop distances
-    t0 = time.time()
-    # Forker publishes B1
-    tracker.record_event(2, b1.block_hash, timestamp=t0, probe_id=0, message_type="publish")
-
-    adj = load_topology(config.topology_path)
-    distances = compute_bfs_distances(adj, config.forker_id)
-
-    # Simulate B1 wave across 1000 nodes (hop delay ~10ms per hop)
-    for nid, d in sorted(distances.items(), key=lambda kv: kv[1]):
-        if nid == 2:
-            continue
-        arr_t = t0 + (d * 0.010) + ((nid % 5) * 0.001)
-        tracker.record_event(nid, b1.block_hash, timestamp=arr_t, probe_id=(nid % 2))
-
-    b1_conv_t = tracker.get_convergence_time(b1.block_hash) or (t0 + 0.060)
-
-    # Forker publishes B2 + B3 immediately upon B1 convergence
-    t_reorg = b1_conv_t + 0.001
-    tracker.record_event(2, b2.block_hash, timestamp=t_reorg, probe_id=0, message_type="publish")
-    tracker.record_event(2, b3.block_hash, timestamp=t_reorg + 0.001, probe_id=0, message_type="publish")
-
-    # Simulate B3 reorg wave
-    for nid, d in sorted(distances.items(), key=lambda kv: kv[1]):
-        if nid == 2:
-            continue
-        arr_t = t_reorg + 0.001 + (d * 0.012) + ((nid % 4) * 0.001)
-        tracker.record_event(nid, b3.block_hash, timestamp=arr_t, probe_id=(nid % 2))
-
-    # Stop condition: Experiment stops immediately when the target block(s) / reorg have fully converged across 100% of nodes
-    b3_conv_t = tracker.get_convergence_time(b3.block_hash) or (t_reorg + 0.080)
-    step_sec = step_ms / 1000.0
-    t_final = b3_conv_t + step_sec
-
-    # 4. Generate discrete snapshots stopping immediately upon full convergence
-    snapshots = tracker.generate_sliced_snapshots(
-        start_time=t0,
-        end_time=t_final,
-        step_ms=step_ms,
-        stop_on_convergence_hash=b3.block_hash,
-    )
-    log.info("Generated %d sliced snapshots (step=%.1fms, 100%% converged at %.3fs)", len(snapshots), step_ms, b3_conv_t)
-
-    # 5. Export to JSON
-    if out_path is None:
-        out_path = config.results_dir / f"fork_subgraph_height_{height}.json"
-
-    meta = {
-        "mode": "simulation",
-        "timings": {
-            "b1_published_at": t0,
-            "b1_converged_at": b1_conv_t,
-            "reorg_published_at": t_reorg,
-            "final_converged_at": t_final,
-        },
-        "conflicts": conflicts.to_dict(),
-    }
-    tracker.export_to_json(out_path, fork_metadata=meta, snapshots=snapshots, step_ms=step_ms)
-    log.info("Simulation complete! Results saved to %s", out_path)
-    return out_path
 
 
 async def run_live_experiment(
@@ -272,21 +155,7 @@ async def run_live_experiment(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Blockchain Fork Injection and Subgraph Snapshotting")
-    parser.add_argument(
-        "--live",
-        action="store_true",
-        default=True,
-        help="Run against live 1,000-node RegTest network (DEFAULT)",
-    )
-    parser.add_argument(
-        "--dry-run",
-        "--simulated",
-        action="store_true",
-        default=False,
-        dest="dry_run",
-        help="Run simulated dry-run without live bitcoind nodes",
-    )
+    parser = argparse.ArgumentParser(description="Blockchain Fork Injection and Subgraph Snapshotting on Live RegTest Network")
     parser.add_argument("--funding-sats", type=int, default=DEFAULT_FUNDING_TARGET_SATS, help="Target UTXO sats (default: 100,000)")
     parser.add_argument("--step-ms", type=float, default=10.0, help="Snapshot time slice in milliseconds (default: 10.0)")
     parser.add_argument("--timeout", type=float, default=15.0, help="Convergence timeout in seconds (default: 15.0)")
@@ -301,11 +170,7 @@ def main() -> None:
     )
 
     out_path = Path(args.out) if args.out else None
-
-    if args.dry_run:
-        asyncio.run(run_simulated_experiment(config, step_ms=args.step_ms, out_path=out_path))
-    else:
-        asyncio.run(run_live_experiment(config, step_ms=args.step_ms, out_path=out_path))
+    asyncio.run(run_live_experiment(config, step_ms=args.step_ms, out_path=out_path))
 
 
 if __name__ == "__main__":

@@ -21,7 +21,7 @@ DEFAULT_REGTEST_DIR = Path("/mnt/ssd/hdhphat-mindfullab/regtest-node-data")
 DEFAULT_TOPOLOGY_PATH = DEFAULT_REGTEST_DIR / "groundtruth_topology.json"
 DEFAULT_INFERRED_TOPOLOGY_PATH = PROJECT_ROOT / "results-regtest" / "run_2026-10-12_22-12-42" / "full_inferred_topology.json"
 DEFAULT_RESULTS_DIR = Path(__file__).resolve().parent / "results"
-DEFAULT_EDGE_DELAYS_PATH = DEFAULT_RESULTS_DIR / "edge_delays_min_20rounds.json"
+DEFAULT_EDGE_DELAYS_PATH = DEFAULT_RESULTS_DIR / "edge_delays_live_30rounds.json"
 
 # Default network configuration
 BASE_P2P_PORT = 10000
