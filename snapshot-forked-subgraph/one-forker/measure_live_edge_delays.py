@@ -53,6 +53,7 @@ from config import (
     DEFAULT_TOPOLOGY_PATH,
     get_node_config,
     load_topology,
+    parse_node_id,
 )
 from txprobe.rpc.client import AsyncBitcoinRpc
 
@@ -62,8 +63,28 @@ logging.basicConfig(
 )
 log = logging.getLogger("snapshot_fork.measure_live_delays")
 
-DEFAULT_LIVE_DELAYS_OUT = DEFAULT_RESULTS_DIR / "edge_delays_live_100rounds_mp.json"
+DEFAULT_LIVE_DELAYS_OUT = DEFAULT_RESULTS_DIR / "edge_delays_live_100rounds_rtt.json"
 DEFAULT_MINING_ADDRESS = "bcrt1qq25myyqyfvfaug3ramvssxpna0zvpayy09t99j"
+
+
+async def fetch_probe_rtt_map(probe_id: int = 0) -> dict[int, float]:
+    """Fetch minping (RTT in ms) for all connected peers from Probe node."""
+    cfg = get_node_config(probe_id)
+    rtt_map: dict[int, float] = {probe_id: 0.0}
+    try:
+        async with AsyncBitcoinRpc("127.0.0.1", cfg.rpc_port, cfg.rpc_user, cfg.rpc_pass, timeout_sec=5.0) as rpc:
+            peers = await rpc.call("getpeerinfo")
+            for p in peers:
+                addr = p.get("addr", "")
+                nid = parse_node_id(addr)
+                minping_s = p.get("minping")
+                if minping_s is not None and minping_s > 0:
+                    rtt_map[nid] = float(minping_s) * 1000.0
+                elif "pingtime" in p and p["pingtime"] > 0:
+                    rtt_map[nid] = float(p["pingtime"]) * 1000.0
+    except Exception as e:
+        log.warning("Failed to fetch getpeerinfo from Probe %d: %s", probe_id, e)
+    return rtt_map
 
 
 def canonical_edge(u: int, v: int) -> tuple[int, int]:
@@ -162,6 +183,8 @@ def measure_live_edge_delays_multiprocess(
     epsilon_ms: float = 0.05,
     seed: int = 42,
     timeout_sec: float = 5.0,
+    use_rtt: bool = True,
+    probe_id: int = 0,
 ) -> dict[str, Any]:
     """Execute live measurement across 1,000 nodes using 20 parallel worker processes."""
     adj = load_topology(topology_path, symmetrize=True)
@@ -173,6 +196,22 @@ def measure_live_edge_delays_multiprocess(
         for v in adj[u]:
             all_edges.add(canonical_edge(u, v))
     total_edges = len(all_edges)
+
+    rtt_map: dict[int, float] = {}
+    if use_rtt:
+        log.info("Fetching P2P minping RTT from Probe %d...", probe_id)
+        rtt_map = asyncio.run(fetch_probe_rtt_map(probe_id))
+        valid_rtts = [v for k, v in rtt_map.items() if k != probe_id]
+        if valid_rtts:
+            log.info(
+                "RTT compensation active (%d nodes): min=%.3fms, median=%.3fms, max=%.3fms",
+                len(rtt_map),
+                min(valid_rtts),
+                statistics.median(valid_rtts),
+                max(valid_rtts),
+            )
+        else:
+            log.warning("No RTT entries fetched from Probe %d, proceeding without RTT compensation.", probe_id)
 
     actual_workers = min(num_workers, total_nodes, os.cpu_count() or 4)
     log.info(
@@ -292,11 +331,20 @@ def measure_live_edge_delays_multiprocess(
 
             total_dur_ms = (max(arrival_times.values()) - min(arrival_times.values())) * 1000.0 if arrival_times else 0.0
 
-            # 6. Calculate edge delays for this round
+            # 6. Calculate calibrated arrival times and edge delays for this round
+            if use_rtt and rtt_map:
+                calibrated_times: dict[int, float] = {}
+                for nid, t_val in arrival_times.items():
+                    # T_calib = T_obs - (RTT / 2)
+                    rtt_sec = (rtt_map.get(nid, 0.0) / 1000.0) / 2.0
+                    calibrated_times[nid] = t_val - rtt_sec
+            else:
+                calibrated_times = arrival_times
+
             round_delays: dict[str, float] = {}
             for u, v in all_edges:
-                if u in arrival_times and v in arrival_times:
-                    delta_ms = abs(arrival_times[u] - arrival_times[v]) * 1000.0
+                if u in calibrated_times and v in calibrated_times:
+                    delta_ms = abs(calibrated_times[u] - calibrated_times[v]) * 1000.0
                     if delta_ms > epsilon_ms:
                         edge_key = canonical_edge_str(u, v)
                         round_delays[edge_key] = delta_ms
@@ -376,14 +424,28 @@ def measure_live_edge_delays_multiprocess(
         "total_measurement_time_sec": round(t_total_all, 2),
     }
 
+    valid_rtts = [v for k, v in rtt_map.items() if k != probe_id] if rtt_map else []
     result_data = {
         "metadata": {
-            "description": f"Empirical minimum edge delays d(u, v) = min_{{r}} |T_r(u) - T_r(v)| across {num_rounds} live RegTest rounds using {actual_workers} Multi-Process workers",
-            "formula": f"Delta_r(u, v) = |T_r(u) - T_r(v)| > {epsilon_ms} ms; d(u, v) = min_r Delta_r(u, v)",
+            "description": f"Empirical minimum edge delays d(u, v) = min_{{r}} |T_r(u) - T_r(v)| across {num_rounds} live RegTest rounds using {actual_workers} Multi-Process workers with P2P RTT compensation",
+            "formula": (
+                f"Delta_r(u, v) = |(T_r(u) - RTT(u)/2) - (T_r(v) - RTT(v)/2)| > {epsilon_ms} ms; d(u, v) = min_r Delta_r(u, v)"
+                if (use_rtt and rtt_map)
+                else f"Delta_r(u, v) = |T_r(u) - T_r(v)| > {epsilon_ms} ms; d(u, v) = min_r Delta_r(u, v)"
+            ),
             "unit": "milliseconds",
             "source_nodes": source_nodes,
             "epsilon_ms": epsilon_ms,
             "concurrency_workers": actual_workers,
+            "rtt_compensation_enabled": bool(use_rtt and rtt_map),
+            "probe_id": probe_id,
+            "rtt_statistics_ms": {
+                "nodes_count": len(valid_rtts),
+                "min_ms": round(min(valid_rtts), 4) if valid_rtts else 0.0,
+                "median_ms": round(statistics.median(valid_rtts), 4) if valid_rtts else 0.0,
+                "mean_ms": round(statistics.mean(valid_rtts), 4) if valid_rtts else 0.0,
+                "max_ms": round(max(valid_rtts), 4) if valid_rtts else 0.0,
+            } if valid_rtts else None,
         },
         "statistics": stats,
         "rounds": round_telemetries,
@@ -422,6 +484,9 @@ def main() -> None:
     parser.add_argument("--out", type=Path, default=DEFAULT_LIVE_DELAYS_OUT, help="Output JSON path")
     parser.add_argument("--epsilon-ms", type=float, default=0.05, help="Minimum non-zero delta filter threshold (default: 0.05 ms)")
     parser.add_argument("--seed", type=int, default=42, help="Random seed for source selection (default: 42)")
+    parser.add_argument("--no-rtt", dest="use_rtt", action="store_false", help="Disable RTT latency compensation")
+    parser.add_argument("--probe-id", type=int, default=0, help="Probe node ID for RTT minping querying (default: 0)")
+    parser.set_defaults(use_rtt=True)
 
     args = parser.parse_args()
 
@@ -432,6 +497,8 @@ def main() -> None:
         out_path=args.out,
         epsilon_ms=args.epsilon_ms,
         seed=args.seed,
+        use_rtt=args.use_rtt,
+        probe_id=args.probe_id,
     )
 
 
